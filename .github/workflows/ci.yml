@@ -32,14 +32,9 @@ jobs:
         run: dotnet tool install --global GitVersion.Tool
       - name: Get version
         id: gitversion
-        #- name: Save state
-        #run: echo "{name}={value}" >> $GITHUB_STATE
-        #
-        #- name: Set output
-        #
         run: |
           dotnet-gitversion /updateassemblyinfo
-          echo "version=$(dotnet-gitversion /showvariable FullSemVer)" >> $GITHUB_OUTPUT
+          echo "::set-output name=version::$(dotnet-gitversion /showvariable FullSemVer)"
       - name: Build (Windows)
         env:
           IS_PR: ${{ !!github.head_ref }}
