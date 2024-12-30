@@ -38,7 +38,6 @@ namespace RitsukageBot.Services
         {
             _logger.LogInformation("Starting Discord bot service...");
             var token = _services.GetRequiredService<IConfiguration>().GetValue<string>("Discord:Token");
-            await InitMessageLoggerAsync().ConfigureAwait(false);
             await InitCommandsAsync().ConfigureAwait(false);
             await InitInteractionsAsync().ConfigureAwait(false);
             await _client.LoginAsync(TokenType.Bot, token).ConfigureAwait(false);
@@ -76,21 +75,6 @@ namespace RitsukageBot.Services
                     break;
             }
 
-            return Task.CompletedTask;
-        }
-
-        internal Task InitMessageLoggerAsync()
-        {
-            _client.MessageReceived += LogMessageAsync;
-            return Task.CompletedTask;
-        }
-
-        internal Task LogMessageAsync(SocketMessage message)
-        {
-            if (message is not SocketUserMessage userMessage) return Task.CompletedTask;
-
-            _logger.LogInformation("{username}#{discriminator}: {message}", userMessage.Author.Username,
-                userMessage.Author.Discriminator, userMessage.Content);
             return Task.CompletedTask;
         }
 
