@@ -1,5 +1,7 @@
-﻿using Discord.Commands;
+﻿using CacheTower;
+using Discord.Commands;
 using Discord.WebSocket;
+using Microsoft.Extensions.Logging;
 using RitsukageBot.Library.Graphic;
 using RitsukageBot.Library.Graphic.Processing;
 using SixLabors.ImageSharp;
@@ -15,7 +17,14 @@ namespace RitsukageBot.Modules.Command
         /// <summary>
         ///     Http client factory
         /// </summary>
-        public IHttpClientFactory HttpClientFactory { get; set; }
+        public required IHttpClientFactory HttpClientFactory { get; set; }
+
+        /// <summary>
+        ///     Cache provider
+        /// </summary>
+        public required ICacheStack CacheProvider { get; set; }
+
+        public required ILogger<SampleCommandModule> Logger { get; set; }
 
         /// <summary>
         ///     Ping
@@ -103,25 +112,66 @@ namespace RitsukageBot.Modules.Command
 
             if (!Uri.IsWellFormedUriString(url, UriKind.Absolute)) await ReplyAsync("Invalid url");
 
-            var httpClient = HttpClientFactory.CreateClient();
-            var stream = await httpClient.GetStreamAsync(url);
-            var image = await Image.LoadAsync<Rgba32>(stream);
-            await using var processor = new ImageProcessor<Rgba32>(image);
-            processor.AddStep(new InvertColor<Rgba32>());
-            using var result = await processor.ApplyStepsAsync();
-            await using var memoryStream = new MemoryStream();
-            if (result.Frames.Count > 1)
+            var resultCacheKey = $"image_invertcolor_{url}";
+            var resultCache = await CacheProvider.GetAsync<byte[]>(resultCacheKey);
+            if (resultCache?.Value is { Length: > 0 })
             {
-                result.FixGifRepeatCount();
-                await result.SaveAsGifAsync(memoryStream);
+                Logger.LogDebug("Found result cache for {url}", url);
+                using var memoryStream = new MemoryStream(resultCache.Value);
+                using var resultImage = await Image.LoadAsync<Rgba32>(memoryStream);
                 memoryStream.Seek(0, SeekOrigin.Begin);
-                await Context.Channel.SendFileAsync(memoryStream, "result.gif");
+                await Context.Channel.SendFileAsync(memoryStream,
+                    resultImage.Frames.Count > 1 ? "result.gif" : "result.png");
+                return;
+            }
+
+            var imageCacheKey = $"image_{url}";
+            var imageCache = await CacheProvider.GetAsync<byte[]>(imageCacheKey);
+            Image<Rgba32>? image = null;
+
+            if (imageCache?.Value is not { Length: > 0 })
+            {
+                Logger.LogDebug("Downloading image from {url}", url);
+                var httpClient = HttpClientFactory.CreateClient();
+                await using var stream = await httpClient.GetStreamAsync(url);
+                using var memoryStream = new MemoryStream();
+                await stream.CopyToAsync(memoryStream);
+                await CacheProvider.SetAsync(imageCacheKey, memoryStream.ToArray(), TimeSpan.FromMinutes(5));
+                memoryStream.Seek(0, SeekOrigin.Begin);
+                image = await Image.LoadAsync<Rgba32>(memoryStream);
+                Logger.LogDebug("Saved image to cache for {url}", url);
             }
             else
             {
-                await result.SaveAsPngAsync(memoryStream);
-                memoryStream.Seek(0, SeekOrigin.Begin);
-                await Context.Channel.SendFileAsync(memoryStream, "result.png");
+                Logger.LogDebug("Found image cache for {url}", url);
+            }
+
+            if (image is not null)
+            {
+                Logger.LogDebug("Processing image for {url}", url);
+                await using var processor = new ImageProcessor<Rgba32>(image);
+                processor.AddStep(new InvertColor<Rgba32>());
+                using var result = await processor.ApplyStepsAsync();
+                using var memoryStream = new MemoryStream();
+                if (result.Frames.Count > 1)
+                {
+                    result.FixGifRepeatCount();
+                    await result.SaveAsGifAsync(memoryStream);
+                    memoryStream.Seek(0, SeekOrigin.Begin);
+                    var bytes = memoryStream.ToArray();
+                    await CacheProvider.SetAsync(resultCacheKey, bytes, TimeSpan.FromMinutes(5));
+                    await Context.Channel.SendFileAsync(memoryStream, "result.gif");
+                }
+                else
+                {
+                    await result.SaveAsPngAsync(memoryStream);
+                    memoryStream.Seek(0, SeekOrigin.Begin);
+                    var bytes = memoryStream.ToArray();
+                    await CacheProvider.SetAsync(resultCacheKey, bytes, TimeSpan.FromMinutes(5));
+                    await Context.Channel.SendFileAsync(memoryStream, "result.png");
+                }
+
+                Logger.LogDebug("Saved result to cache for {url}", url);
             }
         }
     }

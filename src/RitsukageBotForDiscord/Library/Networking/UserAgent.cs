@@ -32,8 +32,8 @@ namespace RitsukageBot.Library.Networking
             .FirstOrDefault()?.Company ?? Unknown;
 
         private static readonly string AssemblyName = typeof(UserAgent).Assembly.GetName().Name ?? string.Empty;
-        
-        private static readonly string AssemblyVersion =  
+
+        private static readonly string AssemblyVersion =
             typeof(UserAgent).Assembly.GetName().Version?.ToString() ?? string.Empty;
 
         private static readonly string AssemblyRepositoryUrl = typeof(UserAgent).Assembly
