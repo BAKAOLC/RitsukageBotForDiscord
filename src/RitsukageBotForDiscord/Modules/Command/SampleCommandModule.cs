@@ -76,8 +76,31 @@ namespace RitsukageBot.Modules.Command
         [Command("invertcolor")]
         [Summary("Invert color")]
         public async Task InvertImageColorAsync(
-            [Summary("The image url")] string url)
+            [Summary("The image url")] string? url = null)
         {
+            if (url == null)
+            {
+                if (Context.Message.ReferencedMessage != null)
+                {
+                    if (Context.Message.ReferencedMessage.Attachments.Count == 0)
+                    {
+                        await ReplyAsync("No image found");
+                        return;
+                    }
+
+                    url = Context.Message.ReferencedMessage.Attachments.First().Url;
+                }
+                else if (Context.Message.Attachments.Count == 0)
+                {
+                    await ReplyAsync("No image found");
+                    return;
+                }
+                else
+                {
+                    url = Context.Message.Attachments.First().Url;
+                }
+            }
+
             if (!Uri.IsWellFormedUriString(url, UriKind.Absolute)) await ReplyAsync("Invalid url");
 
             var httpClient = HttpClientFactory.CreateClient();
@@ -100,7 +123,6 @@ namespace RitsukageBot.Modules.Command
                 memoryStream.Seek(0, SeekOrigin.Begin);
                 await Context.Channel.SendFileAsync(memoryStream, "result.png");
             }
-
         }
     }
 }
