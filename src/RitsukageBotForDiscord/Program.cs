@@ -34,6 +34,7 @@ var host = Host.CreateDefaultBuilder()
     {
         services.AddHostedService<UnhandledExceptionHandler>();
         services.AddOptions();
+        services.AddHttpClient();
         services.AddDbContext<DbContext>(builder =>
         {
             var provider = context.Configuration.GetValue<string>("DatabaseProvider");
