@@ -33,7 +33,7 @@ jobs:
       - name: Get version
         id: gitversion
         run: |
-          gitversion /updateassemblyinfo
+          dotnet-gitversion /updateassemblyinfo
           echo "::set-output name=version::$(gitversion /showvariable FullSemVer)"
       - name: Build (Windows)
         env:
