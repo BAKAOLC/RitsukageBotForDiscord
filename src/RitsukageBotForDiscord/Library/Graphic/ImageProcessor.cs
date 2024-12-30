@@ -23,11 +23,6 @@ namespace RitsukageBot.Library.Graphic
             _images = new Image<T>[image.Frames.Count];
             for (var i = 0; i < image.Frames.Count; i++) _images[i] = image.Frames.CloneFrame(i);
         }
-        
-        ~ImageProcessor()
-        {
-            Dispose(false);
-        }
 
         /// <summary>
         ///     Dispose async
@@ -46,6 +41,11 @@ namespace RitsukageBot.Library.Graphic
         {
             Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        ~ImageProcessor()
+        {
+            Dispose(false);
         }
 
         /// <summary>
