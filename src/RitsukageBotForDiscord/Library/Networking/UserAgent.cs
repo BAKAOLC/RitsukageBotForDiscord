@@ -42,7 +42,7 @@ namespace RitsukageBot.Library.Networking
             .FirstOrDefault(x => x.Key == "RepositoryUrl")?.Value ?? Unknown;
 
         internal static readonly string AssemblyUserAgent =
-            $"{AssemblyName}/{AssemblyVersion}({AssemblyAuthor}{(AssemblyRepositoryUrl == Unknown ? string.Empty : $", {AssemblyRepositoryUrl}")})";
+            $"{AssemblyName}/{AssemblyVersion} ({AssemblyAuthor}{(AssemblyRepositoryUrl == Unknown ? string.Empty : $", {AssemblyRepositoryUrl}")})";
 
         internal static readonly string Windows =
             $"{TagMozillaWindows} {TagAppleWebKit} {TagChrome} {TagSafari} {TagEdge} {AssemblyUserAgent}";

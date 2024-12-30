@@ -1,4 +1,3 @@
-
 [*.{appxmanifest,axml,blockshader,build,c,c++,c++m,cc,ccm,cginc,compute,config,cp,cpp,cppm,cshtml,csproj,cu,cuh,cxx,cxxm,dbml,discomap,dtd,fx,fxh,h,h++,hh,hlsl,hlsli,hlslinc,hp,hpp,htm,html,hxx,icc,inc,inl,ino,ipp,ixx,jsproj,lsproj,mpp,mq4,mq5,mqh,mxx,njsproj,nuspec,proj,props,proto,razor,resw,resx,shaderFoundry,StyleCop,targets,tasks,tcc,tpp,urtshader,usf,ush,vbproj,xml,xsd}]
 indent_style = tab
 indent_size = tab

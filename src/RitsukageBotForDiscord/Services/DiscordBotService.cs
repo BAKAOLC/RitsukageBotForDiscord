@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using System.Reflection;
+using Discord;
 using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
@@ -6,7 +7,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using System.Reflection;
 
 namespace RitsukageBot.Services
 {
@@ -87,10 +87,7 @@ namespace RitsukageBot.Services
 
         internal Task LogMessageAsync(SocketMessage message)
         {
-            if (message is not SocketUserMessage userMessage)
-            {
-                return Task.CompletedTask;
-            }
+            if (message is not SocketUserMessage userMessage) return Task.CompletedTask;
 
             _logger.LogInformation("{username}#{discriminator}: {message}", userMessage.Author.Username,
                 userMessage.Author.Discriminator, userMessage.Content);
@@ -105,17 +102,11 @@ namespace RitsukageBot.Services
 
         internal async Task HandleCommandAsync(SocketMessage messageParam)
         {
-            if (messageParam is not SocketUserMessage message)
-            {
-                return;
-            }
+            if (messageParam is not SocketUserMessage message) return;
 
             var argPos = 0;
 
-            if (!message.HasCharPrefix('!', ref argPos) || message.Author.IsBot)
-            {
-                return;
-            }
+            if (!message.HasCharPrefix('!', ref argPos) || message.Author.IsBot) return;
 
             _logger.LogInformation("Command received: {command}", message.Content);
             var context = new SocketCommandContext(_client, message);

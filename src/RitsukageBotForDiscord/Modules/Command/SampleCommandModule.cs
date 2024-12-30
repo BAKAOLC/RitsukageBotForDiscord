@@ -1,5 +1,9 @@
 ﻿using Discord.Commands;
 using Discord.WebSocket;
+using RitsukageBot.Library.Graphic;
+using RitsukageBot.Library.Graphic.Processing;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace RitsukageBot.Modules.Command
 {
@@ -8,6 +12,11 @@ namespace RitsukageBot.Modules.Command
     /// </summary>
     public class SampleCommandModule : ModuleBase<SocketCommandContext>
     {
+        /// <summary>
+        ///     Http client factory
+        /// </summary>
+        public IHttpClientFactory HttpClientFactory { get; set; }
+
         /// <summary>
         ///     Ping
         /// </summary>
@@ -26,7 +35,7 @@ namespace RitsukageBot.Modules.Command
         /// <returns></returns>
         [Command("echo")]
         [Summary("Echoes a message")]
-        public Task EchoAsync([Remainder][Summary("The text to echo")] string message)
+        public Task EchoAsync([Remainder] [Summary("The text to echo")] string message)
         {
             return ReplyAsync(message);
         }
@@ -58,6 +67,38 @@ namespace RitsukageBot.Modules.Command
         {
             var userInfo = user ?? Context.User;
             return ReplyAsync($"{userInfo.Username}#{userInfo.Discriminator}");
+        }
+
+        /// <summary>
+        ///     Invert color
+        /// </summary>
+        /// <param name="url"></param>
+        [Command("invertcolor")]
+        [Summary("Invert color")]
+        public async Task InvertImageColorAsync(
+            [Summary("The image url")] string url)
+        {
+            if (!Uri.IsWellFormedUriString(url, UriKind.Absolute)) await ReplyAsync("Invalid url");
+
+            var httpClient = HttpClientFactory.CreateClient();
+            var stream = await httpClient.GetStreamAsync(url);
+            var image = await Image.LoadAsync<Rgba32>(stream);
+            await using var processor = new ImageProcessor<Rgba32>(image);
+            processor.AddStep(new InvertColor<Rgba32>());
+            using var result = await processor.ApplyStepsAsync();
+            await using var memoryStream = new MemoryStream();
+            if (result.Frames.Count > 1)
+            {
+                result.FixGifRepeatCount();
+                await result.SaveAsGifAsync(memoryStream);
+            }
+            else
+            {
+                await result.SaveAsPngAsync(memoryStream);
+            }
+
+            memoryStream.Seek(0, SeekOrigin.Begin);
+            await Context.Channel.SendFileAsync(memoryStream, "result.png");
         }
     }
 }
