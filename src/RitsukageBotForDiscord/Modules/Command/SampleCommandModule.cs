@@ -91,14 +91,16 @@ namespace RitsukageBot.Modules.Command
             {
                 result.FixGifRepeatCount();
                 await result.SaveAsGifAsync(memoryStream);
+                memoryStream.Seek(0, SeekOrigin.Begin);
+                await Context.Channel.SendFileAsync(memoryStream, "result.gif");
             }
             else
             {
                 await result.SaveAsPngAsync(memoryStream);
+                memoryStream.Seek(0, SeekOrigin.Begin);
+                await Context.Channel.SendFileAsync(memoryStream, "result.png");
             }
 
-            memoryStream.Seek(0, SeekOrigin.Begin);
-            await Context.Channel.SendFileAsync(memoryStream, "result.png");
         }
     }
 }
