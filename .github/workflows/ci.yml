@@ -28,7 +28,7 @@ jobs:
           dotnet-version: ${{ matrix.dotnet-version }}
       - name: Install dependencies
         run: dotnet restore
-      - name: Build
+      - name: Build (Windows)
         env:
           IS_PR: ${{ !!github.head_ref }}
         if: ${{ matrix.os == 'windows-latest' }}
@@ -36,7 +36,7 @@ jobs:
           if ($env:IS_PR -eq "true") { echo $env:PR_PROMPT }
           $outputDir=$executioncontext.sessionstate.path.getunresolvedproviderpathfrompspath(".\publish\")
           dotnet publish -c Release --property:PublishDir=$outputDir --no-self-contained
-      - name: Build
+      - name: Build (Linux/Mac)
         env:
           IS_PR: ${{ !!github.head_ref }}
         if: ${{ matrix.os != 'windows-latest' }}
