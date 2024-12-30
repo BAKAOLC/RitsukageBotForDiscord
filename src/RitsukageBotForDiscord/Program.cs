@@ -8,10 +8,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using NLog.Extensions.Logging;
 using RitsukageBot.Library.Networking;
 using RitsukageBot.Options;
 using RitsukageBot.Services;
-using Serilog;
 
 Console.Title = "Ritsukage Bot";
 
@@ -24,10 +24,7 @@ var host = Host.CreateDefaultBuilder()
     .ConfigureLogging((context, builder) =>
     {
         builder.ClearProviders();
-        var logger = new LoggerConfiguration()
-            .ReadFrom.Configuration(context.Configuration)
-            .CreateLogger();
-        builder.AddSerilog(logger, true);
+        builder.AddNLog();
     })
     .ConfigureServices((context, services) =>
     {
