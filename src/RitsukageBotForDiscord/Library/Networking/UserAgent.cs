@@ -31,18 +31,18 @@ namespace RitsukageBot.Library.Networking
             .OfType<AssemblyCompanyAttribute>()
             .FirstOrDefault()?.Company ?? Unknown;
 
-        private static readonly string AssemblyName = typeof(UserAgent).Assembly.GetName().Name ?? Unknown;
-
-        private static readonly string AssemblyVersion =
-            typeof(UserAgent).Assembly.GetName().Version?.ToString() ?? Unknown;
+        private static readonly string AssemblyName = typeof(UserAgent).Assembly.GetName().Name ?? string.Empty;
+        
+        private static readonly string AssemblyVersion =  
+            typeof(UserAgent).Assembly.GetName().Version?.ToString() ?? string.Empty;
 
         private static readonly string AssemblyRepositoryUrl = typeof(UserAgent).Assembly
             .GetCustomAttributes(false)
             .OfType<AssemblyMetadataAttribute>()
-            .FirstOrDefault(x => x.Key == "RepositoryUrl")?.Value ?? Unknown;
+            .FirstOrDefault(x => x.Key == "RepositoryUrl")?.Value ?? string.Empty;
 
         internal static readonly string AssemblyUserAgent =
-            $"{AssemblyName}/{AssemblyVersion} ({AssemblyAuthor}{(AssemblyRepositoryUrl == Unknown ? string.Empty : $", {AssemblyRepositoryUrl}")})";
+            $"{(string.IsNullOrWhiteSpace(AssemblyName) ? Unknown : AssemblyName)}/{(string.IsNullOrWhiteSpace(AssemblyVersion) ? Unknown : AssemblyVersion)} ({(string.IsNullOrWhiteSpace(AssemblyAuthor) ? Unknown : AssemblyAuthor)}{(string.IsNullOrWhiteSpace(AssemblyRepositoryUrl) ? string.Empty : $", {AssemblyRepositoryUrl}")})";
 
         internal static readonly string Windows =
             $"{TagMozillaWindows} {TagAppleWebKit} {TagChrome} {TagSafari} {TagEdge} {AssemblyUserAgent}";
