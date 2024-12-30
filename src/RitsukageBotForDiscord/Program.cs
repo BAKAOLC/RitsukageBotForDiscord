@@ -1,5 +1,4 @@
-﻿using System.Net;
-using CacheTower.Serializers.NewtonsoftJson;
+﻿using CacheTower.Serializers.NewtonsoftJson;
 using Discord;
 using Discord.Commands;
 using Discord.Interactions;
@@ -34,7 +33,8 @@ var host = Host.CreateDefaultBuilder()
     {
         services.AddHostedService<UnhandledExceptionHandler>();
         services.AddOptions();
-        services.AddHttpClient();
+        services.AddHttpClient().ConfigureHttpClientDefaults(x =>
+            x.ConfigureHttpClient(y => y.DefaultRequestHeaders.Add("User-Agent", UserAgent.Default)));
         services.AddDbContext<DbContext>(builder =>
         {
             var provider = context.Configuration.GetValue<string>("DatabaseProvider");
