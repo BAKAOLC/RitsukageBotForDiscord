@@ -39,7 +39,7 @@ jobs:
         #
         run: |
           dotnet-gitversion /updateassemblyinfo
-          echo "version=$(dotnet-gitversion /showvariable FullSemVer)" >> "$GITHUB_OUTPUT"
+          echo "version=$(dotnet-gitversion /showvariable FullSemVer)" >> $GITHUB_OUTPUT
       - name: Build (Windows)
         env:
           IS_PR: ${{ !!github.head_ref }}
