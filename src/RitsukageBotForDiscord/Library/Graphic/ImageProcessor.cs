@@ -43,6 +43,9 @@ namespace RitsukageBot.Library.Graphic
             GC.SuppressFinalize(this);
         }
 
+        /// <summary>
+        ///     Finalizer
+        /// </summary>
         ~ImageProcessor()
         {
             Dispose(false);

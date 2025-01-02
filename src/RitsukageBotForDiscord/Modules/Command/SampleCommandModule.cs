@@ -24,6 +24,9 @@ namespace RitsukageBot.Modules.Command
         /// </summary>
         public required ICacheStack CacheProvider { get; set; }
 
+        /// <summary>
+        ///     Logger
+        /// </summary>
         public required ILogger<SampleCommandModule> Logger { get; set; }
 
         /// <summary>
