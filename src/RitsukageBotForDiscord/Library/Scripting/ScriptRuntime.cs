@@ -72,7 +72,7 @@ namespace RitsukageBot.Library.Scripting
             var ms = new MemoryStream();
             var il = Compilation.Emit(ms);
             if (!il.Success)
-                return default;
+                throw new CompilationErrorException("Compilation failed", il.Diagnostics);
             ms.Seek(0, SeekOrigin.Begin);
             return (new(Assembly.Load(ms.ToArray()), name), il.Diagnostics);
         }

@@ -24,6 +24,7 @@ namespace RitsukageBot.Services
             _services = serviceProvider;
             _client = client;
             _client.Log += LogAsync;
+            _client.ButtonExecuted += OnButtonExecuted;
             _scriptingModuleSupport = new(this, serviceProvider);
         }
 
@@ -44,6 +45,12 @@ namespace RitsukageBot.Services
             _client.Dispose();
             _logger.LogInformation("Discord bot service stopped.");
             return Task.CompletedTask;
+        }
+
+        private Task OnButtonExecuted(SocketMessageComponent component)
+        {
+            _logger.LogInformation("Button clicked: {Id} {CustomId} by User {User}", component.Id, component.Data.CustomId, component.User);
+            return component.RespondAsync("Button clicked");
         }
 
         public Task LogAsync(LogMessage message)

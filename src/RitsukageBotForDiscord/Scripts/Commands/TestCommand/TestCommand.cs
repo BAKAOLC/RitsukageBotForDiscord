@@ -1,5 +1,4 @@
 using Discord.Commands;
-using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
 
 /// <summary>

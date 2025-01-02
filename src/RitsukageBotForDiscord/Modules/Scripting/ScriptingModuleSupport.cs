@@ -1,5 +1,6 @@
 using Discord.Commands;
 using Discord.Interactions;
+using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RitsukageBot.Library.Scripting;
@@ -90,9 +91,18 @@ namespace RitsukageBot.Modules.Scripting
                     _commandModules.Add(assemblyInfo, loadedTypes);
                     _logger.LogInformation("Loaded command module: {directory}", directoryName);
                 }
-                catch (Exception e)
+                catch (CompilationErrorException ex)
                 {
-                    Console.WriteLine(e);
+                    foreach (var diagnostic in ex.Diagnostics)
+                    {
+                        _logger.LogError("[{tag}][{source}] {diagnostic}", TagCommandModulePath, directoryName, diagnostic);
+                    }
+
+                    _logger.LogError(ex, "Failed to load command module: {directory}", directoryName);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to load command module: {directory}", directoryName);
                 }
             }
 
@@ -134,9 +144,18 @@ namespace RitsukageBot.Modules.Scripting
                     _interactionModules.Add(assemblyInfo, loadedTypes);
                     _logger.LogInformation("Loaded interaction module: {directory}", directoryName);
                 }
-                catch (Exception e)
+                catch (CompilationErrorException ex)
                 {
-                    Console.WriteLine(e);
+                    foreach (var diagnostic in ex.Diagnostics)
+                    {
+                        _logger.LogError("[{tag}][{source}] {diagnostic}", TagCommandModulePath, directoryName, diagnostic);
+                    }
+
+                    _logger.LogError(ex, "Failed to load command module: {directory}", directoryName);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to load interaction module: {directory}", directoryName);
                 }
             }
         }

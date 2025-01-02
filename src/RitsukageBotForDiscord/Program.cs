@@ -12,6 +12,7 @@ using NLog.Extensions.Logging;
 using RitsukageBot.Library.Networking;
 using RitsukageBot.Options;
 using RitsukageBot.Services;
+using RunMode = Discord.Commands.RunMode;
 
 Console.Title = "Ritsukage Bot";
 
@@ -83,11 +84,13 @@ var host = Host.CreateDefaultBuilder()
         {
             LogLevel = LogSeverity.Info,
             CaseSensitiveCommands = false,
+            DefaultRunMode = RunMode.Async,
         });
         services.AddSingleton<CommandService>();
         services.AddSingleton<InteractionServiceConfig>(_ => new()
         {
             LogLevel = LogSeverity.Info,
+            DefaultRunMode = Discord.Interactions.RunMode.Async,
         });
         services.AddSingleton<InteractionService>(x => new(x.GetRequiredService<DiscordSocketClient>(),
             x.GetRequiredService<InteractionServiceConfig>()));

@@ -65,6 +65,10 @@
 		<None Update="nlog.config">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
+		<Compile Remove="Scripts\Interactions\TestInteractionWithComponent\TestInteractionWithComponent.cs"/>
+		<None Include="Scripts\Interactions\TestInteractionWithComponent\TestInteractionWithComponent.cs">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 		<Compile Remove="Scripts\Commands\TestCommand\TestCommand.cs"/>
 		<None Include="Scripts\Commands\TestCommand\TestCommand.cs">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
