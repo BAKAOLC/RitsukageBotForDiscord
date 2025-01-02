@@ -19,43 +19,50 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Content Include="icon.ico"/>
+	  <Compile Remove="ModuleScripts\**\*.cs" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="CacheTower" Version="0.14.0"/>
-		<PackageReference Include="CacheTower.Providers.FileSystem.Json" Version="0.14.0"/>
-		<PackageReference Include="CacheTower.Serializers.NewtonsoftJson" Version="0.14.0"/>
-		<PackageReference Include="Discord.Net" Version="3.17.0"/>
-		<PackageReference Include="Discord.Net.Commands" Version="3.17.0"/>
-		<PackageReference Include="Discord.Net.Interactions" Version="3.17.0"/>
-		<PackageReference Include="Discord.Net.WebSocket" Version="3.17.0"/>
+		<Content Include="icon.ico" />
+		<None Include="ModuleScripts\**\*.cs">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="CacheTower" Version="0.14.0" />
+		<PackageReference Include="CacheTower.Providers.FileSystem.Json" Version="0.14.0" />
+		<PackageReference Include="CacheTower.Serializers.NewtonsoftJson" Version="0.14.0" />
+		<PackageReference Include="Discord.Net" Version="3.17.0" />
+		<PackageReference Include="Discord.Net.Commands" Version="3.17.0" />
+		<PackageReference Include="Discord.Net.Interactions" Version="3.17.0" />
+		<PackageReference Include="Discord.Net.WebSocket" Version="3.17.0" />
 		<PackageReference Include="GitVersion.MsBuild" Version="6.1.0">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="JetBrains.Annotations" Version="2024.3.0"/>
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.12.0"/>
-		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0"/>
+		<PackageReference Include="JetBrains.Annotations" Version="2024.3.0" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.12.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0"/>
-		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0"/>
-		<PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0"/>
-		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0"/>
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0"/>
-		<PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0"/>
-		<PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0"/>
-		<PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0"/>
-		<PackageReference Include="Microsoft.Extensions.Options" Version="9.0.0"/>
-		<PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="9.0.0"/>
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
-		<PackageReference Include="NLog" Version="5.3.4"/>
-		<PackageReference Include="NLog.Extensions.Logging" Version="5.3.15"/>
-		<PackageReference Include="SixLabors.ImageSharp" Version="3.1.6"/>
-		<PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.4"/>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Options" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="9.0.0" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+		<PackageReference Include="NLog" Version="5.3.4" />
+		<PackageReference Include="NLog.Extensions.Logging" Version="5.3.15" />
+		<PackageReference Include="SixLabors.ImageSharp" Version="3.1.6" />
+		<PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.4" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -63,14 +70,6 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<None Update="nlog.config">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<Compile Remove="Scripts\Commands\TestCommand\TestCommand.cs"/>
-		<None Include="Scripts\Commands\TestCommand\TestCommand.cs">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<Compile Remove="Scripts\Interactions\TestInteraction\TestInteraction.cs"/>
-		<None Include="Scripts\Interactions\TestInteraction\TestInteraction.cs">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>

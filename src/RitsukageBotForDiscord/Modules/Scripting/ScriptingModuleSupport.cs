@@ -13,7 +13,7 @@ namespace RitsukageBot.Modules.Scripting
 {
     internal sealed class ScriptingModuleSupport(DiscordBotService discordBotService, IServiceProvider services) : IDiscordBotModule
     {
-        public const string TagScriptModulePath = "Scripts";
+        public const string TagScriptModulePath = "ModuleScripts";
         public const string TagCommandModulePath = "Commands";
         public const string TagInteractionModulePath = "Interactions";
         private readonly CommandService _command = services.GetRequiredService<CommandService>();
