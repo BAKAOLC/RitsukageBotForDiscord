@@ -3,6 +3,7 @@ using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using RitsukageBot.Services;
 
 namespace RitsukageBot.Modules.Interaction
@@ -11,6 +12,7 @@ namespace RitsukageBot.Modules.Interaction
     {
         private readonly DiscordSocketClient _client = services.GetRequiredService<DiscordSocketClient>();
         private readonly InteractionService _interaction = services.GetRequiredService<InteractionService>();
+        private readonly ILogger<InteractionModuleSupport> _logger = services.GetRequiredService<ILogger<InteractionModuleSupport>>();
 
         public void Dispose()
         {
@@ -27,7 +29,11 @@ namespace RitsukageBot.Modules.Interaction
 
         public async Task InitAsync()
         {
-            _client.InteractionCreated += HandleInteractionAsync;
+            _client.InteractionCreated += HandleInteractionCreatedAsync;
+            _client.SlashCommandExecuted += HandleSlashCommandExecutedAsync;
+            _client.ButtonExecuted += HandleButtonExecutedAsync;
+            _client.MessageCommandExecuted += HandleMessageCommandExecutedAsync;
+            _client.UserCommandExecuted += HandleUserCommandExecutedAsync;
             _client.Ready += RegisterCommandsAsync;
             _interaction.Log += discordBotService.LogAsync;
             await _interaction.AddModulesAsync(Assembly.GetEntryAssembly(), services);
@@ -46,9 +52,49 @@ namespace RitsukageBot.Modules.Interaction
             return _interaction.RegisterCommandsGloballyAsync();
         }
 
-        internal Task HandleInteractionAsync(SocketInteraction interaction1)
+        internal static IInteractionContext CreateGeneric(DiscordSocketClient client, SocketInteraction interaction)
         {
-            var context = new SocketInteractionContext(_client, interaction1);
+            return interaction switch
+            {
+                SocketModal modal => new SocketInteractionContext<SocketModal>(client, modal),
+                SocketUserCommand user => new SocketInteractionContext<SocketUserCommand>(client, user),
+                SocketSlashCommand slash => new SocketInteractionContext<SocketSlashCommand>(client, slash),
+                SocketMessageCommand message => new SocketInteractionContext<SocketMessageCommand>(client, message),
+                SocketMessageComponent component => new SocketInteractionContext<SocketMessageComponent>(client, component),
+                _ => throw new InvalidOperationException("This interaction type is unsupported! Please report this."),
+            };
+        }
+
+        internal Task HandleInteractionCreatedAsync(SocketInteraction interaction)
+        {
+            return Task.CompletedTask;
+        }
+
+        internal Task HandleSlashCommandExecutedAsync(SocketSlashCommand command)
+        {
+            var context = new SocketInteractionContext<SocketSlashCommand>(_client, command);
+            _logger.LogInformation("User {UserId} executed slash command {InteractionEntitlements}", context.User.Id, context.Interaction.Entitlements);
+            return _interaction.ExecuteCommandAsync(context, services);
+        }
+
+        internal Task HandleButtonExecutedAsync(SocketMessageComponent component)
+        {
+            var context = CreateGeneric(_client, component);
+            _logger.LogInformation("User {UserId} executed button {InteractionEntitlements}", context.User.Id, context.Interaction.Entitlements);
+            return _interaction.ExecuteCommandAsync(context, services);
+        }
+
+        internal Task HandleMessageCommandExecutedAsync(SocketMessageCommand command)
+        {
+            var context = CreateGeneric(_client, command);
+            _logger.LogInformation("User {UserId} executed message command {InteractionEntitlements}", context.User.Id, context.Interaction.Entitlements);
+            return _interaction.ExecuteCommandAsync(context, services);
+        }
+
+        internal Task HandleUserCommandExecutedAsync(SocketUserCommand command)
+        {
+            var context = CreateGeneric(_client, command);
+            _logger.LogInformation("User {UserId} executed user command {InteractionEntitlements}", context.User.Id, context.Interaction.Entitlements);
             return _interaction.ExecuteCommandAsync(context, services);
         }
 
@@ -65,7 +111,11 @@ namespace RitsukageBot.Modules.Interaction
                 _interaction.RemoveModuleAsync(module);
             }
 
-            _client.InteractionCreated -= HandleInteractionAsync;
+            _client.UserCommandExecuted -= HandleUserCommandExecutedAsync;
+            _client.MessageCommandExecuted -= HandleMessageCommandExecutedAsync;
+            _client.ButtonExecuted -= HandleButtonExecutedAsync;
+            _client.SlashCommandExecuted -= HandleSlashCommandExecutedAsync;
+            _client.InteractionCreated -= HandleInteractionCreatedAsync;
             _client.Ready -= RegisterCommandsAsync;
             _interaction.Log -= discordBotService.LogAsync;
         }
@@ -77,7 +127,11 @@ namespace RitsukageBot.Modules.Interaction
                 await _interaction.RemoveModuleAsync(module).ConfigureAwait(false);
             }
 
-            _client.InteractionCreated -= HandleInteractionAsync;
+            _client.UserCommandExecuted -= HandleUserCommandExecutedAsync;
+            _client.MessageCommandExecuted -= HandleMessageCommandExecutedAsync;
+            _client.ButtonExecuted -= HandleButtonExecutedAsync;
+            _client.SlashCommandExecuted -= HandleSlashCommandExecutedAsync;
+            _client.InteractionCreated -= HandleInteractionCreatedAsync;
             _client.Ready -= RegisterCommandsAsync;
             _interaction.Log -= discordBotService.LogAsync;
         }

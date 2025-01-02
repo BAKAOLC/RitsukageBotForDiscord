@@ -1,5 +1,6 @@
 using Discord.Commands;
 using Discord.Interactions;
+using Discord.WebSocket;
 using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -15,14 +16,25 @@ namespace RitsukageBot.Modules.Scripting
         public const string TagScriptModulePath = "Scripts";
         public const string TagCommandModulePath = "Commands";
         public const string TagInteractionModulePath = "Interactions";
-
         private readonly CommandService _command = services.GetRequiredService<CommandService>();
-
         private readonly Dictionary<ScriptRuntime.AssemblyInfo, List<Type>> _commandModules = [];
         private readonly CommandModuleSupport _commandModuleSupport = new(discordBotService, services);
+
+        private readonly List<Type> _commandModuleSupportBaseType = [typeof(ModuleBase<SocketCommandContext>)];
         private readonly InteractionService _interaction = services.GetRequiredService<InteractionService>();
         private readonly Dictionary<ScriptRuntime.AssemblyInfo, List<Type>> _interactionModules = [];
         private readonly InteractionModuleSupport _interactionModuleSupport = new(discordBotService, services);
+
+        private readonly List<Type> _interactionModuleSupportBaseType =
+        [
+            typeof(InteractionModuleBase<SocketInteractionContext>),
+            typeof(InteractionModuleBase<SocketInteractionContext<SocketModal>>),
+            typeof(InteractionModuleBase<SocketInteractionContext<SocketUserCommand>>),
+            typeof(InteractionModuleBase<SocketInteractionContext<SocketSlashCommand>>),
+            typeof(InteractionModuleBase<SocketInteractionContext<SocketMessageCommand>>),
+            typeof(InteractionModuleBase<SocketInteractionContext<SocketMessageComponent>>),
+        ];
+
         private readonly ILogger<ScriptingModuleSupport> _logger = services.GetRequiredService<ILogger<ScriptingModuleSupport>>();
 
         public async Task InitAsync()
@@ -73,7 +85,7 @@ namespace RitsukageBot.Modules.Scripting
                         continue;
                     }
 
-                    var commandModuleBaseType = assemblyInfo.Assembly.GetTypes().Where(x => x.BaseType == typeof(ModuleBase<SocketCommandContext>)).ToArray();
+                    var commandModuleBaseType = assemblyInfo.Assembly.GetTypes().Where(x => x.BaseType != null && _commandModuleSupportBaseType.Contains(x.BaseType)).ToArray();
                     if (commandModuleBaseType.Length == 0)
                     {
                         _logger.LogError("Failed to find command module base type: {directory}", directoryName);
@@ -126,7 +138,7 @@ namespace RitsukageBot.Modules.Scripting
                         continue;
                     }
 
-                    var interactionModuleBaseType = assemblyInfo.Assembly.GetTypes().Where(x => x.BaseType == typeof(InteractionModuleBase<SocketInteractionContext>)).ToArray();
+                    var interactionModuleBaseType = assemblyInfo.Assembly.GetTypes().Where(x => x.BaseType != null && _interactionModuleSupportBaseType.Contains(x.BaseType)).ToArray();
                     if (interactionModuleBaseType.Length == 0)
                     {
                         _logger.LogError("Failed to find interaction module base type: {directory}", directoryName);

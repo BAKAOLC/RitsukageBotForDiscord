@@ -1,15 +1,10 @@
 using Discord;
 using Discord.Interactions;
+using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
 
-/// <summary>
-///     Sample script command module
-/// </summary>
-public class SampleScriptInteractionWithComponentModule : InteractionModuleBase<SocketInteractionContext>
+public class SampleScriptInteractionWithComponentModule : InteractionModuleBase<SocketInteractionContext<SocketSlashCommand>>
 {
-    /// <summary>
-    ///     Logger
-    /// </summary>
     public required ILogger<SampleScriptInteractionWithComponentModule> Logger { get; set; }
 
     [SlashCommand("test_component", "Test interaction with component")]
@@ -24,5 +19,57 @@ public class SampleScriptInteractionWithComponentModule : InteractionModuleBase<
             .WithButton("Link Button", style: ButtonStyle.Link, url: "https://github.com/BAKAOLC/RitsukageBotForDiscord");
 
         return RespondAsync("Test interaction with component", components: builder.Build());
+    }
+}
+
+public class SampleScriptInteractionWithComponentButtonModule : InteractionModuleBase<SocketInteractionContext<SocketMessageComponent>>
+{
+    /// <summary>
+    ///     Logger
+    /// </summary>
+    public required ILogger<SampleScriptInteractionWithComponentButtonModule> Logger { get; set; }
+
+    [ComponentInteraction("test_primary_button")]
+    public Task TestPrimaryButtonAsync()
+    {
+        Logger.LogInformation("Primary button clicked");
+        return Context.Interaction.UpdateAsync(x =>
+        {
+            x.Content = "Primary button clicked";
+            x.Components = null;
+        });
+    }
+
+    [ComponentInteraction("test_secondary_button")]
+    public Task TestSecondaryButtonAsync()
+    {
+        Logger.LogInformation("Secondary button clicked");
+        return Context.Interaction.UpdateAsync(x =>
+        {
+            x.Content = "Secondary button clicked";
+            x.Components = null;
+        });
+    }
+
+    [ComponentInteraction("test_success_button")]
+    public Task TestSuccessButtonAsync()
+    {
+        Logger.LogInformation("Success button clicked");
+        return Context.Interaction.UpdateAsync(x =>
+        {
+            x.Content = "Success button clicked";
+            x.Components = null;
+        });
+    }
+
+    [ComponentInteraction("test_danger_button")]
+    public Task TestDangerButtonAsync()
+    {
+        Logger.LogInformation("Danger button clicked");
+        return Context.Interaction.UpdateAsync(x =>
+        {
+            x.Content = "Danger button clicked";
+            x.Components = null;
+        });
     }
 }

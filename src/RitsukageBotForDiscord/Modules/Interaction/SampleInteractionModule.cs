@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Interactions;
+using Discord.WebSocket;
 
 namespace RitsukageBot.Modules.Interaction
 {
@@ -7,7 +8,7 @@ namespace RitsukageBot.Modules.Interaction
     ///     Sample interaction module
     /// </summary>
     [Group("sample", "sample group description")]
-    public class SampleInteractionModule : InteractionModuleBase<SocketInteractionContext>
+    public class SampleInteractionModule : InteractionModuleBase<SocketInteractionContext<SocketSlashCommand>>
     {
         /// <summary>
         ///     Ping

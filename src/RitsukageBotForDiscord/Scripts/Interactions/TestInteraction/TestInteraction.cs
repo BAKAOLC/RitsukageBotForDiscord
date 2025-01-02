@@ -1,14 +1,8 @@
 using Discord.Interactions;
 using Microsoft.Extensions.Logging;
 
-/// <summary>
-///     Sample script command module
-/// </summary>
 public class SampleScriptInteractionModule : InteractionModuleBase<SocketInteractionContext>
 {
-    /// <summary>
-    ///     Logger
-    /// </summary>
     public required ILogger<SampleScriptInteractionModule> Logger { get; set; }
 
     [SlashCommand("test_script", "Test interaction command for script")]

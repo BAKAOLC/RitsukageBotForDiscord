@@ -42,14 +42,10 @@ namespace RitsukageBot.Modules.Command
         internal Task HandleCommandAsync(SocketMessage messageParam)
         {
             if (messageParam is not SocketUserMessage message) return Task.CompletedTask;
-
             var argPos = 0;
-
             if (!message.HasCharPrefix('!', ref argPos) || message.Author.IsBot) return Task.CompletedTask;
-
-            _logger.LogInformation("Command: {message}", message);
-
             var context = new SocketCommandContext(_client, message);
+            _logger.LogInformation("User {UserId} executed command {Command}", context.User.Id, context.Message.Content);
             return _command.ExecuteAsync(context, argPos, services);
         }
 
