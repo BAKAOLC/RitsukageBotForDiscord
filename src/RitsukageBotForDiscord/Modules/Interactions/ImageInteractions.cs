@@ -26,8 +26,12 @@ namespace RitsukageBot.Modules.Interactions
         /// </summary>
         public static readonly AllowedInteraction[] AllowedInteractions =
         [
-            new("Invert Color", $"{TagCustomId}:invert_color", ProcessStep: new InvertColor<Rgba32>()),
-            new("Invert Frames", $"{TagCustomId}:invert_frames", ProcessStep: new InvertFrames<Rgba32>()),
+            new("Invert Color", $"{TagCustomId}:invert_color"),
+            new("Invert Frames", $"{TagCustomId}:invert_frames"),
+            new("Mirror Left", $"{TagCustomId}:mirror_left"),
+            new("Mirror Right", $"{TagCustomId}:mirror_right"),
+            new("Mirror Top", $"{TagCustomId}:mirror_top"),
+            new("Mirror Bottom", $"{TagCustomId}:mirror_bottom"),
         ];
 
         /// <summary>
@@ -224,7 +228,7 @@ namespace RitsukageBot.Modules.Interactions
         /// <param name="Label"></param>
         /// <param name="CustomId"></param>
         /// <param name="ButtonStyle"></param>
-        public readonly record struct AllowedInteraction(string Label, string CustomId, ButtonStyle? ButtonStyle = null, IEmote? Emote = null, IProcessStep<Rgba32>? ProcessStep = null)
+        public readonly record struct AllowedInteraction(string Label, string CustomId, ButtonStyle? ButtonStyle = null, IEmote? Emote = null)
         {
             /// <summary>
             ///     Label
@@ -245,11 +249,6 @@ namespace RitsukageBot.Modules.Interactions
             ///     Emote
             /// </summary>
             public IEmote? Emote { get; init; } = Emote;
-
-            /// <summary>
-            ///     Process step
-            /// </summary>
-            public IProcessStep<Rgba32>? ProcessStep { get; init; } = ProcessStep;
 
             /// <summary>
             ///     As button builder
@@ -383,6 +382,78 @@ namespace RitsukageBot.Modules.Interactions
 
             var processor = new ImageProcessor<Rgba32>(image);
             processor.AddProcessStep(new InvertFrames<Rgba32>());
+            var result = await processor.ProcessAsync();
+            await SetImage(result);
+        }
+
+        /// <summary>
+        ///     Mirror left
+        /// </summary>
+        [ComponentInteraction($"{ImageInteractions.TagCustomId}:mirror_left")]
+        public async Task MirrorLeftAsync()
+        {
+            var image = await GetImage();
+            if (image is null)
+            {
+                return;
+            }
+
+            var processor = new ImageProcessor<Rgba32>(image);
+            processor.AddProcessStep(new HalfMirror<Rgba32>(HalfMirror<Rgba32>.MirrorType.Left));
+            var result = await processor.ProcessAsync();
+            await SetImage(result);
+        }
+
+        /// <summary>
+        ///     Mirror right
+        /// </summary>
+        [ComponentInteraction($"{ImageInteractions.TagCustomId}:mirror_right")]
+        public async Task MirrorRightAsync()
+        {
+            var image = await GetImage();
+            if (image is null)
+            {
+                return;
+            }
+
+            var processor = new ImageProcessor<Rgba32>(image);
+            processor.AddProcessStep(new HalfMirror<Rgba32>(HalfMirror<Rgba32>.MirrorType.Right));
+            var result = await processor.ProcessAsync();
+            await SetImage(result);
+        }
+
+        /// <summary>
+        ///     Mirror top
+        /// </summary>
+        [ComponentInteraction($"{ImageInteractions.TagCustomId}:mirror_top")]
+        public async Task MirrorTopAsync()
+        {
+            var image = await GetImage();
+            if (image is null)
+            {
+                return;
+            }
+
+            var processor = new ImageProcessor<Rgba32>(image);
+            processor.AddProcessStep(new HalfMirror<Rgba32>(HalfMirror<Rgba32>.MirrorType.Top));
+            var result = await processor.ProcessAsync();
+            await SetImage(result);
+        }
+
+        /// <summary>
+        ///     Mirror bottom
+        /// </summary>
+        [ComponentInteraction($"{ImageInteractions.TagCustomId}:mirror_bottom")]
+        public async Task MirrorBottomAsync()
+        {
+            var image = await GetImage();
+            if (image is null)
+            {
+                return;
+            }
+
+            var processor = new ImageProcessor<Rgba32>(image);
+            processor.AddProcessStep(new HalfMirror<Rgba32>(HalfMirror<Rgba32>.MirrorType.Bottom));
             var result = await processor.ProcessAsync();
             await SetImage(result);
         }
