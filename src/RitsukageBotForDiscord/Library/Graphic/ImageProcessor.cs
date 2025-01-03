@@ -11,9 +11,9 @@ namespace RitsukageBot.Library.Graphic
     public sealed class ImageProcessor<T> : IDisposable, IAsyncDisposable
         where T : unmanaged, IPixel<T>
     {
-        private readonly Image<T>[] _images;
         private readonly List<IProcessStep<T>> _steps = [];
         private bool _disposed;
+        private Image<T>[] _images;
 
         /// <summary>
         ///     Image processor
@@ -56,7 +56,7 @@ namespace RitsukageBot.Library.Graphic
         /// </summary>
         /// <param name="step">What to do</param>
         /// <returns></returns>
-        public ImageProcessor<T> AddStep(IProcessStep<T> step)
+        public ImageProcessor<T> AddProcessStep(IProcessStep<T> step)
         {
             _steps.Add(step);
             return this;
@@ -66,9 +66,9 @@ namespace RitsukageBot.Library.Graphic
         ///     Apply steps
         /// </summary>
         /// <returns>Image after processing</returns>
-        public async Task<Image<T>> ApplyStepsAsync()
+        public async Task<Image<T>> ProcessAsync()
         {
-            foreach (var step in _steps) await step.ProcessAsync(_images);
+            foreach (var step in _steps) await step.ProcessAsync(ref _images);
 
             var image = _images.First().Clone();
             for (var i = 1; i < _images.Length; i++) image.Frames.AddFrame(_images[i].Frames.RootFrame);

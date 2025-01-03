@@ -14,6 +14,6 @@ namespace RitsukageBot.Library.Graphic.Processing
         /// </summary>
         /// <param name="images">The images to process</param>
         /// <returns></returns>
-        Task ProcessAsync(Image<T>[] images);
+        Task ProcessAsync(ref Image<T>[] images);
     }
 }

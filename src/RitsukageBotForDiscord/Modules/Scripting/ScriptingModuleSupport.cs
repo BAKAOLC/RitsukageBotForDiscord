@@ -5,8 +5,8 @@ using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RitsukageBot.Library.Scripting;
-using RitsukageBot.Modules.Command;
-using RitsukageBot.Modules.Interaction;
+using RitsukageBot.Modules.Commands;
+using RitsukageBot.Modules.Interactions;
 using RitsukageBot.Services;
 
 namespace RitsukageBot.Modules.Scripting
@@ -65,6 +65,12 @@ namespace RitsukageBot.Modules.Scripting
 
         public async Task LoadScriptsAsync()
         {
+            if (!Directory.Exists(TagScriptModulePath))
+            {
+                _logger.LogDebug("Script module path not found: {path}", TagScriptModulePath);
+                return;
+            }
+
             foreach (var directory in Directory.GetDirectories(Path.Combine(TagScriptModulePath, TagCommandModulePath)))
             {
                 var directoryName = Path.GetFileName(directory);
@@ -97,11 +103,11 @@ namespace RitsukageBot.Modules.Scripting
                     {
                         await _command.AddModuleAsync(type, services).ConfigureAwait(false);
                         loadedTypes.Add(type);
-                        _logger.LogInformation("Loaded command module type: {type}", type);
+                        _logger.LogDebug("Loaded command module type: {type}", type);
                     }
 
                     _commandModules.Add(assemblyInfo, loadedTypes);
-                    _logger.LogInformation("Loaded command module: {directory}", directoryName);
+                    _logger.LogDebug("Loaded command module: {directory}", directoryName);
                 }
                 catch (CompilationErrorException ex)
                 {
@@ -150,11 +156,11 @@ namespace RitsukageBot.Modules.Scripting
                     {
                         await _interaction.AddModuleAsync(type, services).ConfigureAwait(false);
                         loadedTypes.Add(type);
-                        _logger.LogInformation("Loaded interaction module type: {type}", type);
+                        _logger.LogDebug("Loaded interaction module type: {type}", type);
                     }
 
                     _interactionModules.Add(assemblyInfo, loadedTypes);
-                    _logger.LogInformation("Loaded interaction module: {directory}", directoryName);
+                    _logger.LogDebug("Loaded interaction module: {directory}", directoryName);
                 }
                 catch (CompilationErrorException ex)
                 {
@@ -179,11 +185,11 @@ namespace RitsukageBot.Modules.Scripting
                 foreach (var type in types)
                 {
                     _command.RemoveModuleAsync(type);
-                    _logger.LogInformation("Unloaded command module type: {type}", type);
+                    _logger.LogDebug("Unloaded command module type: {type}", type);
                 }
 
                 _commandModules.Remove(assemblyInfo);
-                _logger.LogInformation("Unloaded command module: {assembly}", assemblyInfo.Name);
+                _logger.LogDebug("Unloaded command module: {assembly}", assemblyInfo.Name);
             }
 
             foreach (var (assemblyInfo, types) in _interactionModules)
@@ -191,11 +197,11 @@ namespace RitsukageBot.Modules.Scripting
                 foreach (var type in types)
                 {
                     _interaction.RemoveModuleAsync(type);
-                    _logger.LogInformation("Unloaded interaction module type: {type}", type);
+                    _logger.LogDebug("Unloaded interaction module type: {type}", type);
                 }
 
                 _interactionModules.Remove(assemblyInfo);
-                _logger.LogInformation("Unloaded interaction module: {assembly}", assemblyInfo.Name);
+                _logger.LogDebug("Unloaded interaction module: {assembly}", assemblyInfo.Name);
             }
         }
 
@@ -206,11 +212,11 @@ namespace RitsukageBot.Modules.Scripting
                 foreach (var type in types)
                 {
                     await _command.RemoveModuleAsync(type).ConfigureAwait(false);
-                    _logger.LogInformation("Unloaded command module type: {type}", type);
+                    _logger.LogDebug("Unloaded command module type: {type}", type);
                 }
 
                 _commandModules.Remove(assemblyInfo);
-                _logger.LogInformation("Unloaded command module: {assembly}", assemblyInfo.Name);
+                _logger.LogDebug("Unloaded command module: {assembly}", assemblyInfo.Name);
             }
 
             foreach (var (assemblyInfo, types) in _interactionModules)
@@ -218,11 +224,11 @@ namespace RitsukageBot.Modules.Scripting
                 foreach (var type in types)
                 {
                     await _interaction.RemoveModuleAsync(type).ConfigureAwait(false);
-                    _logger.LogInformation("Unloaded interaction module type: {type}", type);
+                    _logger.LogDebug("Unloaded interaction module type: {type}", type);
                 }
 
                 _interactionModules.Remove(assemblyInfo);
-                _logger.LogInformation("Unloaded interaction module: {assembly}", assemblyInfo.Name);
+                _logger.LogDebug("Unloaded interaction module: {assembly}", assemblyInfo.Name);
             }
         }
 

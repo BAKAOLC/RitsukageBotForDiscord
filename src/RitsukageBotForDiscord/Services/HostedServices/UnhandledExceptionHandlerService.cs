@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 
 namespace RitsukageBot.Services
 {
-    internal class UnhandledExceptionHandler(ILogger<UnhandledExceptionEventHandler> logger) : IHostedService
+    internal class UnhandledExceptionHandlerService(ILogger<UnhandledExceptionEventHandler> logger) : IHostedService
     {
         public Task StartAsync(CancellationToken cancellationToken)
         {

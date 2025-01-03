@@ -1,14 +1,13 @@
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
 
 namespace RitsukageBot.Library.Graphic.Processing
 {
     /// <summary>
-    ///     Invert color
+    ///     Invert frames
     /// </summary>
     /// <typeparam name="T">pixel type</typeparam>
-    public class InvertColor<T> : IProcessStep<T> where T : unmanaged, IPixel<T>
+    public class InvertFrames<T> : IProcessStep<T> where T : unmanaged, IPixel<T>
     {
         /// <summary>
         ///     Process
@@ -17,13 +16,8 @@ namespace RitsukageBot.Library.Graphic.Processing
         /// <returns></returns>
         public Task ProcessAsync(ref Image<T>[] images)
         {
-            foreach (var image in images) Process(image);
+            Array.Reverse(images);
             return Task.CompletedTask;
-        }
-
-        private static void Process(Image<T> image)
-        {
-            image.Mutate(x => x.Invert());
         }
     }
 }

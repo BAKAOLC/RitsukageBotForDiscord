@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RitsukageBot.Services;
 
-namespace RitsukageBot.Modules.Command
+namespace RitsukageBot.Modules.Commands
 {
     internal sealed class CommandModuleSupport(DiscordBotService discordBotService, IServiceProvider services) : IDiscordBotModule
     {

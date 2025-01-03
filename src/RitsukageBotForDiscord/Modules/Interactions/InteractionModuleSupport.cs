@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RitsukageBot.Services;
 
-namespace RitsukageBot.Modules.Interaction
+namespace RitsukageBot.Modules.Interactions
 {
     internal sealed class InteractionModuleSupport(DiscordBotService discordBotService, IServiceProvider services) : IDiscordBotModule
     {
@@ -34,6 +34,7 @@ namespace RitsukageBot.Modules.Interaction
             _client.ButtonExecuted += HandleButtonExecutedAsync;
             _client.MessageCommandExecuted += HandleMessageCommandExecutedAsync;
             _client.UserCommandExecuted += HandleUserCommandExecutedAsync;
+            _client.SelectMenuExecuted += HandleSelectMenuExecutedAsync;
             _client.Ready += RegisterCommandsAsync;
             _interaction.Log += discordBotService.LogAsync;
             await _interaction.AddModulesAsync(Assembly.GetEntryAssembly(), services);
@@ -95,6 +96,13 @@ namespace RitsukageBot.Modules.Interaction
         {
             var context = CreateGeneric(_client, command);
             _logger.LogInformation("User {UserId} executed user command {InteractionEntitlements}", context.User.Id, context.Interaction.Entitlements);
+            return _interaction.ExecuteCommandAsync(context, services);
+        }
+
+        internal Task HandleSelectMenuExecutedAsync(SocketMessageComponent menu)
+        {
+            var context = CreateGeneric(_client, menu);
+            _logger.LogInformation("User {UserId} executed select menu {InteractionEntitlements}", context.User.Id, context.Interaction.Entitlements);
             return _interaction.ExecuteCommandAsync(context, services);
         }
 

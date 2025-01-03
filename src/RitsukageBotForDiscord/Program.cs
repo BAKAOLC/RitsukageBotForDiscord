@@ -12,6 +12,7 @@ using NLog.Extensions.Logging;
 using RitsukageBot.Library.Networking;
 using RitsukageBot.Options;
 using RitsukageBot.Services;
+using RitsukageBot.Services.Providers;
 using RunMode = Discord.Commands.RunMode;
 
 Console.Title = "Ritsukage Bot";
@@ -22,14 +23,14 @@ var host = Host.CreateDefaultBuilder()
         configure.SetBasePath(Directory.GetCurrentDirectory());
         configure.AddJsonFile("appsettings.json", true);
     })
-    .ConfigureLogging((context, builder) =>
+    .ConfigureLogging(builder =>
     {
         builder.ClearProviders();
         builder.AddNLog();
     })
     .ConfigureServices((context, services) =>
     {
-        services.AddHostedService<UnhandledExceptionHandler>();
+        services.AddHostedService<UnhandledExceptionHandlerService>();
         services.AddOptions();
         services.AddHttpClient().ConfigureHttpClientDefaults(x =>
             x.ConfigureHttpClient(y => y.DefaultRequestHeaders.Add("User-Agent", UserAgent.Default)));
@@ -94,6 +95,7 @@ var host = Host.CreateDefaultBuilder()
         });
         services.AddSingleton<InteractionService>(x => new(x.GetRequiredService<DiscordSocketClient>(),
             x.GetRequiredService<InteractionServiceConfig>()));
+        services.AddSingleton<ImageCacheProviderService>();
         services.AddHostedService<DiscordBotService>();
     }).Build();
 
