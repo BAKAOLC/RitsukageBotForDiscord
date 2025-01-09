@@ -4,9 +4,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using RitsukageBot.Modules.Scripting;
+using RitsukageBot.Library.Modules.ModuleSupports;
 
-namespace RitsukageBot.Services
+namespace RitsukageBot.Services.HostedServices
 {
     internal class DiscordBotService : IHostedService
     {

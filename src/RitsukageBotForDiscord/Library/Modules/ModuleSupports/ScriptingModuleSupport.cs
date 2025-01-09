@@ -5,11 +5,9 @@ using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RitsukageBot.Library.Scripting;
-using RitsukageBot.Modules.Commands;
-using RitsukageBot.Modules.Interactions;
-using RitsukageBot.Services;
+using RitsukageBot.Services.HostedServices;
 
-namespace RitsukageBot.Modules.Scripting
+namespace RitsukageBot.Library.Modules.ModuleSupports
 {
     internal sealed class ScriptingModuleSupport(DiscordBotService discordBotService, IServiceProvider services) : IDiscordBotModule
     {

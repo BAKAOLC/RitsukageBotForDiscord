@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace RitsukageBot.Services
+namespace RitsukageBot.Services.HostedServices
 {
     internal class UnhandledExceptionHandlerService(ILogger<UnhandledExceptionEventHandler> logger) : IHostedService
     {

@@ -4,9 +4,9 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using RitsukageBot.Services;
+using RitsukageBot.Services.HostedServices;
 
-namespace RitsukageBot.Modules.Interactions
+namespace RitsukageBot.Library.Modules.ModuleSupports
 {
     internal sealed class InteractionModuleSupport(DiscordBotService discordBotService, IServiceProvider services) : IDiscordBotModule
     {

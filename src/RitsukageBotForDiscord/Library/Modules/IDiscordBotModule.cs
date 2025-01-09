@@ -1,4 +1,4 @@
-namespace RitsukageBot.Modules
+namespace RitsukageBot.Library.Modules
 {
     internal interface IDiscordBotModule : IDisposable, IAsyncDisposable
     {

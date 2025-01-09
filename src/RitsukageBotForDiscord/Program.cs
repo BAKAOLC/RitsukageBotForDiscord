@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging;
 using NLog.Extensions.Logging;
 using RitsukageBot.Library.Networking;
 using RitsukageBot.Options;
-using RitsukageBot.Services;
+using RitsukageBot.Services.HostedServices;
 using RitsukageBot.Services.Providers;
 using RunMode = Discord.Commands.RunMode;
 

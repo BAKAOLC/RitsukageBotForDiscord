@@ -8,7 +8,7 @@ using RitsukageBot.Services.Providers;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 
-namespace RitsukageBot.Modules.Interactions
+namespace RitsukageBot.Modules
 {
     /// <summary>
     ///     Image interactions
@@ -32,49 +32,11 @@ namespace RitsukageBot.Modules.Interactions
             new("Mirror Right", $"{TagCustomId}:mirror_right"),
             new("Mirror Top", $"{TagCustomId}:mirror_top"),
             new("Mirror Bottom", $"{TagCustomId}:mirror_bottom"),
+            new("Move Left", $"{TagCustomId}:move_left"),
+            new("Move Right", $"{TagCustomId}:move_right"),
+            new("Move Up", $"{TagCustomId}:move_up"),
+            new("Move Down", $"{TagCustomId}:move_down"),
         ];
-
-        /// <summary>
-        ///     Cancel interaction
-        /// </summary>
-        public static readonly AllowedInteraction CancelInteraction = new()
-        {
-            Label = "Cancel",
-            CustomId = $"{TagCustomId}:cancel",
-            ButtonStyle = ButtonStyle.Danger,
-        };
-
-        /// <summary>
-        ///     Cancel and publish interaction
-        /// </summary>
-        public static readonly AllowedInteraction CancelAndPublishInteraction = new()
-        {
-            Label = "Cancel and Publish",
-            CustomId = $"{TagCustomId}:cancel_and_publish",
-            ButtonStyle = ButtonStyle.Danger,
-        };
-
-        /// <summary>
-        ///     Last page interaction
-        /// </summary>
-        public static readonly AllowedInteraction LastPageInteraction = new()
-        {
-            Label = "Last Page",
-            CustomId = $"{TagCustomId}:last_page",
-            ButtonStyle = ButtonStyle.Secondary,
-            Emote = new Emoji("⬅️"),
-        };
-
-        /// <summary>
-        ///     Next page interaction
-        /// </summary>
-        public static readonly AllowedInteraction NextPageInteraction = new()
-        {
-            Label = "Next Page",
-            CustomId = $"{TagCustomId}:next_page",
-            ButtonStyle = ButtonStyle.Secondary,
-            Emote = new Emoji("➡️"),
-        };
 
         /// <summary>
         ///     Image cache provider service
@@ -159,6 +121,8 @@ namespace RitsukageBot.Modules.Interactions
                 x.Components = GetOperationMenus().Build();
             });
         }
+
+        #region Helper methods
 
         /// <summary>
         ///     Get operation menus
@@ -269,6 +233,54 @@ namespace RitsukageBot.Modules.Interactions
                 return builder;
             }
         }
+
+        #endregion
+
+        #region Basic interactions
+
+        /// <summary>
+        ///     Cancel interaction
+        /// </summary>
+        public static readonly AllowedInteraction CancelInteraction = new()
+        {
+            Label = "Cancel",
+            CustomId = $"{TagCustomId}:cancel",
+            ButtonStyle = ButtonStyle.Danger,
+        };
+
+        /// <summary>
+        ///     Cancel and publish interaction
+        /// </summary>
+        public static readonly AllowedInteraction CancelAndPublishInteraction = new()
+        {
+            Label = "Cancel and Publish",
+            CustomId = $"{TagCustomId}:cancel_and_publish",
+            ButtonStyle = ButtonStyle.Danger,
+        };
+
+        /// <summary>
+        ///     Last page interaction
+        /// </summary>
+        public static readonly AllowedInteraction LastPageInteraction = new()
+        {
+            Label = "Last Page",
+            CustomId = $"{TagCustomId}:last_page",
+            ButtonStyle = ButtonStyle.Secondary,
+            Emote = new Emoji("⬅️"),
+        };
+
+        /// <summary>
+        ///     Next page interaction
+        /// </summary>
+        public static readonly AllowedInteraction NextPageInteraction = new()
+        {
+            Label = "Next Page",
+            CustomId = $"{TagCustomId}:next_page",
+            ButtonStyle = ButtonStyle.Secondary,
+            Emote = new Emoji("➡️"),
+        };
+
+        #endregion
     }
 
 
@@ -288,175 +300,96 @@ namespace RitsukageBot.Modules.Interactions
         public required ImageCacheProviderService ImageCacheProviderService { get; set; }
 
         /// <summary>
-        ///     Cancel image interaction
-        /// </summary>
-        /// <returns></returns>
-        [ComponentInteraction($"{ImageInteractions.TagCustomId}:cancel")]
-        public Task CancelAsync()
-        {
-            Logger.LogInformation("Image interaction canceled");
-            return Context.Interaction.UpdateAsync(x => x.Components = null);
-        }
-
-        /// <summary>
-        ///     Cancel and publish image interaction
-        /// </summary>
-        /// <returns></returns>
-        [ComponentInteraction($"{ImageInteractions.TagCustomId}:cancel_and_publish")]
-        public async Task CancelAndPublishAsync()
-        {
-            Logger.LogInformation("Image interaction canceled and published");
-            var attachment = Context.Interaction.Message.Attachments.FirstOrDefault();
-            await Context.Interaction.UpdateAsync(x => x.Components = null);
-            if (attachment is not null) await Context.Channel.SendMessageAsync(attachment.Url);
-        }
-
-        /// <summary>
-        ///     Last page
-        /// </summary>
-        [ComponentInteraction($"{ImageInteractions.TagCustomId}:last_page")]
-        public async Task LastPageAsync()
-        {
-            var firstComponent = Context.Interaction.Message.Components?.FirstOrDefault()?.Components?.FirstOrDefault();
-            if (firstComponent is not null)
-            {
-                var componentInteraction = ImageInteractions.AllowedInteractions.FirstOrDefault(x => x.CustomId == firstComponent.CustomId);
-                if (componentInteraction.CustomId is not null)
-                {
-                    var index = Array.IndexOf(ImageInteractions.AllowedInteractions, componentInteraction);
-                    var page = index / 8 - 1;
-                    await Context.Interaction.UpdateAsync(x => x.Components = ImageInteractions.GetOperationMenus(page).Build());
-                }
-            }
-        }
-
-        /// <summary>
-        ///     Next page
-        /// </summary>
-        [ComponentInteraction($"{ImageInteractions.TagCustomId}:next_page")]
-        public async Task NextPageAsync()
-        {
-            var firstComponent = Context.Interaction.Message.Components?.FirstOrDefault()?.Components?.FirstOrDefault();
-            if (firstComponent is not null)
-            {
-                var componentInteraction = ImageInteractions.AllowedInteractions.FirstOrDefault(x => x.CustomId == firstComponent.CustomId);
-                if (componentInteraction.CustomId is not null)
-                {
-                    var index = Array.IndexOf(ImageInteractions.AllowedInteractions, componentInteraction);
-                    var page = index / 8 + 1;
-                    await Context.Interaction.UpdateAsync(x => x.Components = ImageInteractions.GetOperationMenus(page).Build());
-                }
-            }
-        }
-
-        /// <summary>
         ///     Invert color
         /// </summary>
         [ComponentInteraction($"{ImageInteractions.TagCustomId}:invert_color")]
-        public async Task InvertColorAsync()
+        public Task InvertColorAsync()
         {
-            var image = await GetImage();
-            if (image is null)
-            {
-                return;
-            }
-
-            var processor = new ImageProcessor<Rgba32>(image);
-            processor.AddProcessStep(new InvertColor<Rgba32>());
-            var result = await processor.ProcessAsync();
-            await SetImage(result);
+            return TriggerProcess<InvertColor<Rgba32>>();
         }
 
         /// <summary>
         ///     Invert frames
         /// </summary>
-        /// <returns></returns>
         [ComponentInteraction($"{ImageInteractions.TagCustomId}:invert_frames")]
-        public async Task InvertFrameAsync()
+        public Task InvertFrameAsync()
         {
-            var image = await GetImage();
-            if (image is null)
-            {
-                return;
-            }
-
-            var processor = new ImageProcessor<Rgba32>(image);
-            processor.AddProcessStep(new InvertFrames<Rgba32>());
-            var result = await processor.ProcessAsync();
-            await SetImage(result);
+            return TriggerProcess<InvertFrames<Rgba32>>();
         }
 
         /// <summary>
         ///     Mirror left
         /// </summary>
         [ComponentInteraction($"{ImageInteractions.TagCustomId}:mirror_left")]
-        public async Task MirrorLeftAsync()
+        public Task MirrorLeftAsync()
         {
-            var image = await GetImage();
-            if (image is null)
-            {
-                return;
-            }
-
-            var processor = new ImageProcessor<Rgba32>(image);
-            processor.AddProcessStep(new HalfMirror<Rgba32>(HalfMirror<Rgba32>.MirrorType.Left));
-            var result = await processor.ProcessAsync();
-            await SetImage(result);
+            return TriggerProcess<HalfMirror<Rgba32>>(new(HalfMirror<Rgba32>.MirrorType.Left));
         }
 
         /// <summary>
         ///     Mirror right
         /// </summary>
         [ComponentInteraction($"{ImageInteractions.TagCustomId}:mirror_right")]
-        public async Task MirrorRightAsync()
+        public Task MirrorRightAsync()
         {
-            var image = await GetImage();
-            if (image is null)
-            {
-                return;
-            }
-
-            var processor = new ImageProcessor<Rgba32>(image);
-            processor.AddProcessStep(new HalfMirror<Rgba32>(HalfMirror<Rgba32>.MirrorType.Right));
-            var result = await processor.ProcessAsync();
-            await SetImage(result);
+            return TriggerProcess<HalfMirror<Rgba32>>(new(HalfMirror<Rgba32>.MirrorType.Right));
         }
 
         /// <summary>
         ///     Mirror top
         /// </summary>
         [ComponentInteraction($"{ImageInteractions.TagCustomId}:mirror_top")]
-        public async Task MirrorTopAsync()
+        public Task MirrorTopAsync()
         {
-            var image = await GetImage();
-            if (image is null)
-            {
-                return;
-            }
-
-            var processor = new ImageProcessor<Rgba32>(image);
-            processor.AddProcessStep(new HalfMirror<Rgba32>(HalfMirror<Rgba32>.MirrorType.Top));
-            var result = await processor.ProcessAsync();
-            await SetImage(result);
+            return TriggerProcess<HalfMirror<Rgba32>>(new(HalfMirror<Rgba32>.MirrorType.Top));
         }
 
         /// <summary>
         ///     Mirror bottom
         /// </summary>
         [ComponentInteraction($"{ImageInteractions.TagCustomId}:mirror_bottom")]
-        public async Task MirrorBottomAsync()
+        public Task MirrorBottomAsync()
         {
-            var image = await GetImage();
-            if (image is null)
-            {
-                return;
-            }
-
-            var processor = new ImageProcessor<Rgba32>(image);
-            processor.AddProcessStep(new HalfMirror<Rgba32>(HalfMirror<Rgba32>.MirrorType.Bottom));
-            var result = await processor.ProcessAsync();
-            await SetImage(result);
+            return TriggerProcess<HalfMirror<Rgba32>>(new(HalfMirror<Rgba32>.MirrorType.Bottom));
         }
+
+        /// <summary>
+        ///     Move up
+        /// </summary>
+        [ComponentInteraction($"{ImageInteractions.TagCustomId}:move_left")]
+        public Task MoveLeftAsync()
+        {
+            return TriggerProcess<MoveAnimation<Rgba32>>(new(MoveAnimation<Rgba32>.MoveDirection.Left));
+        }
+
+        /// <summary>
+        ///     Move right
+        /// </summary>
+        [ComponentInteraction($"{ImageInteractions.TagCustomId}:move_right")]
+        public Task MoveRightAsync()
+        {
+            return TriggerProcess<MoveAnimation<Rgba32>>(new(MoveAnimation<Rgba32>.MoveDirection.Right));
+        }
+
+        /// <summary>
+        ///     Move up
+        /// </summary>
+        [ComponentInteraction($"{ImageInteractions.TagCustomId}:move_up")]
+        public Task MoveUpAsync()
+        {
+            return TriggerProcess<MoveAnimation<Rgba32>>(new(MoveAnimation<Rgba32>.MoveDirection.Up));
+        }
+
+        /// <summary>
+        ///     Move down
+        /// </summary>
+        [ComponentInteraction($"{ImageInteractions.TagCustomId}:move_down")]
+        public Task MoveDownAsync()
+        {
+            return TriggerProcess<MoveAnimation<Rgba32>>(new(MoveAnimation<Rgba32>.MoveDirection.Down));
+        }
+
+        #region Helper methods
 
         private async Task<Image<Rgba32>?> GetImage()
         {
@@ -521,5 +454,99 @@ namespace RitsukageBot.Modules.Interactions
                 };
             });
         }
+
+        private Task TriggerProcess<T>() where T : IProcessStep<Rgba32>, new()
+        {
+            return TriggerProcess(new T());
+        }
+
+        private async Task TriggerProcess<T>(T processStep) where T : IProcessStep<Rgba32>
+        {
+            var image = await GetImage();
+            if (image is null)
+            {
+                return;
+            }
+
+            var processor = new ImageProcessor<Rgba32>(image);
+            processor.AddProcessStep(processStep);
+            var result = await processor.ProcessAsync();
+            await SetImage(result);
+        }
+
+        #endregion
+
+        #region Basic interactions
+
+        /// <summary>
+        ///     Cancel image interaction
+        /// </summary>
+        [ComponentInteraction($"{ImageInteractions.TagCustomId}:cancel")]
+        public Task CancelAsync()
+        {
+            Logger.LogInformation("Image interaction canceled");
+            return Context.Interaction.UpdateAsync(x => x.Components = null);
+        }
+
+        /// <summary>
+        ///     Cancel and publish image interaction
+        /// </summary>
+        [ComponentInteraction($"{ImageInteractions.TagCustomId}:cancel_and_publish")]
+        public async Task CancelAndPublishAsync()
+        {
+            Logger.LogInformation("Image interaction canceled and published");
+            var attachment = Context.Interaction.Message.Attachments.FirstOrDefault();
+            await Context.Interaction.UpdateAsync(x => x.Components = null);
+            if (attachment is not null)
+            {
+                var embed = new EmbedBuilder()
+                    .WithTitle("Image Interaction")
+                    .WithImageUrl(attachment.Url)
+                    .WithFooter("Published by " + Context.User.Username, Context.User.GetAvatarUrl())
+                    .WithTimestamp(DateTimeOffset.Now)
+                    .Build();
+                await Context.Channel.SendMessageAsync(embed: embed);
+            }
+        }
+
+        /// <summary>
+        ///     Last page
+        /// </summary>
+        [ComponentInteraction($"{ImageInteractions.TagCustomId}:last_page")]
+        public async Task LastPageAsync()
+        {
+            var firstComponent = Context.Interaction.Message.Components?.FirstOrDefault()?.Components?.FirstOrDefault();
+            if (firstComponent is not null)
+            {
+                var componentInteraction = ImageInteractions.AllowedInteractions.FirstOrDefault(x => x.CustomId == firstComponent.CustomId);
+                if (componentInteraction.CustomId is not null)
+                {
+                    var index = Array.IndexOf(ImageInteractions.AllowedInteractions, componentInteraction);
+                    var page = index / 8 - 1;
+                    await Context.Interaction.UpdateAsync(x => x.Components = ImageInteractions.GetOperationMenus(page).Build());
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Next page
+        /// </summary>
+        [ComponentInteraction($"{ImageInteractions.TagCustomId}:next_page")]
+        public async Task NextPageAsync()
+        {
+            var firstComponent = Context.Interaction.Message.Components?.FirstOrDefault()?.Components?.FirstOrDefault();
+            if (firstComponent is not null)
+            {
+                var componentInteraction = ImageInteractions.AllowedInteractions.FirstOrDefault(x => x.CustomId == firstComponent.CustomId);
+                if (componentInteraction.CustomId is not null)
+                {
+                    var index = Array.IndexOf(ImageInteractions.AllowedInteractions, componentInteraction);
+                    var page = index / 8 + 1;
+                    await Context.Interaction.UpdateAsync(x => x.Components = ImageInteractions.GetOperationMenus(page).Build());
+                }
+            }
+        }
+
+        #endregion
     }
 }
