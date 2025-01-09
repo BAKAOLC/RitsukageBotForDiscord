@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Text;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
@@ -74,7 +75,7 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
         internal Task HandleSlashCommandExecutedAsync(SocketSlashCommand command)
         {
             var context = new SocketInteractionContext<SocketSlashCommand>(_client, command);
-            _logger.LogInformation("User {UserId} executed slash command {InteractionEntitlements}", context.User.Id, context.Interaction.Entitlements);
+            _logger.LogInformation("User {UserId} executed slash command {InteractionEntitlements}", context.User.Id, FormatSlashCommandData(context.Interaction.Data));
             return _interaction.ExecuteCommandAsync(context, services);
         }
 
@@ -104,6 +105,23 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
             var context = CreateGeneric(_client, menu);
             _logger.LogInformation("User {UserId} executed select menu {InteractionEntitlements}", context.User.Id, context.Interaction.Entitlements);
             return _interaction.ExecuteCommandAsync(context, services);
+        }
+
+        internal static string FormatSlashCommandData(SocketSlashCommandData data)
+        {
+            var sb = new StringBuilder();
+            sb.Append(data.Name);
+            foreach (var option in data.Options)
+            {
+                sb.Append(' ');
+                sb.Append(option.Name);
+
+                if (option.Value is null) continue;
+                sb.Append(": ");
+                sb.Append(option.Value);
+            }
+
+            return sb.ToString();
         }
 
         ~InteractionModuleSupport()

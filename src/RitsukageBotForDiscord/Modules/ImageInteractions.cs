@@ -192,6 +192,7 @@ namespace RitsukageBot.Modules
         /// <param name="Label"></param>
         /// <param name="CustomId"></param>
         /// <param name="ButtonStyle"></param>
+        /// <param name="Emote"></param>
         public readonly record struct AllowedInteraction(string Label, string CustomId, ButtonStyle? ButtonStyle = null, IEmote? Emote = null)
         {
             /// <summary>
