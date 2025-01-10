@@ -32,6 +32,7 @@
 		<PackageReference Include="Discord.Net.Commands" Version="3.17.0"/>
 		<PackageReference Include="Discord.Net.Interactions" Version="3.17.0"/>
 		<PackageReference Include="Discord.Net.WebSocket" Version="3.17.0"/>
+		<PackageReference Include="DnsClient" Version="1.8.0"/>
 		<PackageReference Include="GitVersion.MsBuild" Version="6.1.0">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -67,6 +68,10 @@
 		<None Update="nlog.config">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Folder Include="Library\Minecraft\Jila\"/>
 	</ItemGroup>
 
 </Project>

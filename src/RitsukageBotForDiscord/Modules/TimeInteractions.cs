@@ -29,7 +29,7 @@ namespace RitsukageBot.Modules
         {
             await Context.Interaction.DeferAsync(true);
             var now = DateTimeOffset.Now;
-            await ModifyOriginalResponseAsync(x => { x.Content = $"Host Time: {now:yyyy-MM-dd HH:mm:ss zzz}"; });
+            await Context.Interaction.FollowupAsync($"Host Time: {now:yyyy-MM-dd HH:mm:ss zzz}");
         }
 
         /// <summary>
@@ -40,7 +40,7 @@ namespace RitsukageBot.Modules
         {
             await Context.Interaction.DeferAsync(true);
             var now = DateTimeOffset.UtcNow;
-            await ModifyOriginalResponseAsync(x => { x.Content = $"Host Utc Time: {now:yyyy-MM-dd HH:mm:ss zzz}"; });
+            await Context.Interaction.FollowupAsync($"Host Utc Time: {now:yyyy-MM-dd HH:mm:ss zzz}");
         }
 
         /// <summary>
@@ -52,7 +52,7 @@ namespace RitsukageBot.Modules
             await Context.Interaction.DeferAsync(true);
             var now = DateTimeOffset.Now;
             var day = Math.Floor((now.Date - new DateTimeOffset(2018, 8, 19, 0, 0, 0, TimeSpan.Zero)).TotalDays) + 1;
-            await ModifyOriginalResponseAsync(x => { x.Content = $"云绝历: 2018-08-{day,00} {now:HH:mm:ss zzz}"; });
+            await Context.Interaction.FollowupAsync($"云绝历: 2018-08-{day,00} {now:HH:mm:ss zzz}");
         }
 
         /// <summary>
@@ -64,7 +64,7 @@ namespace RitsukageBot.Modules
             await Context.Interaction.DeferAsync(true);
             var now = ShouSiDateTime.Now;
             var timeZoneString = ShouSiDateTime.TimeZone >= TimeSpan.Zero ? $"+{ShouSiDateTime.TimeZone:hh\\:mm}" : $"{ShouSiDateTime.TimeZone:hh\\:mm}";
-            await ModifyOriginalResponseAsync(x => { x.Content = $"寿司历: {now.Year:0000}-{now.Month:00}-{now.Day:00} {now.Hour:00}:{now.Minute:00}:{now.Second:00} {timeZoneString}"; });
+            await Context.Interaction.FollowupAsync($"寿司历: {now.Year:0000}-{now.Month:00}-{now.Day:00} {now.Hour:00}:{now.Minute:00}:{now.Second:00} {timeZoneString}");
         }
 
 
@@ -93,7 +93,7 @@ namespace RitsukageBot.Modules
                 < 1 and > -4 => "已经在高考期间啦，考个好成绩回来哦！",
                 _ => "考完啦，放松一下吧",
             };
-            await ModifyOriginalResponseAsync(x => { x.Content = message; });
+            await Context.Interaction.FollowupAsync(message);
         }
     }
 }
