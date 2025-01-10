@@ -28,7 +28,7 @@ namespace RitsukageBot.Modules
         [SlashCommand("server-info", "Get server info")]
         public async Task GetServerInfoAsync(string serverAddress, ushort serverPort = 25565)
         {
-            await Context.Interaction.DeferAsync(true);
+            await DeferAsync(true);
             var serverInfo = new ServerInfo(serverAddress, serverPort, Logger);
             await serverInfo.StartGetServerInfoAsync();
 
@@ -53,11 +53,11 @@ namespace RitsukageBot.Modules
             {
                 var ms = new MemoryStream(serverInfo.IconData);
                 embed.WithThumbnailUrl("attachment://server-icon.png");
-                await Context.Interaction.FollowupWithFileAsync(ms, "server-icon.png", embed: embed.Build());
+                await FollowupWithFileAsync(ms, "server-icon.png", embed: embed.Build());
             }
             else
             {
-                await Context.Interaction.FollowupAsync(embed: embed.Build());
+                await FollowupAsync(embed: embed.Build());
             }
         }
     }

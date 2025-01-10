@@ -55,7 +55,7 @@ namespace RitsukageBot.Modules
         [SlashCommand("modify", "Begin image interaction")]
         public async Task ImageAsync(string url)
         {
-            await Context.Interaction.DeferAsync(true);
+            await DeferAsync(true);
             Image<Rgba32>? image = null;
             var message = string.Empty;
             var success = false;
@@ -92,7 +92,7 @@ namespace RitsukageBot.Modules
 
             if (!success || image is null)
             {
-                await ModifyOriginalResponseAsync(x => { x.Content = string.IsNullOrEmpty(message) ? "Failed to download image" : message; });
+                await FollowupAsync(string.IsNullOrEmpty(message) ? "Failed to download image" : message);
                 return;
             }
 
@@ -112,14 +112,7 @@ namespace RitsukageBot.Modules
             imageStream.Seek(0, SeekOrigin.Begin);
             image.Dispose();
 
-            await Context.Interaction.ModifyOriginalResponseAsync(x =>
-            {
-                x.Attachments = new List<FileAttachment>
-                {
-                    new(imageStream, fileName),
-                };
-                x.Components = GetOperationMenus().Build();
-            });
+            await FollowupWithFileAsync(imageStream, fileName, components: GetOperationMenus().Build());
         }
 
         #region Helper methods
@@ -447,13 +440,7 @@ namespace RitsukageBot.Modules
             imageStream.Seek(0, SeekOrigin.Begin);
             image.Dispose();
 
-            await Context.Interaction.UpdateAsync(x =>
-            {
-                x.Attachments = new List<FileAttachment>
-                {
-                    new(imageStream, fileName),
-                };
-            });
+            await Context.Interaction.UpdateAsync(x => x.Attachments = new List<FileAttachment> { new(imageStream, fileName) });
         }
 
         private Task TriggerProcess<T>() where T : IProcessStep<Rgba32>, new()
@@ -524,7 +511,7 @@ namespace RitsukageBot.Modules
                 {
                     var index = Array.IndexOf(ImageInteractions.AllowedInteractions, componentInteraction);
                     var page = index / 8 - 1;
-                    await Context.Interaction.UpdateAsync(x => x.Components = ImageInteractions.GetOperationMenus(page).Build());
+                    await FollowupAsync(components: ImageInteractions.GetOperationMenus(page).Build());
                 }
             }
         }
@@ -543,7 +530,7 @@ namespace RitsukageBot.Modules
                 {
                     var index = Array.IndexOf(ImageInteractions.AllowedInteractions, componentInteraction);
                     var page = index / 8 + 1;
-                    await Context.Interaction.UpdateAsync(x => x.Components = ImageInteractions.GetOperationMenus(page).Build());
+                    await FollowupAsync(components: ImageInteractions.GetOperationMenus(page).Build());
                 }
             }
         }
