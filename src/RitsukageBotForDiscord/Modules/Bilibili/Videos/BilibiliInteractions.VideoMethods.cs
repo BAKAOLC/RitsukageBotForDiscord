@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Discord;
 using Discord.Interactions;
+using Microsoft.Extensions.Logging;
 using Richasy.BiliKernel.Models.Media;
 using RitsukageBot.Library.Bilibili.Utils;
 
@@ -67,7 +68,24 @@ namespace RitsukageBot.Modules.Bilibili
                         .WithDescription("Invalid video id.").Build()).ConfigureAwait(false);
 
                 var media = new MediaIdentifier(avid.ToString(), null, null);
-                var detail = await PlayerService.GetVideoPageDetailAsync(media).ConfigureAwait(false);
+                try
+                {
+                    var detail = await PlayerService.GetVideoPageDetailAsync(media).ConfigureAwait(false);
+                    var embed = CreateVideoInfoEmbed(detail);
+                    await FollowupWithFileAsync(new MemoryStream(BilibiliIconData), "bilibili-icon.png",
+                        embed: embed.Build()).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "Failed to get video information.");
+                    await FollowupAsync(embed: new EmbedBuilder().WithColor(Color.Red).WithTitle("Error")
+                            .WithDescription("Failed to get video information: " + ex.Message).Build())
+                        .ConfigureAwait(false);
+                }
+            }
+
+            private static EmbedBuilder CreateVideoInfoEmbed(VideoPlayerView detail)
+            {
                 var embed = new EmbedBuilder();
                 embed.WithColor(Color.Green);
                 embed.WithTitle(detail.Information.Identifier.Title);
@@ -189,9 +207,7 @@ namespace RitsukageBot.Modules.Bilibili
                 content.AppendLine();
                 content.Append($"https://www.bilibili.com/video/{detail.Information.BvId}/");
                 embed.WithDescription(content.ToString());
-
-                await FollowupWithFileAsync(new MemoryStream(BilibiliIconData), "bilibili-icon.png",
-                    embed: embed.Build()).ConfigureAwait(false);
+                return embed;
             }
 
             [GeneratedRegex(@"((https?://)?www\.bilibili\.com/video/)(?<id>[0-9a-zA-Z]+)",

@@ -287,7 +287,7 @@ namespace RitsukageBot.Modules
         [ComponentInteraction($"{ImageInteractions.TagCustomId}:invert_color")]
         public Task InvertColorAsync()
         {
-            return TriggerProcess<InvertColor<Rgba32>>();
+            return TriggerProcessAsync<InvertColor<Rgba32>>();
         }
 
         /// <summary>
@@ -296,7 +296,7 @@ namespace RitsukageBot.Modules
         [ComponentInteraction($"{ImageInteractions.TagCustomId}:invert_frames")]
         public Task InvertFrameAsync()
         {
-            return TriggerProcess<InvertFrames<Rgba32>>();
+            return TriggerProcessAsync<InvertFrames<Rgba32>>();
         }
 
         /// <summary>
@@ -305,7 +305,7 @@ namespace RitsukageBot.Modules
         [ComponentInteraction($"{ImageInteractions.TagCustomId}:mirror_left")]
         public Task MirrorLeftAsync()
         {
-            return TriggerProcess<HalfMirror<Rgba32>>(new(HalfMirror<Rgba32>.MirrorType.Left));
+            return TriggerProcessAsync<HalfMirror<Rgba32>>(new(HalfMirror<Rgba32>.MirrorType.Left));
         }
 
         /// <summary>
@@ -314,7 +314,7 @@ namespace RitsukageBot.Modules
         [ComponentInteraction($"{ImageInteractions.TagCustomId}:mirror_right")]
         public Task MirrorRightAsync()
         {
-            return TriggerProcess<HalfMirror<Rgba32>>(new(HalfMirror<Rgba32>.MirrorType.Right));
+            return TriggerProcessAsync<HalfMirror<Rgba32>>(new(HalfMirror<Rgba32>.MirrorType.Right));
         }
 
         /// <summary>
@@ -323,7 +323,7 @@ namespace RitsukageBot.Modules
         [ComponentInteraction($"{ImageInteractions.TagCustomId}:mirror_top")]
         public Task MirrorTopAsync()
         {
-            return TriggerProcess<HalfMirror<Rgba32>>(new(HalfMirror<Rgba32>.MirrorType.Top));
+            return TriggerProcessAsync<HalfMirror<Rgba32>>(new(HalfMirror<Rgba32>.MirrorType.Top));
         }
 
         /// <summary>
@@ -332,7 +332,7 @@ namespace RitsukageBot.Modules
         [ComponentInteraction($"{ImageInteractions.TagCustomId}:mirror_bottom")]
         public Task MirrorBottomAsync()
         {
-            return TriggerProcess<HalfMirror<Rgba32>>(new(HalfMirror<Rgba32>.MirrorType.Bottom));
+            return TriggerProcessAsync<HalfMirror<Rgba32>>(new(HalfMirror<Rgba32>.MirrorType.Bottom));
         }
 
         /// <summary>
@@ -341,7 +341,7 @@ namespace RitsukageBot.Modules
         [ComponentInteraction($"{ImageInteractions.TagCustomId}:move_left")]
         public Task MoveLeftAsync()
         {
-            return TriggerProcess<MoveAnimation<Rgba32>>(new(MoveAnimation<Rgba32>.MoveDirection.Left));
+            return TriggerProcessAsync<MoveAnimation<Rgba32>>(new(MoveAnimation<Rgba32>.MoveDirection.Left));
         }
 
         /// <summary>
@@ -350,7 +350,7 @@ namespace RitsukageBot.Modules
         [ComponentInteraction($"{ImageInteractions.TagCustomId}:move_right")]
         public Task MoveRightAsync()
         {
-            return TriggerProcess<MoveAnimation<Rgba32>>(new(MoveAnimation<Rgba32>.MoveDirection.Right));
+            return TriggerProcessAsync<MoveAnimation<Rgba32>>(new(MoveAnimation<Rgba32>.MoveDirection.Right));
         }
 
         /// <summary>
@@ -359,7 +359,7 @@ namespace RitsukageBot.Modules
         [ComponentInteraction($"{ImageInteractions.TagCustomId}:move_up")]
         public Task MoveUpAsync()
         {
-            return TriggerProcess<MoveAnimation<Rgba32>>(new(MoveAnimation<Rgba32>.MoveDirection.Up));
+            return TriggerProcessAsync<MoveAnimation<Rgba32>>(new(MoveAnimation<Rgba32>.MoveDirection.Up));
         }
 
         /// <summary>
@@ -368,12 +368,12 @@ namespace RitsukageBot.Modules
         [ComponentInteraction($"{ImageInteractions.TagCustomId}:move_down")]
         public Task MoveDownAsync()
         {
-            return TriggerProcess<MoveAnimation<Rgba32>>(new(MoveAnimation<Rgba32>.MoveDirection.Down));
+            return TriggerProcessAsync<MoveAnimation<Rgba32>>(new(MoveAnimation<Rgba32>.MoveDirection.Down));
         }
 
         #region Helper methods
 
-        private async Task<Image<Rgba32>?> GetImage()
+        private async Task<Image<Rgba32>?> GetImageAsync()
         {
             var attachment = Context.Interaction.Message.Attachments.FirstOrDefault();
             if (attachment is null) return null;
@@ -407,7 +407,7 @@ namespace RitsukageBot.Modules
             return image;
         }
 
-        private async Task SetImage(Image<Rgba32> image)
+        private async Task SetImageAsync(Image<Rgba32> image)
         {
             var imageStream = new MemoryStream();
             string fileName;
@@ -430,20 +430,20 @@ namespace RitsukageBot.Modules
                 .ConfigureAwait(false);
         }
 
-        private Task TriggerProcess<T>() where T : IProcessStep<Rgba32>, new()
+        private Task TriggerProcessAsync<T>() where T : IProcessStep<Rgba32>, new()
         {
-            return TriggerProcess(new T());
+            return TriggerProcessAsync(new T());
         }
 
-        private async Task TriggerProcess<T>(T processStep) where T : IProcessStep<Rgba32>
+        private async Task TriggerProcessAsync<T>(T processStep) where T : IProcessStep<Rgba32>
         {
-            var image = await GetImage().ConfigureAwait(false);
+            var image = await GetImageAsync().ConfigureAwait(false);
             if (image is null) return;
 
             var processor = new ImageProcessor<Rgba32>(image);
             processor.AddProcessStep(processStep);
             var result = await processor.ProcessAsync().ConfigureAwait(false);
-            await SetImage(result).ConfigureAwait(false);
+            await SetImageAsync(result).ConfigureAwait(false);
         }
 
         #endregion

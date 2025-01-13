@@ -1,7 +1,6 @@
 using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
-using Richasy.BiliKernel;
 using RitsukageBot.Services.Providers;
 
 namespace RitsukageBot.Modules.Bilibili
@@ -32,11 +31,6 @@ namespace RitsukageBot.Modules.Bilibili
         ///     Bilibili kernel provider.
         /// </summary>
         public required BiliKernelProviderService BiliKernelProvider { get; set; }
-
-        /// <summary>
-        ///     Bilibili kernel.
-        /// </summary>
-        public Kernel Kernel => BiliKernelProvider.Kernel;
     }
 
     /// <summary>
@@ -54,10 +48,5 @@ namespace RitsukageBot.Modules.Bilibili
         ///     Bilibili kernel provider.
         /// </summary>
         public required BiliKernelProviderService BiliKernelProvider { get; set; }
-
-        /// <summary>
-        ///     Bilibili kernel.
-        /// </summary>
-        public Kernel Kernel => BiliKernelProvider.Kernel;
     }
 }

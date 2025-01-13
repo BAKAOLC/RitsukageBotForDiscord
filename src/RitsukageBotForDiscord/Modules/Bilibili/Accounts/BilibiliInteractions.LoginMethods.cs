@@ -18,7 +18,7 @@ namespace RitsukageBot.Modules.Bilibili
             [SlashCommand("login", "Login to Bilibili")]
             public async Task LoginAsync()
             {
-                await DeferAsync(true);
+                await DeferAsync(true).ConfigureAwait(false);
                 var isLogin = await VerifyBotLoginAsync().ConfigureAwait(false);
                 if (isLogin)
                 {
@@ -96,7 +96,7 @@ namespace RitsukageBot.Modules.Bilibili
                     if (tokenResolver is not TvAuthenticationService service)
                         throw new InvalidOperationException(
                             "The authentication service is not a modified version of the TV authentication service.");
-                    await service.SignInAsync();
+                    await service.SignInAsync().ConfigureAwait(false);
                     var qrCode = service.GetQrCode() ?? throw new InvalidOperationException("The QR code is null.");
                     var qrCodeImage = service.GetQrCodeImage() ??
                                       throw new InvalidOperationException("The QR code image is null.");
@@ -164,7 +164,7 @@ namespace RitsukageBot.Modules.Bilibili
                             .WithDescription("Logout successfully.").Build(),
                     };
                     x.Components = null;
-                });
+                }).ConfigureAwait(false);
             }
         }
     }

@@ -41,7 +41,7 @@ namespace RitsukageBot.Services.Providers
             {
                 _logger.LogDebug("Found image cache for {url}", url);
                 using var memoryStream = new MemoryStream(imageCache.Value);
-                return await Image.LoadAsync<Rgba32>(memoryStream);
+                return await Image.LoadAsync<Rgba32>(memoryStream).ConfigureAwait(false);
             }
 
             _logger.LogDebug("Downloading image from {url}", url);
@@ -53,7 +53,7 @@ namespace RitsukageBot.Services.Providers
                 cacheTime == TimeSpan.Zero ? TimeSpan.FromDays(1) : cacheTime).ConfigureAwait(false);
             _logger.LogDebug("Saved image cache for {url}", url);
             cacheStream.Seek(0, SeekOrigin.Begin);
-            return await Image.LoadAsync<Rgba32>(cacheStream);
+            return await Image.LoadAsync<Rgba32>(cacheStream).ConfigureAwait(false);
         }
     }
 }

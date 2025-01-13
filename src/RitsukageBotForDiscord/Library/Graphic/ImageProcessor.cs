@@ -29,7 +29,7 @@ namespace RitsukageBot.Library.Graphic
         /// </summary>
         public async ValueTask DisposeAsync()
         {
-            await DisposeAsyncCore();
+            await DisposeAsyncCore().ConfigureAwait(false);
             Dispose(false);
             GC.SuppressFinalize(this);
         }
@@ -68,7 +68,7 @@ namespace RitsukageBot.Library.Graphic
         /// <returns>Image after processing</returns>
         public async Task<Image<T>> ProcessAsync()
         {
-            foreach (var step in _steps) await step.ProcessAsync(ref _images);
+            foreach (var step in _steps) await step.ProcessAsync(ref _images).ConfigureAwait(false);
 
             var image = _images.First().Clone();
             for (var i = 1; i < _images.Length; i++) image.Frames.AddFrame(_images[i].Frames.RootFrame);
@@ -92,12 +92,12 @@ namespace RitsukageBot.Library.Graphic
         /// <summary>
         ///     Dispose async
         /// </summary>
-        private async ValueTask DisposeAsyncCore()
+        private ValueTask DisposeAsyncCore()
         {
-            if (_disposed) return;
+            if (_disposed) return ValueTask.CompletedTask;
             foreach (var image in _images) image.Dispose();
-            await Task.CompletedTask;
             _disposed = true;
+            return ValueTask.CompletedTask;
         }
     }
 }
