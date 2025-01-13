@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Richasy.BiliKernel;
 using Richasy.BiliKernel.Bili.Authorization;
 using RitsukageBot.Library.Bilibili.BiliKernelModules.Authorizers;
@@ -11,16 +12,50 @@ namespace RitsukageBot.Services.Providers
     /// </summary>
     public class BiliKernelProviderService
     {
-        private readonly Lazy<Kernel> _kernelInstance = new(BuildKernel);
+        private readonly Lazy<Kernel> _kernelInstance;
+
+        /// <summary>
+        ///     Bili kernel provider service.
+        /// </summary>
+        /// <param name="loggerFactory"></param>
+        public BiliKernelProviderService(ILoggerFactory? loggerFactory = null)
+        {
+            _kernelInstance = new(() => BuildKernel(loggerFactory));
+        }
 
         /// <summary>
         ///     Kernel.
         /// </summary>
         public Kernel Kernel => _kernelInstance.Value;
 
-        private static Kernel BuildKernel()
+        /// <summary>Gets a required service from the <see cref="Services" /> provider.</summary>
+        /// <typeparam name="T">Specifies the type of the service to get.</typeparam>
+        /// <param name="serviceKey">An object that specifies the key of the service to get.</param>
+        /// <returns>The found service instance.</returns>
+        /// <exception cref="KernelException">A service of the specified type and name could not be found.</exception>
+        public T GetRequiredService<T>(object? serviceKey = null) where T : class
+        {
+            return Kernel.GetRequiredService<T>(serviceKey);
+        }
+
+
+        /// <summary>Gets all services of the specified type.</summary>
+        /// <typeparam name="T">Specifies the type of the services to retrieve.</typeparam>
+        /// <returns>An enumerable of all instances of the specified service that are registered.</returns>
+        /// <remarks>There is no guaranteed ordering on the results.</remarks>
+        public IEnumerable<T> GetAllServices<T>() where T : class
+        {
+            return Kernel.GetAllServices<T>();
+        }
+
+        private Kernel BuildKernel(ILoggerFactory? loggerFactory)
         {
             var kernelBuilder = Kernel.CreateBuilder();
+            if (loggerFactory is not null)
+            {
+                kernelBuilder.Services.AddSingleton(loggerFactory);
+            }
+
             kernelBuilder.AddArticleDiscoveryService();
             kernelBuilder.AddArticleOperationService();
             kernelBuilder.AddBasicAuthenticator();
