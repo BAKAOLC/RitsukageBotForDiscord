@@ -37,9 +37,9 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
 
         public async Task InitAsync()
         {
-            await _commandModuleSupport.InitAsync();
-            await _interactionModuleSupport.InitAsync();
-            await LoadScriptsAsync();
+            await _commandModuleSupport.InitAsync().ConfigureAwait(false);
+            await _interactionModuleSupport.InitAsync().ConfigureAwait(false);
+            await LoadScriptsAsync().ConfigureAwait(false);
         }
 
         public async Task ReInitAsync()
@@ -76,7 +76,7 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
                 if (!File.Exists(scriptFile)) continue;
                 try
                 {
-                    var script = await File.ReadAllTextAsync(scriptFile);
+                    var script = await File.ReadAllTextAsync(scriptFile).ConfigureAwait(false);
                     var scriptRuntime = ScriptRuntime.Create(script);
                     var (assemblyInfo, diagnostics) = scriptRuntime.CompileToAssembly(directoryName);
                     if (diagnostics.Any())
@@ -129,7 +129,7 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
                 if (!File.Exists(scriptFile)) continue;
                 try
                 {
-                    var script = await File.ReadAllTextAsync(scriptFile);
+                    var script = await File.ReadAllTextAsync(scriptFile).ConfigureAwait(false);
                     var scriptRuntime = ScriptRuntime.Create(script);
                     var (assemblyInfo, diagnostics) = scriptRuntime.CompileToAssembly(directoryName);
                     if (diagnostics.Any())

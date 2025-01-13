@@ -38,9 +38,9 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
             _client.SelectMenuExecuted += HandleSelectMenuExecutedAsync;
             _client.Ready += RegisterCommandsAsync;
             _interaction.Log += discordBotService.LogAsync;
-            await _interaction.AddModulesAsync(Assembly.GetEntryAssembly(), services);
+            await _interaction.AddModulesAsync(Assembly.GetEntryAssembly(), services).ConfigureAwait(false);
             if (_client.ConnectionState == ConnectionState.Connected)
-                await RegisterCommandsAsync();
+                await RegisterCommandsAsync().ConfigureAwait(false);
         }
 
         public async Task ReInitAsync()

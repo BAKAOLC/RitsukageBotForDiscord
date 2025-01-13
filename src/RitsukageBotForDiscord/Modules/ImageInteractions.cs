@@ -55,13 +55,13 @@ namespace RitsukageBot.Modules
         [SlashCommand("modify", "Begin image interaction")]
         public async Task ImageAsync(string url)
         {
-            await DeferAsync(true);
+            await DeferAsync(true).ConfigureAwait(false);
             Image<Rgba32>? image = null;
             var message = string.Empty;
             var success = false;
             try
             {
-                image = await ImageCacheProviderService.GetImageAsync(url);
+                image = await ImageCacheProviderService.GetImageAsync(url).ConfigureAwait(false);
                 success = true;
             }
             catch (HttpRequestException ex)
@@ -92,7 +92,7 @@ namespace RitsukageBot.Modules
 
             if (!success || image is null)
             {
-                await FollowupAsync(string.IsNullOrEmpty(message) ? "Failed to download image" : message);
+                await FollowupAsync(string.IsNullOrEmpty(message) ? "Failed to download image" : message).ConfigureAwait(false);
                 return;
             }
 
@@ -100,19 +100,19 @@ namespace RitsukageBot.Modules
             string fileName;
             if (image.Frames.Count > 1)
             {
-                await image.SaveAsGifAsync(imageStream);
+                await image.SaveAsGifAsync(imageStream).ConfigureAwait(false);
                 fileName = "image.gif";
             }
             else
             {
-                await image.SaveAsPngAsync(imageStream);
+                await image.SaveAsPngAsync(imageStream).ConfigureAwait(false);
                 fileName = "image.png";
             }
 
             imageStream.Seek(0, SeekOrigin.Begin);
             image.Dispose();
 
-            await FollowupWithFileAsync(imageStream, fileName, components: GetOperationMenus().Build());
+            await FollowupWithFileAsync(imageStream, fileName, components: GetOperationMenus().Build()).ConfigureAwait(false);
         }
 
         #region Helper methods
@@ -396,7 +396,7 @@ namespace RitsukageBot.Modules
             Image<Rgba32>? image = null;
             try
             {
-                image = await ImageCacheProviderService.GetImageAsync(attachment.Url);
+                image = await ImageCacheProviderService.GetImageAsync(attachment.Url).ConfigureAwait(false);
             }
             catch (HttpRequestException ex)
             {
@@ -428,19 +428,19 @@ namespace RitsukageBot.Modules
             string fileName;
             if (image.Frames.Count > 1)
             {
-                await image.SaveAsGifAsync(imageStream);
+                await image.SaveAsGifAsync(imageStream).ConfigureAwait(false);
                 fileName = "image.gif";
             }
             else
             {
-                await image.SaveAsPngAsync(imageStream);
+                await image.SaveAsPngAsync(imageStream).ConfigureAwait(false);
                 fileName = "image.png";
             }
 
             imageStream.Seek(0, SeekOrigin.Begin);
             image.Dispose();
 
-            await Context.Interaction.UpdateAsync(x => x.Attachments = new List<FileAttachment> { new(imageStream, fileName) });
+            await Context.Interaction.UpdateAsync(x => x.Attachments = new List<FileAttachment> { new(imageStream, fileName) }).ConfigureAwait(false);
         }
 
         private Task TriggerProcess<T>() where T : IProcessStep<Rgba32>, new()
@@ -450,7 +450,7 @@ namespace RitsukageBot.Modules
 
         private async Task TriggerProcess<T>(T processStep) where T : IProcessStep<Rgba32>
         {
-            var image = await GetImage();
+            var image = await GetImage().ConfigureAwait(false);
             if (image is null)
             {
                 return;
@@ -458,8 +458,8 @@ namespace RitsukageBot.Modules
 
             var processor = new ImageProcessor<Rgba32>(image);
             processor.AddProcessStep(processStep);
-            var result = await processor.ProcessAsync();
-            await SetImage(result);
+            var result = await processor.ProcessAsync().ConfigureAwait(false);
+            await SetImage(result).ConfigureAwait(false);
         }
 
         #endregion
@@ -484,7 +484,7 @@ namespace RitsukageBot.Modules
         {
             Logger.LogInformation("Image interaction canceled and published");
             var attachment = Context.Interaction.Message.Attachments.FirstOrDefault();
-            await Context.Interaction.UpdateAsync(x => x.Components = null);
+            await Context.Interaction.UpdateAsync(x => x.Components = null).ConfigureAwait(false);
             if (attachment is not null)
             {
                 var embed = new EmbedBuilder()
@@ -493,7 +493,7 @@ namespace RitsukageBot.Modules
                     .WithFooter("Published by " + Context.User.Username, Context.User.GetAvatarUrl())
                     .WithTimestamp(DateTimeOffset.Now)
                     .Build();
-                await Context.Channel.SendMessageAsync(embed: embed);
+                await Context.Channel.SendMessageAsync(embed: embed).ConfigureAwait(false);
             }
         }
 
@@ -511,7 +511,7 @@ namespace RitsukageBot.Modules
                 {
                     var index = Array.IndexOf(ImageInteractions.AllowedInteractions, componentInteraction);
                     var page = index / 8 - 1;
-                    await FollowupAsync(components: ImageInteractions.GetOperationMenus(page).Build());
+                    await FollowupAsync(components: ImageInteractions.GetOperationMenus(page).Build()).ConfigureAwait(false);
                 }
             }
         }
@@ -530,7 +530,7 @@ namespace RitsukageBot.Modules
                 {
                     var index = Array.IndexOf(ImageInteractions.AllowedInteractions, componentInteraction);
                     var page = index / 8 + 1;
-                    await FollowupAsync(components: ImageInteractions.GetOperationMenus(page).Build());
+                    await FollowupAsync(components: ImageInteractions.GetOperationMenus(page).Build()).ConfigureAwait(false);
                 }
             }
         }

@@ -71,7 +71,19 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Folder Include="Library\Minecraft\Jila\"/>
+		<ProjectReference Include="..\bili-kernel\src\Authorizers\Authorizers.Tv\Authorizers.Tv.csproj"/>
+		<ProjectReference Include="..\bili-kernel\src\BiliKernel.Abstractions\BiliKernel.Abstractions.csproj"/>
+		<ProjectReference Include="..\bili-kernel\src\BiliKernel.Core\BiliKernel.Core.csproj"/>
+		<ProjectReference Include="..\bili-kernel\src\BiliKernel.Grpc\BiliKernel.Grpc.csproj"/>
+		<ProjectReference Include="..\bili-kernel\src\Resolvers\Resolvers.NativeCookies\Resolvers.NativeCookies.csproj"/>
+		<ProjectReference Include="..\bili-kernel\src\Resolvers\Resolvers.NativeQRCode\Resolvers.NativeQRCode.csproj"/>
+		<ProjectReference Include="..\bili-kernel\src\Resolvers\Resolvers.NativeToken\Resolvers.NativeToken.csproj"/>
+		<ProjectReference Include="..\bili-kernel\src\Services\Services.Article\Services.Article.csproj"/>
+		<ProjectReference Include="..\bili-kernel\src\Services\Services.Comment\Services.Comment.csproj"/>
+		<ProjectReference Include="..\bili-kernel\src\Services\Services.Media\Services.Media.csproj"/>
+		<ProjectReference Include="..\bili-kernel\src\Services\Services.Moment\Services.Moment.csproj"/>
+		<ProjectReference Include="..\bili-kernel\src\Services\Services.Search\Services.Search.csproj"/>
+		<ProjectReference Include="..\bili-kernel\src\Services\Services.User\Services.User.csproj"/>
 	</ItemGroup>
 
 </Project>

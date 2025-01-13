@@ -1,0 +1,3 @@
+[submodule "src/bili-kernel"]
+	path = src/bili-kernel
+	url = https://github.com/Richasy/bili-kernel.git

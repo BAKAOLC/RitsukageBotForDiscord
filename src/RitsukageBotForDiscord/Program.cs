@@ -8,19 +8,16 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using NLog;
 using NLog.Extensions.Logging;
-using NLog.Targets;
 using RitsukageBot.Library.Networking;
 using RitsukageBot.Options;
 using RitsukageBot.Services.HostedServices;
 using RitsukageBot.Services.Providers;
-using LogLevel = NLog.LogLevel;
 using RunMode = Discord.Commands.RunMode;
 
 Console.Title = "Ritsukage Bot";
 
-var host = Host.CreateDefaultBuilder()
+using var host = Host.CreateDefaultBuilder()
     .ConfigureHostConfiguration(configure =>
     {
         configure.SetBasePath(Directory.GetCurrentDirectory());
@@ -99,6 +96,7 @@ var host = Host.CreateDefaultBuilder()
         services.AddSingleton<InteractionService>(x => new(x.GetRequiredService<DiscordSocketClient>(),
             x.GetRequiredService<InteractionServiceConfig>()));
         services.AddSingleton<ImageCacheProviderService>();
+        services.AddSingleton<BiliKernelProviderService>();
         services.AddHostedService<DiscordBotService>();
     }).Build();
 

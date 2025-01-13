@@ -14,6 +14,7 @@ namespace RitsukageBot.Library.Minecraft.Server
     /// </summary>
     /// <param name="ip"></param>
     /// <param name="port"></param>
+    /// <param name="logger"></param>
     public class ServerInfo(string ip, ushort port, ILogger? logger = null)
     {
         /// <summary>
