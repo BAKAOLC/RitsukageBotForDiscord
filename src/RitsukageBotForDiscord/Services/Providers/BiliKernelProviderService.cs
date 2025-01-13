@@ -21,27 +21,33 @@ namespace RitsukageBot.Services.Providers
         private static Kernel BuildKernel()
         {
             var kernelBuilder = Kernel.CreateBuilder();
-            kernelBuilder.AddNativeTokenResolver();
-//          kernelBuilder.AddNativeQRCodeResolver();
-            kernelBuilder.Services.AddSingleton<IQRCodeResolver, EmptyQrCodeResolver>();
-            kernelBuilder.AddNativeCookiesResolver();
-            kernelBuilder.AddHttpClient();
-            kernelBuilder.AddBasicAuthenticator();
-//          kernelBuilder.AddTVAuthentication();
-            kernelBuilder.Services.AddSingleton<IAuthenticationService, TvAuthenticationService>();
-            kernelBuilder.AddMyProfileService();
-            kernelBuilder.AddRelationshipService();
-            kernelBuilder.AddViewLaterService();
-            kernelBuilder.AddViewHistoryService();
-            kernelBuilder.AddVideoDiscoveryService();
-            kernelBuilder.AddLiveDiscoveryService();
-            kernelBuilder.AddEntertainmentDiscoveryService();
             kernelBuilder.AddArticleDiscoveryService();
+            kernelBuilder.AddArticleOperationService();
+            kernelBuilder.AddBasicAuthenticator();
+            kernelBuilder.AddCommentService();
+            kernelBuilder.AddDanmakuService();
+            kernelBuilder.AddEntertainmentDiscoveryService();
+            kernelBuilder.AddFavoriteService();
+            kernelBuilder.AddHttpClient();
+            kernelBuilder.AddLiveDiscoveryService();
+            kernelBuilder.AddMessageService();
             kernelBuilder.AddMomentDiscoveryService();
             kernelBuilder.AddMomentOperationService();
-            kernelBuilder.AddMessageService();
-            kernelBuilder.AddFavoriteService();
+            kernelBuilder.AddMyProfileService();
+            kernelBuilder.AddNativeCookiesResolver();
+            kernelBuilder.AddNativeTokenResolver();
+            //kernelBuilder.AddNativeQRCodeResolver();
+            kernelBuilder.AddPlayerService();
+            kernelBuilder.AddRelationshipService();
             kernelBuilder.AddSearchService();
+            kernelBuilder.AddSubtitleService();
+            //kernelBuilder.AddTVAuthentication();
+            kernelBuilder.AddUserService();
+            kernelBuilder.AddVideoDiscoveryService();
+            kernelBuilder.AddViewHistoryService();
+            kernelBuilder.AddViewLaterService();
+            kernelBuilder.Services.AddSingleton<IQRCodeResolver, EmptyQrCodeResolver>();
+            kernelBuilder.Services.AddSingleton<IAuthenticationService, TvAuthenticationService>();
             return kernelBuilder.Build();
         }
     }
