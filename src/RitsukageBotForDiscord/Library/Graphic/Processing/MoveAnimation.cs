@@ -7,7 +7,8 @@ namespace RitsukageBot.Library.Graphic.Processing
     ///     Invert color
     /// </summary>
     /// <typeparam name="T">pixel type</typeparam>
-    public class MoveAnimation<T>(MoveAnimation<T>.MoveDirection direction) : IProcessStep<T> where T : unmanaged, IPixel<T>
+    public class MoveAnimation<T>(MoveAnimation<T>.MoveDirection direction)
+        : IProcessStep<T> where T : unmanaged, IPixel<T>
     {
         /// <summary>
         ///     Mirror type
@@ -70,14 +71,12 @@ namespace RitsukageBot.Library.Graphic.Processing
                 {
                     var offset = width * index / total;
                     for (var y = 0; y < height; y++)
+                    for (var x = 0; x < width; x++)
                     {
-                        for (var x = 0; x < width; x++)
-                        {
-                            var targetX = x + offset;
-                            if (targetX >= width)
-                                targetX -= width;
-                            image[x, y] = original[targetX, y];
-                        }
+                        var targetX = x + offset;
+                        if (targetX >= width)
+                            targetX -= width;
+                        image[x, y] = original[targetX, y];
                     }
 
                     break;
@@ -86,14 +85,12 @@ namespace RitsukageBot.Library.Graphic.Processing
                 {
                     var offset = width * index / total;
                     for (var y = 0; y < height; y++)
+                    for (var x = 0; x < width; x++)
                     {
-                        for (var x = 0; x < width; x++)
-                        {
-                            var targetX = x - offset;
-                            if (targetX < 0)
-                                targetX += width;
-                            image[x, y] = original[targetX, y];
-                        }
+                        var targetX = x - offset;
+                        if (targetX < 0)
+                            targetX += width;
+                        image[x, y] = original[targetX, y];
                     }
 
                     break;

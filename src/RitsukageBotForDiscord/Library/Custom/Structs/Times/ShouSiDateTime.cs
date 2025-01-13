@@ -67,7 +67,7 @@ namespace RitsukageBot.Library.Custom.Structs.Times
 
         private static bool IsLeap(int year)
         {
-            return year % 4 == 0 && year % 100 != 0 || year % 400 == 0;
+            return (year % 4 == 0 && year % 100 != 0) || year % 400 == 0;
         }
 
         private static readonly int[] Days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
@@ -99,7 +99,9 @@ namespace RitsukageBot.Library.Custom.Structs.Times
                     day -= days;
                 }
                 else
+                {
                     break;
+                }
 
                 n++;
             }
@@ -115,7 +117,9 @@ namespace RitsukageBot.Library.Custom.Structs.Times
                     day -= days;
                 }
                 else
+                {
                     break;
+                }
 
                 if (n == 12)
                     n = 1;

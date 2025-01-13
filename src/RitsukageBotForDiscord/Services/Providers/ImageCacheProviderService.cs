@@ -14,7 +14,10 @@ namespace RitsukageBot.Services.Providers
     /// <param name="logger"></param>
     /// <param name="cacheProvider"></param>
     /// <param name="httpClientFactory"></param>
-    public class ImageCacheProviderService(ILogger<ImageCacheProviderService> logger, ICacheStack cacheProvider, IHttpClientFactory httpClientFactory)
+    public class ImageCacheProviderService(
+        ILogger<ImageCacheProviderService> logger,
+        ICacheStack cacheProvider,
+        IHttpClientFactory httpClientFactory)
     {
         /// <summary>
         ///     Tag cache key
@@ -46,7 +49,8 @@ namespace RitsukageBot.Services.Providers
             await using var stream = await httpClient.GetStreamAsync(url).ConfigureAwait(false);
             using var cacheStream = new MemoryStream();
             await stream.CopyToAsync(cacheStream).ConfigureAwait(false);
-            await cacheProvider.SetAsync(cacheKey, cacheStream.ToArray(), cacheTime == TimeSpan.Zero ? TimeSpan.FromDays(1) : cacheTime).ConfigureAwait(false);
+            await cacheProvider.SetAsync(cacheKey, cacheStream.ToArray(),
+                cacheTime == TimeSpan.Zero ? TimeSpan.FromDays(1) : cacheTime).ConfigureAwait(false);
             _logger.LogDebug("Saved image cache for {url}", url);
             cacheStream.Seek(0, SeekOrigin.Begin);
             return await Image.LoadAsync<Rgba32>(cacheStream);

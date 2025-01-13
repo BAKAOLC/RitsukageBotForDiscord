@@ -51,10 +51,7 @@ namespace RitsukageBot.Services.Providers
         private Kernel BuildKernel(ILoggerFactory? loggerFactory)
         {
             var kernelBuilder = Kernel.CreateBuilder();
-            if (loggerFactory is not null)
-            {
-                kernelBuilder.Services.AddSingleton(loggerFactory);
-            }
+            if (loggerFactory is not null) kernelBuilder.Services.AddSingleton(loggerFactory);
 
             kernelBuilder.AddArticleDiscoveryService();
             kernelBuilder.AddArticleOperationService();

@@ -139,10 +139,12 @@ namespace RitsukageBot.Library.Minecraft.Server
                     var requestPacket = ProtocolHandler.ConcatBytes(ProtocolHandler.GetVarInt(statusRequest.Length),
                         statusRequest);
 
-                    logger?.LogDebug("Sending handshake packet to {ServerAddress}:{ServerPort}", ServerAddress, ServerPort);
+                    logger?.LogDebug("Sending handshake packet to {ServerAddress}:{ServerPort}", ServerAddress,
+                        ServerPort);
                     tcp.Client.Send(toSend, SocketFlags.None);
 
-                    logger?.LogDebug("Sending status request packet to {ServerAddress}:{ServerPort}", ServerAddress, ServerPort);
+                    logger?.LogDebug("Sending status request packet to {ServerAddress}:{ServerPort}", ServerAddress,
+                        ServerPort);
                     tcp.Client.Send(requestPacket, SocketFlags.None);
 
                     logger?.LogDebug("Reading response from {ServerAddress}:{ServerPort}", ServerAddress, ServerPort);
@@ -150,7 +152,8 @@ namespace RitsukageBot.Library.Minecraft.Server
                     var packetLength = handler.ReadNextVarIntRaw();
                     if (packetLength == 0)
                     {
-                        logger?.LogDebug("Received empty packet from {ServerAddress}:{ServerPort}", ServerAddress, ServerPort);
+                        logger?.LogDebug("Received empty packet from {ServerAddress}:{ServerPort}", ServerAddress,
+                            ServerPort);
                         State = ConnectionState.BadResponse;
                         return;
                     }
@@ -158,7 +161,8 @@ namespace RitsukageBot.Library.Minecraft.Server
                     var packetData = new List<byte>(handler.ReadDataRaw(packetLength));
                     if (ProtocolHandler.ReadNextVarInt(packetData) != 0x00)
                     {
-                        logger?.LogDebug("Received unexpected packet ID from {ServerAddress}:{ServerPort}", ServerAddress, ServerPort);
+                        logger?.LogDebug("Received unexpected packet ID from {ServerAddress}:{ServerPort}",
+                            ServerAddress, ServerPort);
                         State = ConnectionState.BadResponse;
                         return;
                     }
@@ -175,7 +179,8 @@ namespace RitsukageBot.Library.Minecraft.Server
 
                     try
                     {
-                        logger?.LogDebug("Sending ping packet to {ServerAddress}:{ServerPort}", ServerAddress, ServerPort);
+                        logger?.LogDebug("Sending ping packet to {ServerAddress}:{ServerPort}", ServerAddress,
+                            ServerPort);
                         var pingWatcher = new Stopwatch();
                         pingWatcher.Start();
                         tcp.Client.Send(pingToSend, SocketFlags.None);
@@ -187,19 +192,22 @@ namespace RitsukageBot.Library.Minecraft.Server
                             packetData = [..handler.ReadDataRaw(packetLength)];
                             if (ProtocolHandler.ReadNextVarInt(packetData) != 0x01)
                             {
-                                logger?.LogDebug("Received unexpected packet ID from {ServerAddress}:{ServerPort}", ServerAddress, ServerPort);
+                                logger?.LogDebug("Received unexpected packet ID from {ServerAddress}:{ServerPort}",
+                                    ServerAddress, ServerPort);
                                 State = ConnectionState.BadResponse;
                                 return;
                             }
                         }
 
-                        logger?.LogDebug("Reading response from {ServerAddress}:{ServerPort}", ServerAddress, ServerPort);
+                        logger?.LogDebug("Reading response from {ServerAddress}:{ServerPort}", ServerAddress,
+                            ServerPort);
                         long content = ProtocolHandler.ReadNextByte(packetData);
                         if (content == 233) Ping = pingWatcher.ElapsedMilliseconds;
                     }
                     catch (Exception)
                     {
-                        logger?.LogDebug("Failed to send ping packet to {ServerAddress}:{ServerPort}", ServerAddress, ServerPort);
+                        logger?.LogDebug("Failed to send ping packet to {ServerAddress}:{ServerPort}", ServerAddress,
+                            ServerPort);
                         Ping = -1;
                     }
                 }
@@ -222,29 +230,20 @@ namespace RitsukageBot.Library.Minecraft.Server
             if (jsonData.TryGetValue("version", out var versionDataToken))
             {
                 var versionData = (JObject)versionDataToken;
-                if (versionData.TryGetValue("name", out var token))
-                {
-                    GameVersion = token.ToString();
-                }
+                if (versionData.TryGetValue("name", out var token)) GameVersion = token.ToString();
 
                 if (versionData.TryGetValue("protocol", out token) && int.TryParse(token.ToString(), out var protocol))
-                {
                     ProtocolVersion = protocol;
-                }
             }
 
             if (jsonData.TryGetValue("players", out var playersDataToken))
             {
                 var playerData = (JObject)playersDataToken;
                 if (playerData.TryGetValue("max", out var token) && int.TryParse(token.ToString(), out var max))
-                {
                     MaxPlayerCount = max;
-                }
 
                 if (playerData.TryGetValue("online", out token) && int.TryParse(token.ToString(), out var online))
-                {
                     CurrentPlayerCount = online;
-                }
 
                 if (playerData.TryGetValue("sample", out token) && token.Type == JTokenType.Array)
                 {
@@ -253,10 +252,7 @@ namespace RitsukageBot.Library.Minecraft.Server
                     {
                         if (nameDataToken.Type is not JTokenType.Object) continue;
                         var nameData = (JObject)nameDataToken;
-                        if (nameData.TryGetValue("name", out var name))
-                        {
-                            result.Add(name.ToString());
-                        }
+                        if (nameData.TryGetValue("name", out var name)) result.Add(name.ToString());
                     }
 
                     OnlinePlayersNames = [.. result];
@@ -264,7 +260,6 @@ namespace RitsukageBot.Library.Minecraft.Server
             }
 
             if (jsonData.TryGetValue("description", out var descriptionDataToken))
-            {
                 switch (descriptionDataToken.Type)
                 {
                     case JTokenType.String:
@@ -288,7 +283,6 @@ namespace RitsukageBot.Library.Minecraft.Server
                         break;
                     }
                 }
-            }
 
             if (jsonData.TryGetValue("favicon", out var faviconDataToken))
                 try

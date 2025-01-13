@@ -42,7 +42,8 @@ namespace RitsukageBot.Modules.Bilibili
     /// <summary>
     ///     Bilibili interaction button.
     /// </summary>
-    public partial class BilibiliInteractionButton : InteractionModuleBase<SocketInteractionContext<SocketMessageComponent>>
+    public partial class
+        BilibiliInteractionButton : InteractionModuleBase<SocketInteractionContext<SocketMessageComponent>>
     {
         /// <summary>
         ///     Logger.

@@ -91,12 +91,10 @@ namespace RitsukageBot.Library.Utils
             var result = new StringBuilder();
             var x2 = toUpper ? "%{0:X2}" : "%{0:x2}";
             foreach (var symbol in Encoding.UTF8.GetBytes(value))
-            {
                 if (symbol is >= 0x20 and <= 0x7E)
                     result.Append((char)symbol);
                 else
                     result.AppendFormat(x2, symbol);
-            }
 
             return result.ToString();
         }
@@ -121,7 +119,8 @@ namespace RitsukageBot.Library.Utils
             return GetUrlRegex().Matches(value).Select(x => x.Value).ToArray();
         }
 
-        [GeneratedRegex(@"((https?|ftp|wss?|ws|file|data):\/\/)?(([a-zA-Z0-9\-_]+\.)+[a-zA-Z]{2,}|(\[[0-9a-fA-F:]+\])|([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}))(:[0-9]{1,5})?(\/[a-zA-Z0-9\-_\.~!$&'()*+,;=:@%]*)*(\?[a-zA-Z0-9\-_\.~!$&'()*+,;=:@%\/]*)?(#[a-zA-Z0-9\-_\.~!$&'()*+,;=:@%\/]*)?")]
+        [GeneratedRegex(
+            @"((https?|ftp|wss?|ws|file|data):\/\/)?(([a-zA-Z0-9\-_]+\.)+[a-zA-Z]{2,}|(\[[0-9a-fA-F:]+\])|([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}))(:[0-9]{1,5})?(\/[a-zA-Z0-9\-_\.~!$&'()*+,;=:@%]*)*(\?[a-zA-Z0-9\-_\.~!$&'()*+,;=:@%\/]*)?(#[a-zA-Z0-9\-_\.~!$&'()*+,;=:@%\/]*)?")]
         private static partial Regex GetUrlRegex();
     }
 }

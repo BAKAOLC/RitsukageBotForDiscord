@@ -9,11 +9,14 @@ using RitsukageBot.Services.HostedServices;
 
 namespace RitsukageBot.Library.Modules.ModuleSupports
 {
-    internal sealed class InteractionModuleSupport(DiscordBotService discordBotService, IServiceProvider services) : IDiscordBotModule
+    internal sealed class InteractionModuleSupport(DiscordBotService discordBotService, IServiceProvider services)
+        : IDiscordBotModule
     {
         private readonly DiscordSocketClient _client = services.GetRequiredService<DiscordSocketClient>();
         private readonly InteractionService _interaction = services.GetRequiredService<InteractionService>();
-        private readonly ILogger<InteractionModuleSupport> _logger = services.GetRequiredService<ILogger<InteractionModuleSupport>>();
+
+        private readonly ILogger<InteractionModuleSupport> _logger =
+            services.GetRequiredService<ILogger<InteractionModuleSupport>>();
 
         public void Dispose()
         {
@@ -62,7 +65,8 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
                 SocketUserCommand user => new SocketInteractionContext<SocketUserCommand>(client, user),
                 SocketSlashCommand slash => new SocketInteractionContext<SocketSlashCommand>(client, slash),
                 SocketMessageCommand message => new SocketInteractionContext<SocketMessageCommand>(client, message),
-                SocketMessageComponent component => new SocketInteractionContext<SocketMessageComponent>(client, component),
+                SocketMessageComponent component => new SocketInteractionContext<SocketMessageComponent>(client,
+                    component),
                 _ => throw new InvalidOperationException("This interaction type is unsupported! Please report this."),
             };
         }
@@ -75,35 +79,40 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
         internal Task HandleSlashCommandExecutedAsync(SocketSlashCommand command)
         {
             var context = new SocketInteractionContext<SocketSlashCommand>(_client, command);
-            _logger.LogInformation("User {UserId} executed slash command {InteractionEntitlements}", context.User.Id, FormatSlashCommandData(context.Interaction.Data));
+            _logger.LogInformation("User {UserId} executed slash command {InteractionEntitlements}", context.User.Id,
+                FormatSlashCommandData(context.Interaction.Data));
             return _interaction.ExecuteCommandAsync(context, services);
         }
 
         internal Task HandleButtonExecutedAsync(SocketMessageComponent component)
         {
             var context = CreateGeneric(_client, component);
-            _logger.LogInformation("User {UserId} executed button {InteractionEntitlements}", context.User.Id, context.Interaction.Entitlements);
+            _logger.LogInformation("User {UserId} executed button {InteractionEntitlements}", context.User.Id,
+                context.Interaction.Entitlements);
             return _interaction.ExecuteCommandAsync(context, services);
         }
 
         internal Task HandleMessageCommandExecutedAsync(SocketMessageCommand command)
         {
             var context = CreateGeneric(_client, command);
-            _logger.LogInformation("User {UserId} executed message command {InteractionEntitlements}", context.User.Id, context.Interaction.Entitlements);
+            _logger.LogInformation("User {UserId} executed message command {InteractionEntitlements}", context.User.Id,
+                context.Interaction.Entitlements);
             return _interaction.ExecuteCommandAsync(context, services);
         }
 
         internal Task HandleUserCommandExecutedAsync(SocketUserCommand command)
         {
             var context = CreateGeneric(_client, command);
-            _logger.LogInformation("User {UserId} executed user command {InteractionEntitlements}", context.User.Id, context.Interaction.Entitlements);
+            _logger.LogInformation("User {UserId} executed user command {InteractionEntitlements}", context.User.Id,
+                context.Interaction.Entitlements);
             return _interaction.ExecuteCommandAsync(context, services);
         }
 
         internal Task HandleSelectMenuExecutedAsync(SocketMessageComponent menu)
         {
             var context = CreateGeneric(_client, menu);
-            _logger.LogInformation("User {UserId} executed select menu {InteractionEntitlements}", context.User.Id, context.Interaction.Entitlements);
+            _logger.LogInformation("User {UserId} executed select menu {InteractionEntitlements}", context.User.Id,
+                context.Interaction.Entitlements);
             return _interaction.ExecuteCommandAsync(context, services);
         }
 
@@ -132,10 +141,7 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
         private void Dispose(bool disposing)
         {
             if (!disposing) return;
-            foreach (var module in _interaction.Modules)
-            {
-                _interaction.RemoveModuleAsync(module);
-            }
+            foreach (var module in _interaction.Modules) _interaction.RemoveModuleAsync(module);
 
             _client.UserCommandExecuted -= HandleUserCommandExecutedAsync;
             _client.MessageCommandExecuted -= HandleMessageCommandExecutedAsync;
@@ -149,9 +155,7 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
         private async ValueTask DisposeAsyncCore()
         {
             foreach (var module in _interaction.Modules)
-            {
                 await _interaction.RemoveModuleAsync(module).ConfigureAwait(false);
-            }
 
             _client.UserCommandExecuted -= HandleUserCommandExecutedAsync;
             _client.MessageCommandExecuted -= HandleMessageCommandExecutedAsync;

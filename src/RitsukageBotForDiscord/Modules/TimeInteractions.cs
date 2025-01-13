@@ -63,8 +63,12 @@ namespace RitsukageBot.Modules
         {
             await DeferAsync(true).ConfigureAwait(false);
             var now = ShouSiDateTime.Now;
-            var timeZoneString = ShouSiDateTime.TimeZone >= TimeSpan.Zero ? $"+{ShouSiDateTime.TimeZone:hh\\:mm}" : $"{ShouSiDateTime.TimeZone:hh\\:mm}";
-            await FollowupAsync($"寿司历: {now.Year:0000}-{now.Month:00}-{now.Day:00} {now.Hour:00}:{now.Minute:00}:{now.Second:00} {timeZoneString}").ConfigureAwait(false);
+            var timeZoneString = ShouSiDateTime.TimeZone >= TimeSpan.Zero
+                ? $"+{ShouSiDateTime.TimeZone:hh\\:mm}"
+                : $"{ShouSiDateTime.TimeZone:hh\\:mm}";
+            await FollowupAsync(
+                    $"寿司历: {now.Year:0000}-{now.Month:00}-{now.Day:00} {now.Hour:00}:{now.Minute:00}:{now.Second:00} {timeZoneString}")
+                .ConfigureAwait(false);
         }
 
 

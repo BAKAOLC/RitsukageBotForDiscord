@@ -21,44 +21,44 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Content Include="icon.ico"/>
+		<Content Include="icon.ico" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="CacheTower" Version="0.14.0"/>
-		<PackageReference Include="CacheTower.Providers.FileSystem.Json" Version="0.14.0"/>
-		<PackageReference Include="CacheTower.Serializers.NewtonsoftJson" Version="0.14.0"/>
-		<PackageReference Include="Discord.Net" Version="3.17.0"/>
-		<PackageReference Include="Discord.Net.Commands" Version="3.17.0"/>
-		<PackageReference Include="Discord.Net.Interactions" Version="3.17.0"/>
-		<PackageReference Include="Discord.Net.WebSocket" Version="3.17.0"/>
-		<PackageReference Include="DnsClient" Version="1.8.0"/>
+		<PackageReference Include="CacheTower" Version="0.14.0" />
+		<PackageReference Include="CacheTower.Providers.FileSystem.Json" Version="0.14.0" />
+		<PackageReference Include="CacheTower.Serializers.NewtonsoftJson" Version="0.14.0" />
+		<PackageReference Include="Discord.Net" Version="3.17.0" />
+		<PackageReference Include="Discord.Net.Commands" Version="3.17.0" />
+		<PackageReference Include="Discord.Net.Interactions" Version="3.17.0" />
+		<PackageReference Include="Discord.Net.WebSocket" Version="3.17.0" />
+		<PackageReference Include="DnsClient" Version="1.8.0" />
 		<PackageReference Include="GitVersion.MsBuild" Version="6.1.0">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="JetBrains.Annotations" Version="2024.3.0"/>
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.12.0"/>
-		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0"/>
+		<PackageReference Include="JetBrains.Annotations" Version="2024.3.0" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.12.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0"/>
-		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0"/>
-		<PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0"/>
-		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0"/>
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0"/>
-		<PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0"/>
-		<PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0"/>
-		<PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0"/>
-		<PackageReference Include="Microsoft.Extensions.Options" Version="9.0.0"/>
-		<PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="9.0.0"/>
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
-		<PackageReference Include="NLog" Version="5.3.4"/>
-		<PackageReference Include="NLog.Extensions.Logging" Version="5.3.15"/>
-		<PackageReference Include="SixLabors.ImageSharp" Version="3.1.6"/>
-		<PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.5"/>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Options" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="9.0.0" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+		<PackageReference Include="NLog" Version="5.3.4" />
+		<PackageReference Include="NLog.Extensions.Logging" Version="5.3.15" />
+		<PackageReference Include="SixLabors.ImageSharp" Version="3.1.6" />
+		<PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.5" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -71,19 +71,19 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\bili-kernel\src\Authorizers\Authorizers.Tv\Authorizers.Tv.csproj"/>
-		<ProjectReference Include="..\bili-kernel\src\BiliKernel.Abstractions\BiliKernel.Abstractions.csproj"/>
-		<ProjectReference Include="..\bili-kernel\src\BiliKernel.Core\BiliKernel.Core.csproj"/>
-		<ProjectReference Include="..\bili-kernel\src\BiliKernel.Grpc\BiliKernel.Grpc.csproj"/>
-		<ProjectReference Include="..\bili-kernel\src\Resolvers\Resolvers.NativeCookies\Resolvers.NativeCookies.csproj"/>
-		<ProjectReference Include="..\bili-kernel\src\Resolvers\Resolvers.NativeQRCode\Resolvers.NativeQRCode.csproj"/>
-		<ProjectReference Include="..\bili-kernel\src\Resolvers\Resolvers.NativeToken\Resolvers.NativeToken.csproj"/>
-		<ProjectReference Include="..\bili-kernel\src\Services\Services.Article\Services.Article.csproj"/>
-		<ProjectReference Include="..\bili-kernel\src\Services\Services.Comment\Services.Comment.csproj"/>
-		<ProjectReference Include="..\bili-kernel\src\Services\Services.Media\Services.Media.csproj"/>
-		<ProjectReference Include="..\bili-kernel\src\Services\Services.Moment\Services.Moment.csproj"/>
-		<ProjectReference Include="..\bili-kernel\src\Services\Services.Search\Services.Search.csproj"/>
-		<ProjectReference Include="..\bili-kernel\src\Services\Services.User\Services.User.csproj"/>
+		<ProjectReference Include="..\bili-kernel\src\Authorizers\Authorizers.Tv\Authorizers.Tv.csproj" />
+		<ProjectReference Include="..\bili-kernel\src\BiliKernel.Abstractions\BiliKernel.Abstractions.csproj" />
+		<ProjectReference Include="..\bili-kernel\src\BiliKernel.Core\BiliKernel.Core.csproj" />
+		<ProjectReference Include="..\bili-kernel\src\BiliKernel.Grpc\BiliKernel.Grpc.csproj" />
+		<ProjectReference Include="..\bili-kernel\src\Resolvers\Resolvers.NativeCookies\Resolvers.NativeCookies.csproj" />
+		<ProjectReference Include="..\bili-kernel\src\Resolvers\Resolvers.NativeQRCode\Resolvers.NativeQRCode.csproj" />
+		<ProjectReference Include="..\bili-kernel\src\Resolvers\Resolvers.NativeToken\Resolvers.NativeToken.csproj" />
+		<ProjectReference Include="..\bili-kernel\src\Services\Services.Article\Services.Article.csproj" />
+		<ProjectReference Include="..\bili-kernel\src\Services\Services.Comment\Services.Comment.csproj" />
+		<ProjectReference Include="..\bili-kernel\src\Services\Services.Media\Services.Media.csproj" />
+		<ProjectReference Include="..\bili-kernel\src\Services\Services.Moment\Services.Moment.csproj" />
+		<ProjectReference Include="..\bili-kernel\src\Services\Services.Search\Services.Search.csproj" />
+		<ProjectReference Include="..\bili-kernel\src\Services\Services.User\Services.User.csproj" />
 	</ItemGroup>
 
 </Project>

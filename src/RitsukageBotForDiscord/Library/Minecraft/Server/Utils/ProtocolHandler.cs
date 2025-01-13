@@ -75,7 +75,7 @@ namespace RitsukageBot.Library.Minecraft.Server
             {
                 Receive(tmp, 0, 1, SocketFlags.None);
                 int k = tmp[0];
-                i |= (k & 0x7F) << j++ * 7;
+                i |= (k & 0x7F) << (j++ * 7);
                 if (j > 5) throw new OverflowException("VarInt too big");
                 if ((k & 0x80) != 128) break;
             }
@@ -106,7 +106,7 @@ namespace RitsukageBot.Library.Minecraft.Server
             while (true)
             {
                 int k = ReadNextByte(cache);
-                i |= (k & 0x7F) << j++ * 7;
+                i |= (k & 0x7F) << (j++ * 7);
                 if (j > 5) throw new OverflowException("VarInt too big");
                 if ((k & 0x80) != 128) break;
             }
@@ -135,7 +135,7 @@ namespace RitsukageBot.Library.Minecraft.Server
             var bytes = new List<byte>();
             while ((paramInt & -128) != 0)
             {
-                bytes.Add((byte)(paramInt & 127 | 128));
+                bytes.Add((byte)((paramInt & 127) | 128));
                 paramInt = paramInt >>> 7;
             }
 

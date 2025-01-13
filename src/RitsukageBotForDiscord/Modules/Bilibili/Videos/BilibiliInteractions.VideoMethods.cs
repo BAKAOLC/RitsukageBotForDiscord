@@ -45,28 +45,26 @@ namespace RitsukageBot.Modules.Bilibili
                     }
                     catch (Exception e)
                     {
-                        await FollowupAsync(embed: new EmbedBuilder().WithColor(Color.Red).WithTitle("Error").WithDescription(e.Message).Build()).ConfigureAwait(false);
+                        await FollowupAsync(embed: new EmbedBuilder().WithColor(Color.Red).WithTitle("Error")
+                            .WithDescription(e.Message).Build()).ConfigureAwait(false);
                         return;
                     }
                 }
                 else
                 {
-                    if (id.StartsWith("av", StringComparison.CurrentCultureIgnoreCase))
-                    {
-                        id = id[2..];
-                    }
+                    if (id.StartsWith("av", StringComparison.CurrentCultureIgnoreCase)) id = id[2..];
 
                     if (!ulong.TryParse(id, out avid))
                     {
-                        await FollowupAsync(embed: new EmbedBuilder().WithColor(Color.Red).WithTitle("Error").WithDescription("Invalid video id.").Build()).ConfigureAwait(false);
+                        await FollowupAsync(embed: new EmbedBuilder().WithColor(Color.Red).WithTitle("Error")
+                            .WithDescription("Invalid video id.").Build()).ConfigureAwait(false);
                         return;
                     }
                 }
 
                 if (avid == 0)
-                {
-                    await FollowupAsync(embed: new EmbedBuilder().WithColor(Color.Red).WithTitle("Error").WithDescription("Invalid video id.").Build()).ConfigureAwait(false);
-                }
+                    await FollowupAsync(embed: new EmbedBuilder().WithColor(Color.Red).WithTitle("Error")
+                        .WithDescription("Invalid video id.").Build()).ConfigureAwait(false);
 
                 var media = new MediaIdentifier(avid.ToString(), null, null);
                 var detail = await PlayerService.GetVideoPageDetailAsync(media).ConfigureAwait(false);
@@ -99,15 +97,13 @@ namespace RitsukageBot.Modules.Bilibili
                     content.AppendLine();
                     content.Append(multiAuthors ? "Authors:" : "Author:");
                     content.AppendLine();
-                    content.AppendFormat(TextFormatAuthor, detail.Information.Publisher.User.Name, detail.Information.Publisher.User.Id);
+                    content.AppendFormat(TextFormatAuthor, detail.Information.Publisher.User.Name,
+                        detail.Information.Publisher.User.Id);
 
                     if (multiAuthors)
-                    {
                         foreach (var collaborator in detail.Information.Collaborators!)
-                        {
-                            content.Append(',').Append(' ').AppendFormat(TextFormatAuthor, collaborator.User.Name, collaborator.User.Id);
-                        }
-                    }
+                            content.Append(',').Append(' ').AppendFormat(TextFormatAuthor, collaborator.User.Name,
+                                collaborator.User.Id);
                 }
 
                 // tags
@@ -117,7 +113,8 @@ namespace RitsukageBot.Modules.Bilibili
                     content.AppendLine();
                     content.Append("Tags:");
                     content.AppendLine();
-                    content.Append(string.Join(", ", detail.Tags.Select(tag => string.Format(TextFormatTag, tag.Name))));
+                    content.Append(string.Join(", ",
+                        detail.Tags.Select(tag => string.Format(TextFormatTag, tag.Name))));
                 }
 
                 // video parts
@@ -140,7 +137,8 @@ namespace RitsukageBot.Modules.Bilibili
                 }
 
                 content.AppendLine();
-                content.Append("Total Duration: ").Append(TimeSpan.FromSeconds(detail.Information.Duration ?? 0).ToString(@"hh\:mm\:ss"));
+                content.Append("Total Duration: ")
+                    .Append(TimeSpan.FromSeconds(detail.Information.Duration ?? 0).ToString(@"hh\:mm\:ss"));
 
                 // statistics
                 if (detail.Information.CommunityInformation is not null)
@@ -192,10 +190,12 @@ namespace RitsukageBot.Modules.Bilibili
                 content.Append($"https://www.bilibili.com/video/{detail.Information.BvId}/");
                 embed.WithDescription(content.ToString());
 
-                await FollowupWithFileAsync(new MemoryStream(BilibiliIconData), "bilibili-icon.png", embed: embed.Build()).ConfigureAwait(false);
+                await FollowupWithFileAsync(new MemoryStream(BilibiliIconData), "bilibili-icon.png",
+                    embed: embed.Build()).ConfigureAwait(false);
             }
 
-            [GeneratedRegex(@"((https?://)?www\.bilibili\.com/video/)(?<id>[0-9a-zA-Z]+)", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+            [GeneratedRegex(@"((https?://)?www\.bilibili\.com/video/)(?<id>[0-9a-zA-Z]+)",
+                RegexOptions.IgnoreCase | RegexOptions.Compiled)]
             private static partial Regex GetMatchVideoIdRegex();
         }
     }

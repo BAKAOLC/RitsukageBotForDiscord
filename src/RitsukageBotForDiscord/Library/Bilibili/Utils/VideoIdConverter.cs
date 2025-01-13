@@ -12,7 +12,8 @@ namespace RitsukageBot.Library.Bilibili.Utils
         private const ulong Aid = 1UL << 51;
         private const ulong Base = 58UL;
 
-        private static readonly char[] CharSet = "FcwAPNKTMug3GV5Lj7EJnHpWsx4tb8haYeviqBz6rkCy12mUSDQX9RdoZf".ToCharArray();
+        private static readonly char[] CharSet =
+            "FcwAPNKTMug3GV5Lj7EJnHpWsx4tb8haYeviqBz6rkCy12mUSDQX9RdoZf".ToCharArray();
 
         private static readonly Dictionary<char, int> CharValue = [];
 
@@ -62,7 +63,9 @@ namespace RitsukageBot.Library.Bilibili.Utils
             if (!GetBvCheckRegex1().IsMatch(bv))
             {
                 if (!GetBvCheckRegex2().IsMatch(bv))
-                    throw new ArgumentException("bv format is illegal, the correct bv format should be BV1xxxxxxxxx and meet the string set by base58 characters", nameof(bv));
+                    throw new ArgumentException(
+                        "bv format is illegal, the correct bv format should be BV1xxxxxxxxx and meet the string set by base58 characters",
+                        nameof(bv));
                 bv = "BV" + bv;
             }
 
@@ -75,7 +78,7 @@ namespace RitsukageBot.Library.Bilibili.Utils
 
             var av = chars.Aggregate(0UL, (current, c) => current * Base + (ulong)CharValue[c]);
 
-            av = av & Mask ^ Xor;
+            av = (av & Mask) ^ Xor;
 
             return av;
         }

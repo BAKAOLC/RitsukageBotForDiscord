@@ -30,7 +30,8 @@ namespace RitsukageBot.Modules.Bilibili
         /// <summary>
         ///     Bilibili account operations.
         /// </summary>
-        public partial class AccountInteractionsButton : InteractionModuleBase<SocketInteractionContext<SocketMessageComponent>>
+        public partial class
+            AccountInteractionsButton : InteractionModuleBase<SocketInteractionContext<SocketMessageComponent>>
         {
             /// <summary>
             ///     Logger.

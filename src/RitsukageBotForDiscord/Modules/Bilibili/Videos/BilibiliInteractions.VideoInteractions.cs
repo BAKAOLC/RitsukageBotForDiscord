@@ -36,7 +36,8 @@ namespace RitsukageBot.Modules.Bilibili
         /// <summary>
         ///     Bilibili video operations.
         /// </summary>
-        public partial class VideoInteractionsButton : InteractionModuleBase<SocketInteractionContext<SocketMessageComponent>>
+        public partial class
+            VideoInteractionsButton : InteractionModuleBase<SocketInteractionContext<SocketMessageComponent>>
         {
             /// <summary>
             ///     Logger.

@@ -92,7 +92,8 @@ namespace RitsukageBot.Modules
 
             if (!success || image is null)
             {
-                await FollowupAsync(string.IsNullOrEmpty(message) ? "Failed to download image" : message).ConfigureAwait(false);
+                await FollowupAsync(string.IsNullOrEmpty(message) ? "Failed to download image" : message)
+                    .ConfigureAwait(false);
                 return;
             }
 
@@ -112,7 +113,8 @@ namespace RitsukageBot.Modules
             imageStream.Seek(0, SeekOrigin.Begin);
             image.Dispose();
 
-            await FollowupWithFileAsync(imageStream, fileName, components: GetOperationMenus().Build()).ConfigureAwait(false);
+            await FollowupWithFileAsync(imageStream, fileName, components: GetOperationMenus().Build())
+                .ConfigureAwait(false);
         }
 
         #region Helper methods
@@ -133,16 +135,10 @@ namespace RitsukageBot.Modules
                 case > 4:
                 {
                     var row1 = new ActionRowBuilder();
-                    for (var i = 0; i < 4; i++)
-                    {
-                        row1.WithButton(interactions[i].AsButtonBuilder());
-                    }
+                    for (var i = 0; i < 4; i++) row1.WithButton(interactions[i].AsButtonBuilder());
 
                     var row2 = new ActionRowBuilder();
-                    for (var i = 4; i < interactions.Length; i++)
-                    {
-                        row2.WithButton(interactions[i].AsButtonBuilder());
-                    }
+                    for (var i = 4; i < interactions.Length; i++) row2.WithButton(interactions[i].AsButtonBuilder());
 
                     builder.AddRow(row1);
                     builder.AddRow(row2);
@@ -151,10 +147,7 @@ namespace RitsukageBot.Modules
                 case > 0:
                 {
                     var row = new ActionRowBuilder();
-                    foreach (var interaction in interactions)
-                    {
-                        row.WithButton(interaction.AsButtonBuilder());
-                    }
+                    foreach (var interaction in interactions) row.WithButton(interaction.AsButtonBuilder());
 
                     builder.AddRow(row);
                     break;
@@ -162,15 +155,9 @@ namespace RitsukageBot.Modules
             }
 
             var operationRow = new ActionRowBuilder();
-            if (hasLastPage)
-            {
-                operationRow.WithButton(LastPageInteraction.AsButtonBuilder());
-            }
+            if (hasLastPage) operationRow.WithButton(LastPageInteraction.AsButtonBuilder());
 
-            if (hasNextPage)
-            {
-                operationRow.WithButton(NextPageInteraction.AsButtonBuilder());
-            }
+            if (hasNextPage) operationRow.WithButton(NextPageInteraction.AsButtonBuilder());
 
             operationRow.WithButton(CancelInteraction.AsButtonBuilder());
             operationRow.WithButton(CancelAndPublishInteraction.AsButtonBuilder());
@@ -186,7 +173,11 @@ namespace RitsukageBot.Modules
         /// <param name="CustomId"></param>
         /// <param name="ButtonStyle"></param>
         /// <param name="Emote"></param>
-        public readonly record struct AllowedInteraction(string Label, string CustomId, ButtonStyle? ButtonStyle = null, IEmote? Emote = null)
+        public readonly record struct AllowedInteraction(
+            string Label,
+            string CustomId,
+            ButtonStyle? ButtonStyle = null,
+            IEmote? Emote = null)
         {
             /// <summary>
             ///     Label
@@ -218,10 +209,7 @@ namespace RitsukageBot.Modules
                 var builder = new ButtonBuilder().WithLabel(Label).WithCustomId(CustomId);
                 builder.WithStyle(ButtonStyle ?? Discord.ButtonStyle.Primary);
 
-                if (Emote is not null)
-                {
-                    builder.WithEmote(Emote);
-                }
+                if (Emote is not null) builder.WithEmote(Emote);
 
                 builder.WithDisabled(disabled);
                 return builder;
@@ -388,10 +376,7 @@ namespace RitsukageBot.Modules
         private async Task<Image<Rgba32>?> GetImage()
         {
             var attachment = Context.Interaction.Message.Attachments.FirstOrDefault();
-            if (attachment is null)
-            {
-                return null;
-            }
+            if (attachment is null) return null;
 
             Image<Rgba32>? image = null;
             try
@@ -440,7 +425,9 @@ namespace RitsukageBot.Modules
             imageStream.Seek(0, SeekOrigin.Begin);
             image.Dispose();
 
-            await Context.Interaction.UpdateAsync(x => x.Attachments = new List<FileAttachment> { new(imageStream, fileName) }).ConfigureAwait(false);
+            await Context.Interaction
+                .UpdateAsync(x => x.Attachments = new List<FileAttachment> { new(imageStream, fileName) })
+                .ConfigureAwait(false);
         }
 
         private Task TriggerProcess<T>() where T : IProcessStep<Rgba32>, new()
@@ -451,10 +438,7 @@ namespace RitsukageBot.Modules
         private async Task TriggerProcess<T>(T processStep) where T : IProcessStep<Rgba32>
         {
             var image = await GetImage().ConfigureAwait(false);
-            if (image is null)
-            {
-                return;
-            }
+            if (image is null) return;
 
             var processor = new ImageProcessor<Rgba32>(image);
             processor.AddProcessStep(processStep);
@@ -506,12 +490,14 @@ namespace RitsukageBot.Modules
             var firstComponent = Context.Interaction.Message.Components?.FirstOrDefault()?.Components?.FirstOrDefault();
             if (firstComponent is not null)
             {
-                var componentInteraction = ImageInteractions.AllowedInteractions.FirstOrDefault(x => x.CustomId == firstComponent.CustomId);
+                var componentInteraction =
+                    ImageInteractions.AllowedInteractions.FirstOrDefault(x => x.CustomId == firstComponent.CustomId);
                 if (componentInteraction.CustomId is not null)
                 {
                     var index = Array.IndexOf(ImageInteractions.AllowedInteractions, componentInteraction);
                     var page = index / 8 - 1;
-                    await FollowupAsync(components: ImageInteractions.GetOperationMenus(page).Build()).ConfigureAwait(false);
+                    await FollowupAsync(components: ImageInteractions.GetOperationMenus(page).Build())
+                        .ConfigureAwait(false);
                 }
             }
         }
@@ -525,12 +511,14 @@ namespace RitsukageBot.Modules
             var firstComponent = Context.Interaction.Message.Components?.FirstOrDefault()?.Components?.FirstOrDefault();
             if (firstComponent is not null)
             {
-                var componentInteraction = ImageInteractions.AllowedInteractions.FirstOrDefault(x => x.CustomId == firstComponent.CustomId);
+                var componentInteraction =
+                    ImageInteractions.AllowedInteractions.FirstOrDefault(x => x.CustomId == firstComponent.CustomId);
                 if (componentInteraction.CustomId is not null)
                 {
                     var index = Array.IndexOf(ImageInteractions.AllowedInteractions, componentInteraction);
                     var page = index / 8 + 1;
-                    await FollowupAsync(components: ImageInteractions.GetOperationMenus(page).Build()).ConfigureAwait(false);
+                    await FollowupAsync(components: ImageInteractions.GetOperationMenus(page).Build())
+                        .ConfigureAwait(false);
                 }
             }
         }

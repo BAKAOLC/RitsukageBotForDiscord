@@ -9,7 +9,8 @@ using RitsukageBot.Services.HostedServices;
 
 namespace RitsukageBot.Library.Modules.ModuleSupports
 {
-    internal sealed class ScriptingModuleSupport(DiscordBotService discordBotService, IServiceProvider services) : IDiscordBotModule
+    internal sealed class ScriptingModuleSupport(DiscordBotService discordBotService, IServiceProvider services)
+        : IDiscordBotModule
     {
         public const string TagScriptModulePath = "ModuleScripts";
         public const string TagCommandModulePath = "Commands";
@@ -33,7 +34,8 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
             typeof(InteractionModuleBase<SocketInteractionContext<SocketMessageComponent>>),
         ];
 
-        private readonly ILogger<ScriptingModuleSupport> _logger = services.GetRequiredService<ILogger<ScriptingModuleSupport>>();
+        private readonly ILogger<ScriptingModuleSupport> _logger =
+            services.GetRequiredService<ILogger<ScriptingModuleSupport>>();
 
         public async Task InitAsync()
         {
@@ -82,14 +84,14 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
                     if (diagnostics.Any())
                     {
                         foreach (var diagnostic in diagnostics)
-                        {
-                            _logger.LogError("[{tag}][{source}] {diagnostic}", TagCommandModulePath, directoryName, diagnostic);
-                        }
+                            _logger.LogError("[{tag}][{source}] {diagnostic}", TagCommandModulePath, directoryName,
+                                diagnostic);
 
                         continue;
                     }
 
-                    var commandModuleBaseType = assemblyInfo.Assembly.GetTypes().Where(x => x.BaseType != null && _commandModuleSupportBaseType.Contains(x.BaseType)).ToArray();
+                    var commandModuleBaseType = assemblyInfo.Assembly.GetTypes().Where(x =>
+                        x.BaseType != null && _commandModuleSupportBaseType.Contains(x.BaseType)).ToArray();
                     if (commandModuleBaseType.Length == 0)
                     {
                         _logger.LogError("Failed to find command module base type: {directory}", directoryName);
@@ -110,9 +112,8 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
                 catch (CompilationErrorException ex)
                 {
                     foreach (var diagnostic in ex.Diagnostics)
-                    {
-                        _logger.LogError("[{tag}][{source}] {diagnostic}", TagCommandModulePath, directoryName, diagnostic);
-                    }
+                        _logger.LogError("[{tag}][{source}] {diagnostic}", TagCommandModulePath, directoryName,
+                            diagnostic);
 
                     _logger.LogError(ex, "Failed to load command module: {directory}", directoryName);
                 }
@@ -122,7 +123,8 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
                 }
             }
 
-            foreach (var directory in Directory.GetDirectories(Path.Combine(TagScriptModulePath, TagInteractionModulePath)))
+            foreach (var directory in Directory.GetDirectories(Path.Combine(TagScriptModulePath,
+                         TagInteractionModulePath)))
             {
                 var directoryName = Path.GetFileName(directory);
                 var scriptFile = Path.Combine(directory, $"{directoryName}.cs");
@@ -135,14 +137,14 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
                     if (diagnostics.Any())
                     {
                         foreach (var diagnostic in diagnostics)
-                        {
-                            _logger.LogError("[{tag}][{source}] {diagnostic}", TagInteractionModulePath, directoryName, diagnostic);
-                        }
+                            _logger.LogError("[{tag}][{source}] {diagnostic}", TagInteractionModulePath, directoryName,
+                                diagnostic);
 
                         continue;
                     }
 
-                    var interactionModuleBaseType = assemblyInfo.Assembly.GetTypes().Where(x => x.BaseType != null && _interactionModuleSupportBaseType.Contains(x.BaseType)).ToArray();
+                    var interactionModuleBaseType = assemblyInfo.Assembly.GetTypes().Where(x =>
+                        x.BaseType != null && _interactionModuleSupportBaseType.Contains(x.BaseType)).ToArray();
                     if (interactionModuleBaseType.Length == 0)
                     {
                         _logger.LogError("Failed to find interaction module base type: {directory}", directoryName);
@@ -163,9 +165,8 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
                 catch (CompilationErrorException ex)
                 {
                     foreach (var diagnostic in ex.Diagnostics)
-                    {
-                        _logger.LogError("[{tag}][{source}] {diagnostic}", TagCommandModulePath, directoryName, diagnostic);
-                    }
+                        _logger.LogError("[{tag}][{source}] {diagnostic}", TagCommandModulePath, directoryName,
+                            diagnostic);
 
                     _logger.LogError(ex, "Failed to load command module: {directory}", directoryName);
                 }

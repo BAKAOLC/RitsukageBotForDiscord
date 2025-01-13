@@ -17,9 +17,16 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Authorizers
     /// <param name="localCookiesResolver"></param>
     /// <param name="localTokenResolver"></param>
     /// <param name="basicAuthenticator"></param>
-    public sealed class TvAuthenticationService(BiliHttpClient biliHttpClient, IQRCodeResolver qrCodeResolver, IBiliCookiesResolver localCookiesResolver, IBiliTokenResolver localTokenResolver, BiliAuthenticator basicAuthenticator) : IAuthenticationService
+    public sealed class TvAuthenticationService(
+        BiliHttpClient biliHttpClient,
+        IQRCodeResolver qrCodeResolver,
+        IBiliCookiesResolver localCookiesResolver,
+        IBiliTokenResolver localTokenResolver,
+        BiliAuthenticator basicAuthenticator) : IAuthenticationService
     {
-        private readonly OriginalAuthenticationService _originalAuthenticationService = new(biliHttpClient, qrCodeResolver, localCookiesResolver, localTokenResolver, basicAuthenticator);
+        private readonly OriginalAuthenticationService _originalAuthenticationService = new(biliHttpClient,
+            qrCodeResolver, localCookiesResolver, localTokenResolver, basicAuthenticator);
+
         private TVQRCode? _qrCode;
         private byte[]? _qrCodeImage;
 
@@ -29,14 +36,12 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Authorizers
         /// <param name="settings"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task SignInAsync(AuthorizeExecutionSettings? settings = null, CancellationToken cancellationToken = default)
+        public async Task SignInAsync(AuthorizeExecutionSettings? settings = null,
+            CancellationToken cancellationToken = default)
         {
             var client = GetClient();
             _qrCode = await GetQrCode(client, cancellationToken);
-            if (string.IsNullOrEmpty(_qrCode.Url))
-            {
-                throw new("Cannot get the QR code URL.");
-            }
+            if (string.IsNullOrEmpty(_qrCode.Url)) throw new("Cannot get the QR code URL.");
 
             var qrCodeGenerator = new QRCodeGenerator();
             var data = qrCodeGenerator.CreateQrCode(_qrCode.Url, QRCodeGenerator.ECCLevel.Q);
@@ -92,18 +97,25 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Authorizers
         public Task WaitQrCodeScanAsync(TVQRCode qrCode, CancellationToken cancellationToken = default)
         {
             var client = GetClient();
-            return client.GetType().GetMethod("WaitQRCodeScanAsync")?.Invoke(client, [qrCode, cancellationToken]) as Task ?? throw new NullReferenceException("Cannot get the method.");
+            return client.GetType().GetMethod("WaitQRCodeScanAsync")
+                       ?.Invoke(client, [qrCode, cancellationToken]) as Task ??
+                   throw new NullReferenceException("Cannot get the method.");
         }
 
         private object GetClient()
         {
-            return _originalAuthenticationService.GetType().GetField("_client", BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(_originalAuthenticationService) ?? throw new NullReferenceException("Cannot get the client.");
+            return _originalAuthenticationService.GetType()
+                       .GetField("_client", BindingFlags.NonPublic | BindingFlags.Instance)
+                       ?.GetValue(_originalAuthenticationService) ??
+                   throw new NullReferenceException("Cannot get the client.");
         }
 
         private static Task<TVQRCode> GetQrCode(object client, CancellationToken cancellationToken)
         {
-            var method = client.GetType().GetMethod("GetQRCodeAsync", BindingFlags.Public | BindingFlags.Instance) ?? throw new NullReferenceException($"Cannot get the method {nameof(GetQrCode)}.");
-            return method.Invoke(client, [cancellationToken]) as Task<TVQRCode> ?? throw new NullReferenceException("Cannot get the result.");
+            var method = client.GetType().GetMethod("GetQRCodeAsync", BindingFlags.Public | BindingFlags.Instance) ??
+                         throw new NullReferenceException($"Cannot get the method {nameof(GetQrCode)}.");
+            return method.Invoke(client, [cancellationToken]) as Task<TVQRCode> ??
+                   throw new NullReferenceException("Cannot get the result.");
         }
     }
 }
