@@ -54,7 +54,10 @@ namespace RitsukageBot.Library.Modules
 
         private Task ClientOnGuildJoinRequestDeleted(Cacheable<SocketGuildUser, ulong> arg1, SocketGuild arg2)
         {
-            _logger.LogInformation("Guild {Guild}({GuildId} deleted a join request. (User: {User}({UserId})", arg2, arg2.Id, arg1.Value, arg1.Value.Id);
+            if (arg1.HasValue)
+                _logger.LogInformation("Guild {Guild}({GuildId} deleted a join request. (User: {User}({UserId})", arg2, arg2.Id, arg1.Value, arg1.Value.Id);
+            else
+                _logger.LogInformation("Guild {Guild}({GuildId} deleted a join request. (User: (Unknown))", arg2, arg2.Id);
             return Task.CompletedTask;
         }
 
@@ -77,29 +80,47 @@ namespace RitsukageBot.Library.Modules
         private Task ClientOnMessageUpdated(Cacheable<IMessage, ulong> arg1, SocketMessage arg2, ISocketMessageChannel arg3)
         {
             if (arg3 is SocketGuildChannel guildChannel)
-                _logger.LogInformation("[Message-Updated] [{Guild}({GuildId})] [{Channel}({ChannelID})] {User}({UserId}): {Content} -> {NewContent}", guildChannel.Guild, guildChannel.Guild.Id, arg3, arg3.Id, arg2.Author, arg2.Author.Id, arg2.Content, arg2.Content);
+            {
+                if (arg1.HasValue)
+                    _logger.LogInformation("[Message-Updated] [{Guild}({GuildId})] [{Channel}({ChannelID})] {User}({UserId}): {Content} -> {NewContent}", guildChannel.Guild, guildChannel.Guild.Id, arg3, arg3.Id, arg2.Author, arg2.Author.Id, arg1.Value.Content, arg2.Content);
+                else
+                    _logger.LogInformation("[Message-Updated] [{Guild}({GuildId})] [{Channel}({ChannelID})] {User}({UserId}): (Unknown) -> {NewContent}", guildChannel.Guild, guildChannel.Guild.Id, arg3, arg3.Id, arg2.Author, arg2.Author.Id, arg2.Content);
+            }
             else
-                _logger.LogInformation("[Message-Updated] [{Channel}({ChannelID})] {User}({UserId}): {Content} -> {NewContent}", arg3, arg3.Id, arg2.Author, arg2.Author.Id, arg2.Content, arg2.Content);
+            {
+                if (arg1.HasValue)
+                    _logger.LogInformation("[Message-Updated] [{Channel}({ChannelID})] {User}({UserId}): {Content} -> {NewContent}", arg3, arg3.Id, arg2.Author, arg2.Author.Id, arg2.Content, arg2.Content);
+                else
+                    _logger.LogInformation("[Message-Updated] [{Channel}({ChannelID})] {User}({UserId}): (Unknown) -> {NewContent}", arg3, arg3.Id, arg2.Author, arg2.Author.Id, arg2.Content);
+            }
+
             return Task.CompletedTask;
         }
 
         private Task ClientOnMessageDeleted(Cacheable<IMessage, ulong> arg1, Cacheable<IMessageChannel, ulong> arg2)
         {
             if (arg2.Value is SocketGuildChannel guildChannel)
-                _logger.LogInformation("[Message-Deleted] [{Guild}({GuildId})] [{Channel}({ChannelID})] {User}({UserId}): {Content}", guildChannel.Guild, guildChannel.Guild.Id, arg2.Value, arg2.Value.Id, arg1.Value.Author, arg1.Value.Author.Id, arg1.Value.Content);
+            {
+                if (arg1.HasValue)
+                    _logger.LogInformation("[Message-Deleted] [{Guild}({GuildId})] [{Channel}({ChannelID})] {User}({UserId}): {Content}", guildChannel.Guild, guildChannel.Guild.Id, arg2.Value, arg2.Value.Id, arg1.Value.Author, arg1.Value.Author.Id, arg1.Value.Content);
+                else
+                    _logger.LogInformation("[Message-Deleted] [{Guild}({GuildId})] [{Channel}({ChannelID})] (Unknown)", guildChannel.Guild, guildChannel.Guild.Id, arg2.Value, arg2.Value.Id);
+            }
             else
-                _logger.LogInformation("[Message-Deleted] [{Channel}({ChannelID})] {User}({UserId}): {Content}", arg2.Value, arg2.Value.Id, arg1.Value.Author, arg1.Value.Author.Id, arg1.Value.Content);
+            {
+                if (arg1.HasValue)
+                    _logger.LogInformation("[Message-Deleted] [{Channel}({ChannelID})] {User}({UserId}): {Content}", arg2.Value, arg2.Value.Id, arg1.Value.Author, arg1.Value.Author.Id, arg1.Value.Content);
+                else
+                    _logger.LogInformation("[Message-Deleted] [{Channel}({ChannelID})] (Unknown)", arg2.Value, arg2.Value.Id);
+            }
+
             return Task.CompletedTask;
         }
 
-        private Task ClientOnMessagesBulkDeleted(IReadOnlyCollection<Cacheable<IMessage, ulong>> arg1, Cacheable<IMessageChannel, ulong> arg2)
+        private async Task ClientOnMessagesBulkDeleted(IReadOnlyCollection<Cacheable<IMessage, ulong>> arg1, Cacheable<IMessageChannel, ulong> arg2)
         {
             foreach (var message in arg1)
-                if (arg2.Value is SocketGuildChannel guildChannel)
-                    _logger.LogInformation("[Message-Deleted] [{Guild}({GuildId})] [{Channel}({ChannelID})] {User}({UserId}): {Content}", guildChannel.Guild, guildChannel.Guild.Id, arg2.Value, arg2.Value.Id, message.Value.Author, message.Value.Author.Id, message.Value.Content);
-                else
-                    _logger.LogInformation("[Message-Deleted] [{Channel}({ChannelID})] {User}({UserId}): {Content}", arg2.Value, arg2.Value.Id, message.Value.Author, message.Value.Author.Id, message.Value.Content);
-            return Task.CompletedTask;
+                await ClientOnMessageDeleted(message, arg2).ConfigureAwait(false);
         }
 
         private Task ClientOnUserBanned(SocketUser arg1, SocketGuild arg2)
