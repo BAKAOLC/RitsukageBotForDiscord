@@ -48,67 +48,80 @@ namespace RitsukageBot.Library.Modules
 
         private Task ClientOnAuditLogCreated(SocketAuditLogEntry arg1, SocketGuild arg2)
         {
-            _logger.LogInformation("Guild {Guild} created an audit log. (User: {User}, Action: {Action}, Reason: {Reason})", arg2, arg1.User, arg1.Action, arg1.Reason);
+            _logger.LogInformation("Guild {Guild}({GuildId}) created an audit log. (User: {User}({UserId}), Action: {Action}, Reason: {Reason})", arg2, arg2.Id, arg1.User, arg1.User?.Id, arg1.Action, arg1.Reason);
             return Task.CompletedTask;
         }
 
         private Task ClientOnGuildJoinRequestDeleted(Cacheable<SocketGuildUser, ulong> arg1, SocketGuild arg2)
         {
-            _logger.LogInformation("Guild {Guild} deleted a join request. (User: {User})", arg2, arg1.Value);
+            _logger.LogInformation("Guild {Guild}({GuildId} deleted a join request. (User: {User}({UserId})", arg2, arg2.Id, arg1.Value, arg1.Value.Id);
             return Task.CompletedTask;
         }
 
         private Task ClientOnJoinedGuild(SocketGuild arg)
         {
-            _logger.LogInformation("Joined guild {Guild}.", arg);
+            _logger.LogInformation("Joined guild {Guild}({GuildId}).", arg, arg.Id);
             return Task.CompletedTask;
         }
 
         private Task ClientOnMessageReceived(SocketMessage arg)
         {
-            _logger.LogInformation("[Message-Received] [{Channel}] {User}: {Content}", arg.Channel, arg.Author, arg.Content);
+            if (arg.Channel is SocketGuildChannel guildChannel)
+                _logger.LogInformation("[Message-Received] [{Guild}({GuildId})] [{Channel}({ChannelID})] {User}({UserId}): {Content}", guildChannel.Guild, guildChannel.Guild.Id, arg.Channel, arg.Channel.Id, arg.Author, arg.Author.Id, arg.Content);
+            else
+                _logger.LogInformation("[Message-Received] [{Channel}({ChannelID})] {User}({UserId}): {Content}", arg.Channel, arg.Channel.Id, arg.Author, arg.Author.Id, arg.Content);
             return Task.CompletedTask;
         }
 
         private Task ClientOnMessageUpdated(Cacheable<IMessage, ulong> arg1, SocketMessage arg2, ISocketMessageChannel arg3)
         {
-            _logger.LogInformation("[Message-Updated] [{Channel}] {User}: {Content} -> {NewContent}", arg3, arg2.Author, arg1.Value.Content, arg2.Content);
+            if (arg3 is SocketGuildChannel guildChannel)
+                _logger.LogInformation("[Message-Updated] [{Guild}({GuildId})] [{Channel}({ChannelID})] {User}({UserId}): {Content} -> {NewContent}", guildChannel.Guild, guildChannel.Guild.Id, arg3, arg3.Id, arg2.Author, arg2.Author.Id, arg2.Content, arg2.Content);
+            else
+                _logger.LogInformation("[Message-Updated] [{Channel}({ChannelID})] {User}({UserId}): {Content} -> {NewContent}", arg3, arg3.Id, arg2.Author, arg2.Author.Id, arg2.Content, arg2.Content);
             return Task.CompletedTask;
         }
 
         private Task ClientOnMessageDeleted(Cacheable<IMessage, ulong> arg1, Cacheable<IMessageChannel, ulong> arg2)
         {
-            _logger.LogInformation("[Message-Deleted] [{Channel}] {User}: {Content}", arg2.Value, arg1.Value.Author, arg1.Value.Content);
+            if (arg2.Value is SocketGuildChannel guildChannel)
+                _logger.LogInformation("[Message-Deleted] [{Guild}({GuildId})] [{Channel}({ChannelID})] {User}({UserId}): {Content}", guildChannel.Guild, guildChannel.Guild.Id, arg2.Value, arg2.Value.Id, arg1.Value.Author, arg1.Value.Author.Id, arg1.Value.Content);
+            else
+                _logger.LogInformation("[Message-Deleted] [{Channel}({ChannelID})] {User}({UserId}): {Content}", arg2.Value, arg2.Value.Id, arg1.Value.Author, arg1.Value.Author.Id, arg1.Value.Content);
             return Task.CompletedTask;
         }
 
         private Task ClientOnMessagesBulkDeleted(IReadOnlyCollection<Cacheable<IMessage, ulong>> arg1, Cacheable<IMessageChannel, ulong> arg2)
         {
-            foreach (var message in arg1) _logger.LogInformation("[Message-Deleted] [{Channel}] {User}: {Content}", arg2.Value, message.Value.Author, message.Value.Content);
+            foreach (var message in arg1)
+                if (arg2.Value is SocketGuildChannel guildChannel)
+                    _logger.LogInformation("[Message-Deleted] [{Guild}({GuildId})] [{Channel}({ChannelID})] {User}({UserId}): {Content}", guildChannel.Guild, guildChannel.Guild.Id, arg2.Value, arg2.Value.Id, message.Value.Author, message.Value.Author.Id, message.Value.Content);
+                else
+                    _logger.LogInformation("[Message-Deleted] [{Channel}({ChannelID})] {User}({UserId}): {Content}", arg2.Value, arg2.Value.Id, message.Value.Author, message.Value.Author.Id, message.Value.Content);
             return Task.CompletedTask;
         }
 
         private Task ClientOnUserBanned(SocketUser arg1, SocketGuild arg2)
         {
-            _logger.LogInformation("User {User} banned from guild {Guild}.", arg1, arg2);
+            _logger.LogInformation("User {User}({UserId}) banned from guild {Guild}({GuildId}).", arg1, arg1.Id, arg2, arg2.Id);
             return Task.CompletedTask;
         }
 
         private Task ClientOnUserJoined(SocketGuildUser arg)
         {
-            _logger.LogInformation("User {User} joined guild {Guild}.", arg, arg.Guild);
+            _logger.LogInformation("User {User}({UserId}) joined guild {Guild}({GuildId}).", arg, arg.Id, arg.Guild, arg.Guild.Id);
             return Task.CompletedTask;
         }
 
         private Task ClientOnUserLeft(SocketGuild arg1, SocketUser arg2)
         {
-            _logger.LogInformation("User {User} left guild {Guild}.", arg2, arg1);
+            _logger.LogInformation("User {User}({UserId}) left guild {Guild}({GuildId}).", arg2, arg2.Id, arg1, arg1.Id);
             return Task.CompletedTask;
         }
 
         private Task ClientOnUserUnbanned(SocketUser arg1, SocketGuild arg2)
         {
-            _logger.LogInformation("User {User} unbanned from guild {Guild}.", arg1, arg2);
+            _logger.LogInformation("User {User}({UserId}) unbanned from guild {Guild}({GuildId}).", arg1, arg1.Id, arg2, arg2.Id);
             return Task.CompletedTask;
         }
 
