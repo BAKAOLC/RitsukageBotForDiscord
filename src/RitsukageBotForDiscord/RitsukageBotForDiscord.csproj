@@ -52,6 +52,7 @@
 		<PackageReference Include="NLog.Extensions.Logging" Version="5.3.15" />
 		<PackageReference Include="SixLabors.ImageSharp" Version="3.1.6" />
 		<PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.5" />
+		<PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -77,10 +78,6 @@
 		<ProjectReference Include="..\bili-kernel\src\Services\Services.Moment\Services.Moment.csproj" />
 		<ProjectReference Include="..\bili-kernel\src\Services\Services.Search\Services.Search.csproj" />
 		<ProjectReference Include="..\bili-kernel\src\Services\Services.User\Services.User.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="Library\Data\" />
 	</ItemGroup>
 
 </Project>
