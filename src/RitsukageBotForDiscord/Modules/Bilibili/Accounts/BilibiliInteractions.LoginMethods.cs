@@ -1,9 +1,9 @@
-using System.Globalization;
 using Discord;
 using Discord.Interactions;
 using Richasy.BiliKernel.Bili.Authorization;
 using Richasy.BiliKernel.Bili.User;
 using RitsukageBot.Library.Bilibili.BiliKernelModules.Authorizers;
+using RitsukageBot.Library.Bilibili.DiscordBridges;
 
 namespace RitsukageBot.Modules.Bilibili
 {
@@ -56,35 +56,9 @@ namespace RitsukageBot.Modules.Bilibili
                 var myInfo = await profileService.GetMyProfileAsync().ConfigureAwait(false);
                 var myCommunityInfo = await profileService.GetMyCommunityInformationAsync().ConfigureAwait(false);
 
-                var embed = new EmbedBuilder();
+                var embed = InformationEmbedBuilder.BuildMyInfo(myInfo, myCommunityInfo);
                 embed.WithColor(Color.Green);
                 embed.WithTitle("Bilibili Login Info");
-                if (myInfo.User.Avatar is not null) embed.WithThumbnailUrl(myInfo.User.Avatar.SourceUri.ToString());
-                embed.AddField("Username", myInfo.User.Name);
-                embed.AddField("UID", myInfo.User.Id);
-                if (myInfo.Level.HasValue) embed.AddField("Level", myInfo.Level);
-                embed.AddField("Is Hardcore", myInfo.IsHardcore ?? false);
-                embed.AddField("Is Vip", myInfo.IsVip ?? false);
-                if (!string.IsNullOrWhiteSpace(myInfo.Introduce))
-                    embed.WithDescription(myInfo.Introduce);
-
-                embed.AddField("Coins",
-                    myCommunityInfo.CoinCount.HasValue
-                        ? myCommunityInfo.CoinCount.Value.ToString(CultureInfo.CurrentCulture)
-                        : "Unknown");
-                embed.AddField("Follows",
-                    myCommunityInfo.FollowCount.HasValue
-                        ? myCommunityInfo.FollowCount.Value.ToString(CultureInfo.CurrentCulture)
-                        : "Unknown");
-                embed.AddField("Fans",
-                    myCommunityInfo.FansCount.HasValue
-                        ? myCommunityInfo.FansCount.Value.ToString(CultureInfo.CurrentCulture)
-                        : "Unknown");
-                embed.AddField("Moments",
-                    myCommunityInfo.MomentCount.HasValue
-                        ? myCommunityInfo.MomentCount.Value.ToString(CultureInfo.CurrentCulture)
-                        : "Unknown");
-
                 return embed;
             }
 
