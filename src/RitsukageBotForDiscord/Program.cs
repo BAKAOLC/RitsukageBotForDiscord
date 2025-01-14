@@ -3,7 +3,6 @@ using Discord;
 using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -34,25 +33,6 @@ using var host = Host.CreateDefaultBuilder()
         services.AddOptions();
         services.AddHttpClient().ConfigureHttpClientDefaults(x =>
             x.ConfigureHttpClient(y => y.DefaultRequestHeaders.Add("User-Agent", UserAgent.Default)));
-        services.AddDbContext<DbContext>(builder =>
-        {
-            var provider = context.Configuration.GetValue<string>("DatabaseProvider");
-            if (string.IsNullOrEmpty(provider)) throw new InvalidOperationException("DatabaseProvider is not set.");
-
-            var connectionString = context.Configuration.GetConnectionString("DefaultConnection");
-            if (string.IsNullOrEmpty(connectionString))
-                throw new InvalidOperationException("DefaultConnection is not set.");
-
-            switch (provider.ToLower())
-            {
-                case "sqlite":
-                    builder.UseSqlite(connectionString);
-                    break;
-                default:
-                    builder.UseSqlServer(connectionString);
-                    break;
-            }
-        });
         services.AddCacheStack(builder =>
         {
             var provider = context.Configuration.GetSection("Cache").Get<CacheOption>();
