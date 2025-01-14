@@ -2,7 +2,6 @@ using System.Reflection;
 using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using RitsukageBot.Services.HostedServices;
 
 namespace RitsukageBot.Library.Modules.ModuleSupports
@@ -12,9 +11,6 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
     {
         private readonly DiscordSocketClient _client = services.GetRequiredService<DiscordSocketClient>();
         private readonly CommandService _command = services.GetRequiredService<CommandService>();
-
-        private readonly ILogger<CommandModuleSupport> _logger =
-            services.GetRequiredService<ILogger<CommandModuleSupport>>();
 
         public void Dispose()
         {
@@ -48,8 +44,6 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
             var argPos = 0;
             if (!message.HasCharPrefix('!', ref argPos) || message.Author.IsBot) return Task.CompletedTask;
             var context = new SocketCommandContext(_client, message);
-            _logger.LogInformation("User {UserId} executed command {Command}", context.User.Id,
-                context.Message.Content);
             return _command.ExecuteAsync(context, argPos, services);
         }
 

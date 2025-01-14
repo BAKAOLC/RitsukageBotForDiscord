@@ -8,14 +8,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using NLog;
 using NLog.Extensions.Logging;
-using NLog.Targets;
 using RitsukageBot.Library.Networking;
 using RitsukageBot.Options;
 using RitsukageBot.Services.HostedServices;
 using RitsukageBot.Services.Providers;
-using LogLevel = NLog.LogLevel;
 using RunMode = Discord.Commands.RunMode;
 
 Console.Title = "Ritsukage Bot";
@@ -82,6 +79,11 @@ using var host = Host.CreateDefaultBuilder()
         {
             LogLevel = LogSeverity.Info,
             MessageCacheSize = 100,
+            GatewayIntents = GatewayIntents.All
+                             // Current bot does not need these intents:
+                             & ~GatewayIntents.GuildPresences
+                             & ~GatewayIntents.GuildScheduledEvents
+                             & ~GatewayIntents.GuildInvites,
         });
         services.AddSingleton<DiscordSocketClient>();
         services.AddSingleton<CommandServiceConfig>(_ => new()
@@ -102,12 +104,6 @@ using var host = Host.CreateDefaultBuilder()
         services.AddSingleton<BiliKernelProviderService>();
         services.AddHostedService<DiscordBotService>();
     }).Build();
-
-#if DEBUG
-foreach (var rule in LogManager.Configuration.LoggingRules)
-    if (rule.Targets.Any(x => x is ConsoleTarget or ColoredConsoleTarget))
-        rule.EnableLoggingForLevel(LogLevel.Debug);
-#endif
 
 var logger = host.Services.GetRequiredService<ILogger<Program>>();
 logger.LogInformation("Starting Ritsukage Bot...");
