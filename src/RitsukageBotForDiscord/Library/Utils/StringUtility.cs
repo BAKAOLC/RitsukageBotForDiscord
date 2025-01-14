@@ -88,15 +88,8 @@ namespace RitsukageBot.Library.Utils
             if (string.IsNullOrEmpty(value))
                 return string.Empty;
 
-            var result = new StringBuilder();
-            var x2 = toUpper ? "%{0:X2}" : "%{0:x2}";
-            foreach (var symbol in Encoding.UTF8.GetBytes(value))
-                if (symbol is >= 0x20 and <= 0x7E)
-                    result.Append((char)symbol);
-                else
-                    result.AppendFormat(x2, symbol);
-
-            return result.ToString();
+            var encoded = HttpUtility.UrlEncode(value);
+            return toUpper ? encoded.ToUpper() : encoded;
         }
 
         /// <summary>

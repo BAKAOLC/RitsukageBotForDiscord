@@ -5,6 +5,7 @@ using Discord.Interactions;
 using Microsoft.Extensions.Logging;
 using Richasy.BiliKernel.Models.Media;
 using RitsukageBot.Library.Bilibili.Utils;
+using RitsukageBot.Library.Utils;
 
 namespace RitsukageBot.Modules.Bilibili
 {
@@ -15,7 +16,7 @@ namespace RitsukageBot.Modules.Bilibili
             private const string TextFormatVideoBvId = "[{0}](https://www.bilibili.com/video/{0}/)";
             private const string TextFormatVideoAvId = "[av{0}](https://www.bilibili.com/video/av{0}/)";
             private const string TextFormatAuthor = "[{0}](https://space.bilibili.com/{1})";
-            private const string TextFormatTag = "[{0}](https://search.bilibili.com/all?keyword={0})";
+            private const string TextFormatTag = "[{0}](https://search.bilibili.com/all?keyword={1})";
 
             private static readonly Regex MatchVideoIdRegex = GetMatchVideoIdRegex();
 
@@ -94,12 +95,11 @@ namespace RitsukageBot.Modules.Bilibili
                 if (detail.Information.Identifier.Cover is not null)
                     embed.WithImageUrl(detail.Information.Identifier.Cover.SourceUri.ToString());
 
-                var content = new StringBuilder();
-
                 // video id
-                content.AppendFormat(TextFormatVideoBvId, detail.Information.BvId);
-                content.Append("\u3000\u3000");
-                content.AppendFormat(TextFormatVideoAvId, detail.Information.Identifier.Id);
+                embed.AddField("BvId", string.Format(TextFormatVideoBvId, detail.Information.BvId), true);
+                embed.AddField("AvId", string.Format(TextFormatVideoAvId, detail.Information.Identifier.Id), true);
+
+                var content = new StringBuilder();
 
                 // author
                 {
@@ -111,85 +111,51 @@ namespace RitsukageBot.Modules.Bilibili
                     embed.WithAuthor(authorBuilder);
 
                     var multiAuthors = detail.Information.Collaborators is not null;
-                    content.AppendLine();
-                    content.AppendLine();
-                    content.Append(multiAuthors ? "Authors:" : "Author:");
-                    content.AppendLine();
-                    content.AppendFormat(TextFormatAuthor, detail.Information.Publisher.User.Name,
-                        detail.Information.Publisher.User.Id);
-
+                    var authors = new List<string>
+                    {
+                        string.Format(TextFormatAuthor, detail.Information.Publisher.User.Name,
+                            detail.Information.Publisher.User.Id),
+                    };
                     if (multiAuthors)
-                        foreach (var collaborator in detail.Information.Collaborators!)
-                            content.Append(',').Append(' ').AppendFormat(TextFormatAuthor, collaborator.User.Name,
-                                collaborator.User.Id);
+                        authors.AddRange(detail.Information.Collaborators!.Select(collaborator =>
+                            string.Format(TextFormatAuthor, collaborator.User.Name, collaborator.User.Id)));
+
+                    embed.AddField(multiAuthors ? "Authors" : "Author", string.Join(", ", authors));
                 }
 
                 // tags
-                if (detail.Tags is not null)
-                {
-                    content.AppendLine();
-                    content.AppendLine();
-                    content.Append("Tags:");
-                    content.AppendLine();
-                    content.Append(string.Join(", ",
-                        detail.Tags.Select(tag => string.Format(TextFormatTag, tag.Name))));
-                }
+                if (detail.Tags is not null) embed.AddField("Tags", string.Join(", ", detail.Tags.Select(tag => string.Format(TextFormatTag, tag.Name, tag.Name.UrlEncode()))));
 
                 // video parts
-                if (detail.Parts is not null)
+                if (detail.Parts is { Count: > 1 })
                 {
-                    content.AppendLine();
-                    content.AppendLine();
-                    content.Append("Parts:");
-                    for (var i = 0; i < detail.Parts.Count; i++)
-                    {
-                        var part = detail.Parts[i];
-                        content.AppendLine();
-                        content.Append('P');
-                        content.Append(i + 1);
-                        content.Append(") ");
-                        content.Append(part.Identifier.Title);
-                        content.Append("\u3000\u3000");
-                        content.Append(TimeSpan.FromSeconds(part.Duration).ToString(@"hh\:mm\:ss"));
-                    }
+                    embed.AddField("Parts", string.Join("\n", detail.Parts.Select((part, i) => $"P{i + 1})\u3000{part.Identifier.Title}\n\u3000\u3000\u3000Duration: {TimeSpan.FromSeconds(part.Duration):hh\\:mm\\:ss}")));
+                    embed.AddField("Total Duration", TimeSpan.FromSeconds(detail.Information.Duration ?? 0).ToString(@"hh\:mm\:ss"));
                 }
-
-                content.AppendLine();
-                content.Append("Total Duration: ")
-                    .Append(TimeSpan.FromSeconds(detail.Information.Duration ?? 0).ToString(@"hh\:mm\:ss"));
+                else
+                {
+                    embed.AddField("Duration", TimeSpan.FromSeconds(detail.Information.Duration ?? 0).ToString(@"hh\:mm\:ss"));
+                }
 
                 // statistics
                 if (detail.Information.CommunityInformation is not null)
                 {
-                    content.AppendLine();
-                    content.AppendLine();
-                    content.Append("Statistics:");
-                    content.AppendLine();
-                    content.Append("Play: ").Append(detail.Information.CommunityInformation.PlayCount);
-                    content.Append("\u3000\u3000");
-                    content.Append("Danmaku: ").Append(detail.Information.CommunityInformation.DanmakuCount);
-                    content.Append("\u3000\u3000");
-                    content.Append("Reply: ").Append(detail.Information.CommunityInformation.CommentCount);
-                    content.Append("\u3000\u3000");
-                    content.Append("Favorite: ").Append(detail.Information.CommunityInformation.FavoriteCount);
-                    content.Append("\u3000\u3000");
-                    content.Append("Coin: ").Append(detail.Information.CommunityInformation.CoinCount);
-                    content.Append("\u3000\u3000");
-                    content.Append("Share: ").Append(detail.Information.CommunityInformation.ShareCount);
-                    content.Append("\u3000\u3000");
-                    content.Append("Like: ").Append(detail.Information.CommunityInformation.LikeCount);
+                    embed.AddField("Play", detail.Information.CommunityInformation.PlayCount, true);
+                    embed.AddField("Danmaku", detail.Information.CommunityInformation.DanmakuCount, true);
+                    embed.AddField("Reply", detail.Information.CommunityInformation.CommentCount, true);
+                    embed.AddField("Favorite", detail.Information.CommunityInformation.FavoriteCount, true);
+                    embed.AddField("Coin", detail.Information.CommunityInformation.CoinCount, true);
+                    embed.AddField("Share", detail.Information.CommunityInformation.ShareCount, true);
+                    embed.AddField("Like", detail.Information.CommunityInformation.LikeCount, true);
                 }
 
                 // description
                 var description = detail.Information.GetExtensionIfNotNull<string>(VideoExtensionDataId.Description);
-                if (!string.IsNullOrWhiteSpace(description))
-                {
-                    content.AppendLine();
-                    content.AppendLine();
-                    content.Append("Description:");
-                    content.AppendLine();
-                    content.Append(description);
-                }
+                if (!string.IsNullOrWhiteSpace(description)) embed.WithDescription(description);
+
+                // publish time
+                if (detail.Information.PublishTime is not null)
+                    embed.WithTimestamp(detail.Information.PublishTime.Value);
 
                 // footer
                 {
@@ -199,13 +165,7 @@ namespace RitsukageBot.Modules.Bilibili
                     embed.WithFooter(footerBuilder);
                 }
 
-                // publish time
-                if (detail.Information.PublishTime is not null)
-                    embed.WithTimestamp(detail.Information.PublishTime.Value);
-
-                content.AppendLine();
-                content.AppendLine();
-                content.Append($"https://www.bilibili.com/video/{detail.Information.BvId}/");
+                embed.WithUrl($"https://www.bilibili.com/video/{detail.Information.BvId}/");
                 embed.WithDescription(content.ToString());
                 return embed;
             }
