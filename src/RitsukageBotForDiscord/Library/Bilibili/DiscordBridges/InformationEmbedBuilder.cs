@@ -126,7 +126,7 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
 
             // description
             var description = detail.Information.GetExtensionIfNotNull<string>(VideoExtensionDataId.Description);
-            if (!string.IsNullOrWhiteSpace(description)) embed.WithDescription(description);
+            if (!string.IsNullOrWhiteSpace(description)) embed.WithDescription(description.Replace("&amp;", "&"));
 
             // publish time
             if (detail.Information.PublishTime is not null)
@@ -152,7 +152,7 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
                 embed.WithImageUrl(detail.Information.Identifier.Cover.SourceUri.ToString());
 
             var description = detail.Information.GetExtensionIfNotNull<string>(LiveExtensionDataId.Description);
-            if (!string.IsNullOrWhiteSpace(description)) embed.WithDescription(description);
+            if (!string.IsNullOrWhiteSpace(description)) embed.WithDescription(description.Replace("&amp;", "&"));
 
             // author
             var authorBuilder = new EmbedAuthorBuilder();
