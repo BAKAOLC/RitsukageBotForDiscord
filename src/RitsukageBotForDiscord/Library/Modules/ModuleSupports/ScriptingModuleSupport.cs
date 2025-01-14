@@ -67,7 +67,8 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
         {
             if (!Directory.Exists(TagScriptModulePath))
             {
-                _logger.LogDebug("Script module path not found: {path}", TagScriptModulePath);
+                _logger.LogWarning("Script module path not found: {path}", TagScriptModulePath);
+                _logger.LogWarning("Skip loading scripts.");
                 return;
             }
 

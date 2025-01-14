@@ -66,10 +66,11 @@ namespace RitsukageBot.Library.Modules
 
         private Task ClientOnMessageReceived(SocketMessage arg)
         {
+            var headTag = arg.Author.Id == _client.CurrentUser.Id ? "Message-Sent" : "Message-Received";
             if (arg.Channel is SocketGuildChannel guildChannel)
-                _logger.LogInformation("[Message-Received] [{Guild}({GuildId})] [{Channel}({ChannelID})] {User}({UserId}): {Content}", guildChannel.Guild, guildChannel.Guild.Id, arg.Channel, arg.Channel.Id, arg.Author, arg.Author.Id, arg.Content);
+                _logger.LogInformation("[{Tag}] [{Guild}({GuildId})] [{Channel}({ChannelID})] {User}({UserId}): {Content}", headTag, guildChannel.Guild, guildChannel.Guild.Id, arg.Channel, arg.Channel.Id, arg.Author, arg.Author.Id, arg.Content);
             else
-                _logger.LogInformation("[Message-Received] [{Channel}({ChannelID})] {User}({UserId}): {Content}", arg.Channel, arg.Channel.Id, arg.Author, arg.Author.Id, arg.Content);
+                _logger.LogInformation("[{Tag}] [{Channel}({ChannelID})] {User}({UserId}): {Content}", headTag, arg.Channel, arg.Channel.Id, arg.Author, arg.Author.Id, arg.Content);
             return Task.CompletedTask;
         }
 
