@@ -14,6 +14,7 @@ namespace RitsukageBot.Services.HostedServices
         private readonly DiscordSocketClient _client;
 
         private readonly DiscordEventLoggerModule _discordEventLoggerModule;
+        private readonly EventModuleSupport _eventModuleSupport;
         private readonly ILogger<DiscordBotService> _logger;
         private readonly ScriptingModuleSupport _scriptingModuleSupport;
         private readonly IServiceProvider _services;
@@ -28,14 +29,16 @@ namespace RitsukageBot.Services.HostedServices
             _client.Log += LogAsync;
             _discordEventLoggerModule = new(this, serviceProvider);
             _scriptingModuleSupport = new(this, serviceProvider);
+            _eventModuleSupport = new(serviceProvider);
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Starting Discord bot service...");
             var token = _services.GetRequiredService<IConfiguration>().GetValue<string>("Discord:Token");
-            await _scriptingModuleSupport.InitAsync().ConfigureAwait(false);
             await _discordEventLoggerModule.InitAsync().ConfigureAwait(false);
+            await _scriptingModuleSupport.InitAsync().ConfigureAwait(false);
+            await _eventModuleSupport.InitAsync().ConfigureAwait(false);
             await _client.LoginAsync(TokenType.Bot, token).ConfigureAwait(false);
             await _client.StartAsync().ConfigureAwait(false);
             _logger.LogInformation("Discord bot service started.");
@@ -44,6 +47,7 @@ namespace RitsukageBot.Services.HostedServices
         public Task StopAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Stopping Discord bot service...");
+            _eventModuleSupport.Dispose();
             _scriptingModuleSupport.Dispose();
             _discordEventLoggerModule.Dispose();
             _client.Dispose();

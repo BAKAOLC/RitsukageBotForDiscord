@@ -171,7 +171,7 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
 
             // is living
             var isLiving = detail.Information.GetExtensionIfNotNull<bool>(LiveExtensionDataId.IsLiving);
-            embed.AddField("Is Living", isLiving ? "Yes" : "No");
+            embed.AddField("Is Living", isLiving ? "Yes" : "No", true);
 
             // start time
             if (isLiving)

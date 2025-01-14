@@ -1,4 +1,5 @@
-﻿using CacheTower.Serializers.NewtonsoftJson;
+﻿using System.Reflection;
+using CacheTower.Serializers.NewtonsoftJson;
 using Discord;
 using Discord.Commands;
 using Discord.Interactions;
@@ -9,6 +10,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NLog.Extensions.Logging;
 using RitsukageBot.Library.Networking;
+using RitsukageBot.Library.Utils;
 using RitsukageBot.Options;
 using RitsukageBot.Services.HostedServices;
 using RitsukageBot.Services.Providers;
@@ -55,6 +57,8 @@ using var host = Host.CreateDefaultBuilder()
 
             builder.WithCleanupFrequency(TimeSpan.FromMilliseconds(provider.CleanUpFrequency));
         });
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(Assembly.GetExecutingAssembly()));
+        services.AddSingleton<DatabaseProviderService>();
         services.AddSingleton<DiscordSocketConfig>(_ => new()
         {
             LogLevel = LogSeverity.Info,
@@ -89,5 +93,7 @@ var logger = host.Services.GetRequiredService<ILogger<Program>>();
 logger.LogInformation("Starting Ritsukage Bot...");
 logger.LogInformation("Assembly User-Agent: {UserAgent}", UserAgent.AssemblyUserAgent);
 logger.LogInformation("Network default User-Agent: {UserAgent}", UserAgent.Default);
+
+NetworkUtility.SetHttpClientFactory(host.Services.GetRequiredService<IHttpClientFactory>());
 
 await host.RunAsync().ConfigureAwait(false);

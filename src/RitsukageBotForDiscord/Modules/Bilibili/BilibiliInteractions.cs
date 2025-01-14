@@ -1,6 +1,7 @@
 using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
+using RitsukageBot.Library.Data;
 using RitsukageBot.Services.Providers;
 
 namespace RitsukageBot.Modules.Bilibili
@@ -25,6 +26,51 @@ namespace RitsukageBot.Modules.Bilibili
         ///     Bilibili kernel provider.
         /// </summary>
         public required BiliKernelProviderService BiliKernelProvider { get; set; }
+
+        /// <summary>
+        ///     Database provider service.
+        /// </summary>
+        public required DatabaseProviderService DatabaseProviderService { get; set; }
+
+        /// <summary>
+        ///     Automatically resolve Bilibili links.
+        /// </summary>
+        /// <param name="active"></param>
+        [SlashCommand("auto-resolve", "Automatically resolve Bilibili links.")]
+        public async Task AutoResolveBilibiliLinkAsync(bool active = true)
+        {
+            await DeferAsync().ConfigureAwait(false);
+            var channelId = Context.Channel.Id;
+            var config = await GetConfigAsync(channelId).ConfigureAwait(false);
+            if (active == config.AutomaticallyResolveBilibiliLinks)
+            {
+                await FollowupAsync("The setting is already set to the specified value.").ConfigureAwait(false);
+                return;
+            }
+
+            config.AutomaticallyResolveBilibiliLinks = active;
+            await DatabaseProviderService.UpdateAsync(config).ConfigureAwait(false);
+            if (active)
+                await FollowupAsync("Automatically resolve Bilibili links has been enabled.").ConfigureAwait(false);
+            else
+                await FollowupAsync("Automatically resolve Bilibili links has been disabled.").ConfigureAwait(false);
+        }
+
+        private async Task<DiscordChannelConfiguration> GetConfigAsync(ulong channelId)
+        {
+            DiscordChannelConfiguration config;
+            try
+            {
+                config = await DatabaseProviderService.GetAsync<DiscordChannelConfiguration>(channelId).ConfigureAwait(false);
+            }
+            catch
+            {
+                config = new() { Id = channelId };
+                await DatabaseProviderService.InsertAsync(config).ConfigureAwait(false);
+            }
+
+            return config;
+        }
     }
 
     /// <summary>

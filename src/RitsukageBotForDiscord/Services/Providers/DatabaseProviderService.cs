@@ -24,7 +24,7 @@ namespace RitsukageBot.Services.Providers
             if (string.IsNullOrEmpty(databasePath)) throw new("Database path is not set.");
 
             _connection = new(databasePath);
-            InitializeAsync().RunSynchronously();
+            InitializeAsync().Wait();
         }
 
         /// <summary>
