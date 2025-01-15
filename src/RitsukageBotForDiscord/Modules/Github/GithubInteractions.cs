@@ -57,7 +57,13 @@ namespace RitsukageBot.Modules.Github
                 await GitHubClientProvider.SetCredentials(token.AccessToken).ConfigureAwait(false);
                 var account = await GitHubClientProvider.Client.User.Current().ConfigureAwait(false);
                 Logger.LogInformation("Successfully logged in to GitHub as {Account}.", account.Login);
-                await ModifyOriginalResponseAsync(x => { x.Embed = BuildUserInfoEmbed(account).Build(); })
+                await ModifyOriginalResponseAsync(x =>
+                    {
+                        x.Embed = BuildUserInfoEmbed(account)
+                            .WithTitle("GitHub User")
+                            .WithColor(Color.Green)
+                            .Build();
+                    })
                     .ConfigureAwait(false);
             }
             catch (Exception ex)
@@ -76,7 +82,7 @@ namespace RitsukageBot.Modules.Github
         }
 
         /// <summary>
-        ///    Get user information.
+        ///     Get user information.
         /// </summary>
         /// <param name="username"></param>
         /// <returns></returns>
@@ -87,7 +93,9 @@ namespace RitsukageBot.Modules.Github
             try
             {
                 var account = await GitHubClientProvider.Client.User.Get(username).ConfigureAwait(false);
-                await FollowupAsync(embed: BuildUserInfoEmbed(account).Build()).ConfigureAwait(false);
+                await FollowupAsync(embed: BuildUserInfoEmbed(account)
+                    .WithTitle("GitHub User")
+                    .WithColor(Color.Green).Build()).ConfigureAwait(false);
             }
             catch (NotFoundException)
             {
@@ -117,7 +125,7 @@ namespace RitsukageBot.Modules.Github
         {
             var embed = new EmbedBuilder();
 
-            embed.WithTitle(account.Login);
+            // embed.WithTitle(account.Login);
             embed.AddField("Name", account.Name, true);
             embed.AddField("Followers", account.Followers, true);
             embed.AddField("Following", account.Following, true);
