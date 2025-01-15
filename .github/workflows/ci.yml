@@ -42,6 +42,7 @@ jobs:
         with:
           path: |
             src/bili-kernel/src/BiliKernel.Grpc/obj
+            src/bili-kernel/src/BiliKernel.Grpc/bin
           key: ${{ runner.os }}-deps
       - name: Build (Windows)
         env:
@@ -69,4 +70,5 @@ jobs:
         with:
           path: |
             src/bili-kernel/src/BiliKernel.Grpc/obj
+            src/bili-kernel/src/BiliKernel.Grpc/bin
           key: ${{ runner.os }}-deps
