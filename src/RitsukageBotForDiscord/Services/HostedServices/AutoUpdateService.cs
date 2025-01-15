@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.IO.Compression;
-using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Hosting;
@@ -260,23 +259,9 @@ namespace RitsukageBot.Services.HostedServices
             if (!match.Success) return false;
 
             var artifactVersion = match.Value;
-            var currentVersion = GetCurrentVersion();
+            const string currentVersion = GitVersionInformation.FullSemVer!;
 
             return new Version(artifactVersion.Replace('-', '.')) > new Version(currentVersion.Replace('-', '.'));
-        }
-
-        private static string GetCurrentVersion()
-        {
-            var gitVersionInformationType = Assembly.GetExecutingAssembly().GetType("GitVersionInformation");
-            if (gitVersionInformationType is null) return string.Empty;
-            var versionField = gitVersionInformationType.GetField("Major");
-            if (versionField != null) return versionField.GetValue(null)?.ToString() ?? string.Empty;
-
-            var versionProperty = gitVersionInformationType.GetProperty("Major");
-            if (versionProperty != null)
-                return versionProperty.GetGetMethod(true)?.Invoke(null, null)?.ToString() ?? string.Empty;
-
-            return string.Empty;
         }
 
         [GeneratedRegex(@"[\d.]+-[\d]+", RegexOptions.Compiled)]
