@@ -2,7 +2,7 @@
 {
     internal class AutoUpdateOption
     {
-        public bool Enable { get; init; } = false;
+        public bool Enabled { get; init; } = false;
 
         public long CheckInterval { get; init; } = 3600000;
 

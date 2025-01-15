@@ -54,7 +54,7 @@ namespace RitsukageBot.Services.HostedServices
         /// <returns></returns>
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            if (!_option.Enable) return Task.CompletedTask;
+            if (!_option.Enabled) return Task.CompletedTask;
             _timer = new(async void (_) => await CheckUpdateAsync().ConfigureAwait(false), null, TimeSpan.Zero,
                 TimeSpan.FromMilliseconds(_option.CheckInterval));
             logger.LogInformation("Auto update service started.");
@@ -67,7 +67,7 @@ namespace RitsukageBot.Services.HostedServices
         /// <param name="cancellationToken"></param>
         public async Task StopAsync(CancellationToken cancellationToken)
         {
-            if (!_option.Enable) return;
+            if (!_option.Enabled) return;
             if (_timer != null) await _timer.DisposeAsync().ConfigureAwait(false);
             logger.LogInformation("Auto update service stopped.");
         }
