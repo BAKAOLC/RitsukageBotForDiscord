@@ -36,6 +36,13 @@ jobs:
         run: |
           dotnet-gitversion /updateassemblyinfo
           echo "::set-output name=version::$(dotnet-gitversion /showvariable FullSemVer)"
+      - name: Cache BiliKernel.Grpc
+        uses: actions/cache@v2
+        with:
+          path: |
+            ./src/bili-kernel/src/BiliKernel.Grpc/obj
+            ./src/bili-kernel/src/BiliKernel.Grpc/bin
+          key: ${{ runner.os }}-bili-kernel-grpc
       - name: Build (Windows)
         env:
           IS_PR: ${{ !!github.head_ref }}
