@@ -1,12 +1,15 @@
 using System.Diagnostics;
 using System.IO.Compression;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using Octokit;
 using RitsukageBot.Library.Utils;
+using RitsukageBot.Options;
 using RitsukageBot.Services.Providers;
 using FileMode = System.IO.FileMode;
 
@@ -15,18 +18,28 @@ namespace RitsukageBot.Services.HostedServices
     /// <summary>
     ///     Auto update service.
     /// </summary>
+    /// <param name="logger"></param>
+    /// <param name="gitHubClientProviderService"></param>
+    /// <param name="configuration"></param>
     public partial class AutoUpdateService(
         ILogger<AutoUpdateService> logger,
-        GitHubClientProviderService gitHubClientProviderService) : IHostedService
+        GitHubClientProviderService gitHubClientProviderService,
+        IConfiguration configuration)
+        : IHostedService
     {
+        private readonly AutoUpdateOption _option =
+            configuration.GetSection("AutoUpdate").Get<AutoUpdateOption>() ?? new();
+
         private Timer? _timer;
 
-        private static string RepositoryOwner { get; } = "BAKAOLC";
+        private string RepositoryOwner => _option.Information.RepositoryOwner;
+        private string RepositoryName => _option.Information.RepositoryName;
 
-        private static string RepositoryName { get; } = "RitsukageBotForDiscord";
+        private string BranchName => _option.Information.BranchName;
 
-        private static string BranchName { get; } = "main";
+        private string TargetJobName => string.Format(_option.Information.TargetJobName, TargetOsArtifactPlatform);
 
+        // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
         private static string TargetOsArtifactPlatform { get; } = PlatformUtility.GetOperatingSystem() switch
         {
             PlatformID.Win32NT => "windows-latest",
@@ -35,8 +48,6 @@ namespace RitsukageBot.Services.HostedServices
             _ => throw new NotSupportedException("Unsupported operating system."),
         };
 
-        private static string TargetJobName { get; } = $"Build - {TargetOsArtifactPlatform} - 9.0.x";
-
         /// <summary>
         ///     Start the auto update service.
         /// </summary>
@@ -44,8 +55,9 @@ namespace RitsukageBot.Services.HostedServices
         /// <returns></returns>
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            _timer = new(async void (_) => await CheckUpdate().ConfigureAwait(false), null, TimeSpan.Zero,
-                TimeSpan.FromMinutes(10));
+            if (!_option.Enable) return Task.CompletedTask;
+            _timer = new(async void (_) => await CheckUpdateAsync().ConfigureAwait(false), null, TimeSpan.Zero,
+                TimeSpan.FromMilliseconds(_option.CheckInterval));
             logger.LogInformation("Auto update service started.");
             return Task.CompletedTask;
         }
@@ -56,11 +68,12 @@ namespace RitsukageBot.Services.HostedServices
         /// <param name="cancellationToken"></param>
         public async Task StopAsync(CancellationToken cancellationToken)
         {
+            if (!_option.Enable) return;
             if (_timer != null) await _timer.DisposeAsync().ConfigureAwait(false);
             logger.LogInformation("Auto update service stopped.");
         }
 
-        private async Task CheckUpdate()
+        private async Task CheckUpdateAsync()
         {
             if (!await CheckLoginAsync().ConfigureAwait(false)) return;
             var client = gitHubClientProviderService.Client;
@@ -213,10 +226,11 @@ namespace RitsukageBot.Services.HostedServices
         {
             var pid = Environment.ProcessId;
             var script = new StringBuilder();
+            var assemblyName = Assembly.GetEntryAssembly()!.GetName().Name;
             if (PlatformUtility.GetOperatingSystem() == PlatformID.Win32NT)
             {
                 script.AppendLine("@echo off");
-                script.AppendLine("title RitsukageBotForDiscord Auto Update");
+                script.AppendLine($"title Updating {assemblyName}");
                 script.AppendLine("echo Stopping current process...");
                 script.AppendLine($"taskkill /pid {pid} /f");
                 script.AppendLine("echo Deleting libraries and runtimes folders...");
@@ -227,7 +241,7 @@ namespace RitsukageBot.Services.HostedServices
                 script.AppendLine("xcopy /e /y update .");
                 script.AppendLine("rmdir /s /q update");
                 script.AppendLine("echo Restarting...");
-                script.AppendLine("start RitsukageBot.exe");
+                script.AppendLine($"start {assemblyName}.exe");
                 script.AppendLine("del %0");
 
                 await File.WriteAllTextAsync("update.bat", script.ToString()).ConfigureAwait(false);
@@ -245,8 +259,8 @@ namespace RitsukageBot.Services.HostedServices
             script.AppendLine("cp -r update/* .");
             script.AppendLine("rm -rf update");
             script.AppendLine("echo Restarting...");
-            script.AppendLine("chmod +x RitsukageBot");
-            script.AppendLine("./RitsukageBot &");
+            script.AppendLine($"chmod +x {assemblyName}");
+            script.AppendLine($"./{assemblyName} &");
             script.AppendLine("rm $0");
 
             await File.WriteAllTextAsync("update.sh", script.ToString()).ConfigureAwait(false);

@@ -8,7 +8,7 @@ namespace RitsukageBot.Options
 
         public CacheLayerOption[] CacheProvider { get; init; } = [];
 
-        public class CacheLayerOption
+        internal class CacheLayerOption
         {
             [Required] public string Type { get; init; } = null!;
 
