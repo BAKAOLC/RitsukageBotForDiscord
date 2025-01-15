@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NLog.Extensions.Logging;
+using Octokit;
 using RitsukageBot.Library.Networking;
 using RitsukageBot.Library.Utils;
 using RitsukageBot.Options;
@@ -59,6 +60,9 @@ using var host = Host.CreateDefaultBuilder()
         });
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(Assembly.GetExecutingAssembly()));
         services.AddSingleton<DatabaseProviderService>();
+        services.AddSingleton<GitHubClientProviderService>();
+        services.AddSingleton<ImageCacheProviderService>();
+        services.AddSingleton<BiliKernelProviderService>();
         services.AddSingleton<DiscordSocketConfig>(_ => new()
         {
             LogLevel = LogSeverity.Info,
@@ -84,8 +88,6 @@ using var host = Host.CreateDefaultBuilder()
         });
         services.AddSingleton<InteractionService>(x => new(x.GetRequiredService<DiscordSocketClient>(),
             x.GetRequiredService<InteractionServiceConfig>()));
-        services.AddSingleton<ImageCacheProviderService>();
-        services.AddSingleton<BiliKernelProviderService>();
         services.AddHostedService<DiscordBotService>();
     }).Build();
 
