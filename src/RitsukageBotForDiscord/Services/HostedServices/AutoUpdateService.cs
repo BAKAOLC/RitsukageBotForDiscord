@@ -6,7 +6,6 @@ using System.Text.RegularExpressions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
 using Octokit;
 using RitsukageBot.Library.Utils;
 using RitsukageBot.Options;
@@ -151,14 +150,7 @@ namespace RitsukageBot.Services.HostedServices
             File.Delete("update.zip");
 
             var appSettingsPath = Path.Combine("update", "appsettings.json");
-            if (File.Exists(appSettingsPath))
-            {
-                var appSettings = JObject.Parse(await File.ReadAllTextAsync(appSettingsPath).ConfigureAwait(false));
-                var currentAppSettings =
-                    JObject.Parse(await File.ReadAllTextAsync("appsettings.json").ConfigureAwait(false));
-                var combineAppSettings = CombineAppSettings(currentAppSettings, appSettings);
-                await File.WriteAllTextAsync(appSettingsPath, combineAppSettings.ToString()).ConfigureAwait(false);
-            }
+            if (File.Exists(appSettingsPath)) File.Delete(appSettingsPath);
 
             var scriptPath = await GenerateUpdateScriptAsync().ConfigureAwait(false);
             if (PlatformUtility.GetOperatingSystem() == PlatformID.Win32NT)
@@ -170,56 +162,6 @@ namespace RitsukageBot.Services.HostedServices
                 });
             else
                 Process.Start("sh", scriptPath);
-        }
-
-        private static JToken CombineAppSettings(JToken current, JToken update)
-        {
-            if (current.Type != update.Type) return update;
-            if (update.Type is not (JTokenType.Object or JTokenType.Array)) return update;
-            if (update.Type is JTokenType.Array)
-            {
-                if (!update.Any()) return current;
-
-                var flag = false;
-                var tmpArray = new JArray();
-                for (var i = 0; i < update.Count(); i++)
-                {
-                    var updateItem = update[i]!;
-                    if (current.Count() <= i) break;
-                    var currentItem = current[i]!;
-                    if (updateItem.Type != currentItem.Type)
-                    {
-                        flag = true;
-                        break;
-                    }
-
-                    if (updateItem.Type is JTokenType.Object or JTokenType.Array)
-                        tmpArray[i] = CombineAppSettings(currentItem, updateItem);
-                    else
-                        tmpArray[i] = currentItem;
-                }
-
-                return flag ? update : tmpArray;
-            }
-
-            if (!update.Any()) return current;
-
-            var tmpObject = new JObject();
-            foreach (var updateProperty in update)
-            {
-                var currentProperty = current[updateProperty.Path]!;
-                if (currentProperty.Type != updateProperty.Type)
-                {
-                    tmpObject[updateProperty.Path] = updateProperty;
-                    continue;
-                }
-
-                tmpObject[updateProperty.Path] = updateProperty.Type is JTokenType.Object or JTokenType.Array
-                    ? CombineAppSettings(currentProperty, updateProperty)
-                    : currentProperty;
-            }
-
-            return tmpObject;
         }
 
         private static async Task<string> GenerateUpdateScriptAsync()
