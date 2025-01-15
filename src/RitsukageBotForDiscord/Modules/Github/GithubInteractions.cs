@@ -75,6 +75,31 @@ namespace RitsukageBot.Modules.Github
             }
         }
 
+        /// <summary>
+        ///    Get user information.
+        /// </summary>
+        /// <param name="username"></param>
+        /// <returns></returns>
+        [SlashCommand("user", "Get user information.")]
+        public async Task GetUserAsync(string username)
+        {
+            await DeferAsync(true).ConfigureAwait(false);
+            try
+            {
+                var account = await GitHubClientProvider.Client.User.Get(username).ConfigureAwait(false);
+                await FollowupAsync(embed: BuildUserInfoEmbed(account).Build()).ConfigureAwait(false);
+            }
+            catch (NotFoundException)
+            {
+                var embed = new EmbedBuilder()
+                    .WithTitle("GitHub User")
+                    .WithColor(Color.Red)
+                    .WithDescription("User not found.")
+                    .AddField("Username", username);
+                await FollowupAsync(embed: embed.Build()).ConfigureAwait(false);
+            }
+        }
+
         private async Task<bool> CheckLoginAsync()
         {
             try
