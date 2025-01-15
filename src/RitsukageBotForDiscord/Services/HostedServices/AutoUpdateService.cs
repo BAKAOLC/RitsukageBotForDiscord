@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO.Compression;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Hosting;
@@ -15,7 +16,9 @@ namespace RitsukageBot.Services.HostedServices
     /// <summary>
     ///     Auto update service.
     /// </summary>
-    public partial class AutoUpdateService(ILogger<AutoUpdateService> logger, GitHubClientProviderService gitHubClientProviderService) : IHostedService
+    public partial class AutoUpdateService(
+        ILogger<AutoUpdateService> logger,
+        GitHubClientProviderService gitHubClientProviderService) : IHostedService
     {
         private Timer? _timer;
 
@@ -42,7 +45,8 @@ namespace RitsukageBot.Services.HostedServices
         /// <returns></returns>
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            _timer = new(async void (_) => await CheckUpdate().ConfigureAwait(false), null, TimeSpan.Zero, TimeSpan.FromMinutes(10));
+            _timer = new(async void (_) => await CheckUpdate().ConfigureAwait(false), null, TimeSpan.Zero,
+                TimeSpan.FromMinutes(10));
             logger.LogInformation("Auto update service started.");
             return Task.CompletedTask;
         }
@@ -69,15 +73,20 @@ namespace RitsukageBot.Services.HostedServices
             var latestRun = runsResponse.WorkflowRuns.ToArray().FirstOrDefault();
             if (latestRun is null) return;
 
-            var jobsResponse = await client.Actions.Workflows.Jobs.List(RepositoryOwner, RepositoryName, latestRun.Id).ConfigureAwait(false);
+            var jobsResponse = await client.Actions.Workflows.Jobs.List(RepositoryOwner, RepositoryName, latestRun.Id)
+                .ConfigureAwait(false);
             var targetJob = jobsResponse.Jobs.FirstOrDefault(job => job.Name == TargetJobName);
             if (targetJob is null) return;
 
-            var artifactsResponse = await client.Actions.Artifacts.ListWorkflowArtifacts(RepositoryOwner, RepositoryName, latestRun.Id).ConfigureAwait(false);
-            var targetArtifact = artifactsResponse.Artifacts.FirstOrDefault(artifact => artifact.Name.EndsWith(TargetOsArtifactPlatform));
+            var artifactsResponse = await client.Actions.Artifacts
+                .ListWorkflowArtifacts(RepositoryOwner, RepositoryName, latestRun.Id).ConfigureAwait(false);
+            var targetArtifact =
+                artifactsResponse.Artifacts.FirstOrDefault(artifact =>
+                    artifact.Name.EndsWith(TargetOsArtifactPlatform));
             if (targetArtifact is null) return;
 
-            logger.LogInformation("Latest run: {RunId}, Latest job: {JobId}, Created at: {CreatedAt}, Target artifact: {ArtifactName}",
+            logger.LogInformation(
+                "Latest run: {RunId}, Latest job: {JobId}, Created at: {CreatedAt}, Target artifact: {ArtifactName}",
                 latestRun.Id, targetJob.Id, latestRun.CreatedAt, targetArtifact.Name);
 
             if (!CheckVersion(targetArtifact.Name))
@@ -87,7 +96,8 @@ namespace RitsukageBot.Services.HostedServices
             }
 
             logger.LogInformation("Newer version found, downloading...");
-            var artifactStream = await client.Actions.Artifacts.DownloadArtifact(RepositoryOwner, RepositoryName, targetArtifact.Id, "zip").ConfigureAwait(false);
+            var artifactStream = await client.Actions.Artifacts
+                .DownloadArtifact(RepositoryOwner, RepositoryName, targetArtifact.Id, "zip").ConfigureAwait(false);
             if (artifactStream is null)
             {
                 logger.LogError("Failed to download artifact.");
@@ -119,7 +129,8 @@ namespace RitsukageBot.Services.HostedServices
 
         private static async Task UpdateAsync(Stream stream)
         {
-            await using var fileStream = new FileStream("update.zip", FileMode.Create, FileAccess.Write, FileShare.None);
+            await using var fileStream =
+                new FileStream("update.zip", FileMode.Create, FileAccess.Write, FileShare.None);
             await stream.CopyToAsync(fileStream).ConfigureAwait(false);
             stream.Close();
             fileStream.Close();
@@ -131,12 +142,13 @@ namespace RitsukageBot.Services.HostedServices
             if (File.Exists(appSettingsPath))
             {
                 var appSettings = JObject.Parse(await File.ReadAllTextAsync(appSettingsPath).ConfigureAwait(false));
-                var currentAppSettings = JObject.Parse(await File.ReadAllTextAsync("appsettings.json").ConfigureAwait(false));
+                var currentAppSettings =
+                    JObject.Parse(await File.ReadAllTextAsync("appsettings.json").ConfigureAwait(false));
                 var combineAppSettings = CombineAppSettings(currentAppSettings, appSettings);
                 await File.WriteAllTextAsync(appSettingsPath, combineAppSettings.ToString()).ConfigureAwait(false);
             }
 
-            var scriptPath = await GenerateUpdateScript().ConfigureAwait(false);
+            var scriptPath = await GenerateUpdateScriptAsync().ConfigureAwait(false);
             if (PlatformUtility.GetOperatingSystem() == PlatformID.Win32NT)
                 Process.Start(new ProcessStartInfo
                 {
@@ -150,16 +162,55 @@ namespace RitsukageBot.Services.HostedServices
 
         private static JToken CombineAppSettings(JToken current, JToken update)
         {
-            if (current is not JObject currentObj || update is not JObject updateObj) return update;
+            if (current.Type != update.Type) return update;
+            if (update.Type is not (JTokenType.Object or JTokenType.Array)) return update;
+            if (update.Type is JTokenType.Array)
+            {
+                if (!update.Any()) return current;
 
-            foreach (var (key, value) in updateObj)
-                if (!currentObj.TryAdd(key, value))
-                    currentObj[key] = CombineAppSettings(currentObj[key]!, value!);
+                var flag = false;
+                var tmpArray = new JArray();
+                for (var i = 0; i < update.Count(); i++)
+                {
+                    var updateItem = update[i]!;
+                    if (current.Count() <= i) break;
+                    var currentItem = current[i]!;
+                    if (updateItem.Type != currentItem.Type)
+                    {
+                        flag = true;
+                        break;
+                    }
 
-            return currentObj;
+                    if (updateItem.Type is JTokenType.Object or JTokenType.Array)
+                        tmpArray[i] = CombineAppSettings(currentItem, updateItem);
+                    else
+                        tmpArray[i] = currentItem;
+                }
+
+                return flag ? update : tmpArray;
+            }
+
+            if (!update.Any()) return current;
+
+            var tmpObject = new JObject();
+            foreach (var updateProperty in update)
+            {
+                var currentProperty = current[updateProperty.Path]!;
+                if (currentProperty.Type != updateProperty.Type)
+                {
+                    tmpObject[updateProperty.Path] = updateProperty;
+                    continue;
+                }
+
+                tmpObject[updateProperty.Path] = updateProperty.Type is JTokenType.Object or JTokenType.Array
+                    ? CombineAppSettings(currentProperty, updateProperty)
+                    : currentProperty;
+            }
+
+            return tmpObject;
         }
 
-        private static async Task<string> GenerateUpdateScript()
+        private static async Task<string> GenerateUpdateScriptAsync()
         {
             var pid = Environment.ProcessId;
             var script = new StringBuilder();
@@ -209,9 +260,23 @@ namespace RitsukageBot.Services.HostedServices
             if (!match.Success) return false;
 
             var artifactVersion = match.Value;
-            const string currentVersion = GitVersionInformation.FullSemVer!;
+            var currentVersion = GetCurrentVersion();
 
             return new Version(artifactVersion.Replace('-', '.')) > new Version(currentVersion.Replace('-', '.'));
+        }
+
+        private static string GetCurrentVersion()
+        {
+            var gitVersionInformationType = Assembly.GetExecutingAssembly().GetType("GitVersionInformation");
+            if (gitVersionInformationType is null) return string.Empty;
+            var versionField = gitVersionInformationType.GetField("Major");
+            if (versionField != null) return versionField.GetValue(null)?.ToString() ?? string.Empty;
+
+            var versionProperty = gitVersionInformationType.GetProperty("Major");
+            if (versionProperty != null)
+                return versionProperty.GetGetMethod(true)?.Invoke(null, null)?.ToString() ?? string.Empty;
+
+            return string.Empty;
         }
 
         [GeneratedRegex(@"[\d.]+-[\d]+", RegexOptions.Compiled)]
