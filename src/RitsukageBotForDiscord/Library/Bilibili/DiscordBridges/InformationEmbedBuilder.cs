@@ -70,17 +70,25 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
             }
 
             // tags
-            if (detail.Tags is not null) embed.AddField("Tags", string.Join(", ", detail.Tags.Select(tag => string.Format(textFormatTag, tag.Name, tag.Name.UrlEncode()))));
+            if (detail.Tags is not null)
+                embed.AddField("Tags",
+                    string.Join(", ",
+                        detail.Tags.Select(tag => string.Format(textFormatTag, tag.Name, tag.Name.UrlEncode()))));
 
             // video parts
             if (detail.Parts is { Count: > 1 })
             {
-                embed.AddField("Parts", string.Join("\n", detail.Parts.Select((part, i) => $"P{i + 1})\u3000{part.Identifier.Title}\n\u3000\u3000\u3000Duration: {TimeSpan.FromSeconds(part.Duration):hh\\:mm\\:ss}")));
-                embed.AddField("Total Duration", TimeSpan.FromSeconds(detail.Information.Duration ?? 0).ToString(@"hh\:mm\:ss"));
+                embed.AddField("Parts",
+                    string.Join("\n",
+                        detail.Parts.Select((part, i) =>
+                            $"P{i + 1})\u3000{part.Identifier.Title}\n\u3000\u3000\u3000Duration: {TimeSpan.FromSeconds(part.Duration):hh\\:mm\\:ss}")));
+                embed.AddField("Total Duration",
+                    TimeSpan.FromSeconds(detail.Information.Duration ?? 0).ToString(@"hh\:mm\:ss"));
             }
             else
             {
-                embed.AddField("Duration", TimeSpan.FromSeconds(detail.Information.Duration ?? 0).ToString(@"hh\:mm\:ss"));
+                embed.AddField("Duration",
+                    TimeSpan.FromSeconds(detail.Information.Duration ?? 0).ToString(@"hh\:mm\:ss"));
             }
 
             // statistics

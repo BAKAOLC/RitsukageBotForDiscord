@@ -23,7 +23,8 @@ namespace RitsukageBot.Library.Utils
         /// <exception cref="InvalidOperationException"></exception>
         public static HttpClient GetHttpClient()
         {
-            return _httpClientFactory?.CreateClient() ?? throw new InvalidOperationException("HTTP client factory is not set.");
+            return _httpClientFactory?.CreateClient() ??
+                   throw new InvalidOperationException("HTTP client factory is not set.");
         }
 
         /// <summary>

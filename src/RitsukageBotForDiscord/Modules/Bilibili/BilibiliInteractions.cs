@@ -61,7 +61,8 @@ namespace RitsukageBot.Modules.Bilibili
             DiscordChannelConfiguration config;
             try
             {
-                config = await DatabaseProviderService.GetAsync<DiscordChannelConfiguration>(channelId).ConfigureAwait(false);
+                config = await DatabaseProviderService.GetAsync<DiscordChannelConfiguration>(channelId)
+                    .ConfigureAwait(false);
             }
             catch
             {

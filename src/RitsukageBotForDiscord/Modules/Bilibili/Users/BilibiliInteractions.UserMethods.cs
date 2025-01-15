@@ -58,7 +58,8 @@ namespace RitsukageBot.Modules.Bilibili
                 }
             }
 
-            [GeneratedRegex(@"((https?://)?space\.bilibili\.com/)(?<id>\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+            [GeneratedRegex(@"((https?://)?space\.bilibili\.com/)(?<id>\d+)",
+                RegexOptions.IgnoreCase | RegexOptions.Compiled)]
             private static partial Regex GetMatchUserIdRegex();
         }
     }

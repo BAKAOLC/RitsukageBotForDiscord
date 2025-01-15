@@ -24,6 +24,7 @@ namespace RitsukageBot.Services.Providers
             if (string.IsNullOrEmpty(databasePath)) throw new("Database path is not set.");
 
             _connection = new(databasePath);
+            // ReSharper disable once AsyncApostle.AsyncWait
             InitializeAsync().Wait();
         }
 
@@ -151,7 +152,8 @@ namespace RitsukageBot.Services.Providers
         /// <returns>
         ///     Whether the table was created or migrated for each type.
         /// </returns>
-        public Task<CreateTablesResult> CreateTablesAsync(CreateFlags createFlags = CreateFlags.None, params Type[] types)
+        public Task<CreateTablesResult> CreateTablesAsync(CreateFlags createFlags = CreateFlags.None,
+            params Type[] types)
         {
             return _connection.CreateTablesAsync(createFlags, types);
         }

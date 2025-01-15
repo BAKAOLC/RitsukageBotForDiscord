@@ -54,13 +54,15 @@ namespace RitsukageBot.Modules.Bilibili.Events
                         case KeyIdType.Video:
                             logger.LogInformation("Try to resolve video {VideoId}", keyId.Id);
                             var videoMediaIdentifier = new MediaIdentifier(keyId.Id, null, null);
-                            var videoPlayerView = await biliKernelProvider.GetRequiredService<IPlayerService>().GetVideoPageDetailAsync(videoMediaIdentifier, cancellationToken).ConfigureAwait(false);
+                            var videoPlayerView = await biliKernelProvider.GetRequiredService<IPlayerService>()
+                                .GetVideoPageDetailAsync(videoMediaIdentifier, cancellationToken).ConfigureAwait(false);
                             embed = InformationEmbedBuilder.BuildVideoInfo(videoPlayerView);
                             break;
                         case KeyIdType.Live:
                             logger.LogInformation("Try to resolve live {LiveId}", keyId.Id);
                             var liveMediaIdentifier = new MediaIdentifier(keyId.Id, null, null);
-                            var livePlayerView = await biliKernelProvider.GetRequiredService<IPlayerService>().GetLivePageDetailAsync(liveMediaIdentifier, cancellationToken).ConfigureAwait(false);
+                            var livePlayerView = await biliKernelProvider.GetRequiredService<IPlayerService>()
+                                .GetLivePageDetailAsync(liveMediaIdentifier, cancellationToken).ConfigureAwait(false);
                             embed = InformationEmbedBuilder.BuildLiveInfo(livePlayerView);
                             break;
                         case KeyIdType.Dynamic:
@@ -68,7 +70,8 @@ namespace RitsukageBot.Modules.Bilibili.Events
                         case KeyIdType.User:
                         {
                             logger.LogInformation("Try to resolve user {UserId}", keyId.Id);
-                            var userCard = await biliKernelProvider.GetRequiredService<IUserService>().GetUserInformationAsync(keyId.Id, cancellationToken);
+                            var userCard = await biliKernelProvider.GetRequiredService<IUserService>()
+                                .GetUserInformationAsync(keyId.Id, cancellationToken);
                             embed = InformationEmbedBuilder.BuildUserInfo(userCard);
                             break;
                         }
@@ -81,11 +84,14 @@ namespace RitsukageBot.Modules.Bilibili.Events
 
                 if (embed is null) continue;
                 embed.WithFooter(footerBuilder);
-                await message.Channel.SendFileAsync(BilibiliIconData.GetLogoIconStream(), "bilibili-icon.png", embed: embed.Build()).ConfigureAwait(false);
+                await message.Channel
+                    .SendFileAsync(BilibiliIconData.GetLogoIconStream(), "bilibili-icon.png", embed: embed.Build())
+                    .ConfigureAwait(false);
             }
         }
 
-        private static async Task<DiscordChannelConfiguration?> GetConfigAsync(DatabaseProviderService database, ulong channelId)
+        private static async Task<DiscordChannelConfiguration?> GetConfigAsync(DatabaseProviderService database,
+            ulong channelId)
         {
             try
             {
@@ -193,22 +199,27 @@ namespace RitsukageBot.Modules.Bilibili.Events
         }
 
 
-        [GeneratedRegex("((https?://)?b23\\.tv/)(?<data>[0-9a-zA-Z]+)", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+        [GeneratedRegex("((https?://)?b23\\.tv/)(?<data>[0-9a-zA-Z]+)",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled)]
         private static partial Regex GetShortLinkRegex();
 
-        [GeneratedRegex(@"((https?://)?space\.bilibili\.com/)(?<id>\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+        [GeneratedRegex(@"((https?://)?space\.bilibili\.com/)(?<id>\d+)",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled)]
         private static partial Regex GetUserRegex();
 
         [GeneratedRegex(@"^\s*[Aa][Vv](?<av>\d+)\s*$", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
         private static partial Regex GetAvidRegex();
 
-        [GeneratedRegex(@"^\s*[Bb][Vv](?<bv>1[1-9a-km-zA-HJ-NP-Z]{9})\s*$", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+        [GeneratedRegex(@"^\s*[Bb][Vv](?<bv>1[1-9a-km-zA-HJ-NP-Z]{9})\s*$",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled)]
         private static partial Regex GetBvidRegex();
 
-        [GeneratedRegex(@"((https?://)?www\.bilibili\.com/video/)(?<id>[0-9a-zA-Z]+)", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+        [GeneratedRegex(@"((https?://)?www\.bilibili\.com/video/)(?<id>[0-9a-zA-Z]+)",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled)]
         private static partial Regex GetVideoRegex();
 
-        [GeneratedRegex(@"((https?://)?live\.bilibili\.com/)(?<id>\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+        [GeneratedRegex(@"((https?://)?live\.bilibili\.com/)(?<id>\d+)",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled)]
         private static partial Regex GetLiveRoomRegex();
 
         [GeneratedRegex(@"((https?://)?t\.bilibili\.com/)(?<id>\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled)]

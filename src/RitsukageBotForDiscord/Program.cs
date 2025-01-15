@@ -9,7 +9,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NLog.Extensions.Logging;
-using Octokit;
 using RitsukageBot.Library.Networking;
 using RitsukageBot.Library.Utils;
 using RitsukageBot.Options;

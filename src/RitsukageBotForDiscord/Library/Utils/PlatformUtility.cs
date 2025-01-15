@@ -13,7 +13,8 @@ namespace RitsukageBot.Library.Utils
         public static PlatformID GetOperatingSystem()
         {
             var winDir = Environment.GetEnvironmentVariable("windir");
-            if (!string.IsNullOrEmpty(winDir) && winDir.Contains('\\') && Directory.Exists(winDir)) return PlatformID.Win32NT;
+            if (!string.IsNullOrEmpty(winDir) && winDir.Contains('\\') && Directory.Exists(winDir))
+                return PlatformID.Win32NT;
 
             if (File.Exists(@"/proc/sys/kernel/ostype"))
             {

@@ -18,7 +18,8 @@ namespace RitsukageBot.Services.Providers
         /// <param name="configuration"></param>
         /// <param name="databaseProviderService"></param>
         /// <exception cref="InvalidOperationException"></exception>
-        public GitHubClientProviderService(IConfiguration configuration, DatabaseProviderService databaseProviderService)
+        public GitHubClientProviderService(IConfiguration configuration,
+            DatabaseProviderService databaseProviderService)
         {
             var option = configuration.GetSection("GitHub").Get<GitHubOption>();
             if (option is null || string.IsNullOrEmpty(option.ProductHeader))
@@ -31,6 +32,7 @@ namespace RitsukageBot.Services.Providers
                 var client = new GitHubClient(new ProductHeaderValue(Option.ProductHeader));
                 try
                 {
+                    // ReSharper disable once AsyncApostle.AsyncWait
                     var account = databaseProviderService.GetAsync<GitHubAccountConfiguration>(0).Result;
                     client.Credentials = new(account.AccessToken);
                 }
@@ -62,7 +64,8 @@ namespace RitsukageBot.Services.Providers
             if (string.IsNullOrEmpty(Option.AppClientId))
                 throw new InvalidOperationException("GitHub App Client ID is not set.");
 
-            return await Client.Oauth.InitiateDeviceFlow(new(Option.AppClientId)).ConfigureAwait(false) ?? throw new InvalidOperationException("Failed to get device flow response.");
+            return await Client.Oauth.InitiateDeviceFlow(new(Option.AppClientId)).ConfigureAwait(false) ??
+                   throw new InvalidOperationException("Failed to get device flow response.");
         }
 
         /// <summary>
@@ -73,7 +76,8 @@ namespace RitsukageBot.Services.Providers
         /// <exception cref="InvalidOperationException"></exception>
         public async Task<OauthToken> WaitForTokenAsync(OauthDeviceFlowResponse deviceFlowResponse)
         {
-            return await Client.Oauth.CreateAccessTokenForDeviceFlow(Option.AppClientId, deviceFlowResponse).ConfigureAwait(false) ?? throw new InvalidOperationException("Failed to get OAuth token.");
+            return await Client.Oauth.CreateAccessTokenForDeviceFlow(Option.AppClientId, deviceFlowResponse)
+                .ConfigureAwait(false) ?? throw new InvalidOperationException("Failed to get OAuth token.");
         }
 
         /// <summary>

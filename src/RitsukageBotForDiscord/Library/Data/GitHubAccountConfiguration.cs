@@ -11,11 +11,14 @@ namespace RitsukageBot.Library.Data
         /// <summary>
         ///     Id.
         /// </summary>
-        [PrimaryKey] [Column("Id")] public ulong Id { get; set; }
+        [PrimaryKey]
+        [Column("Id")]
+        public ulong Id { get; set; }
 
         /// <summary>
         ///     Access token.
         /// </summary>
-        [Column("AccessToken")] public string AccessToken { get; set; } = string.Empty;
+        [Column("AccessToken")]
+        public string AccessToken { get; set; } = string.Empty;
     }
 }

@@ -1,4 +1,3 @@
-using System.Reflection;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
@@ -50,14 +49,16 @@ namespace RitsukageBot.Modules.Github
                     .WithUrl(deviceFlowResponse.VerificationUri)
                     .AddField("Verification URL", deviceFlowResponse.VerificationUri)
                     .AddField("Code", deviceFlowResponse.UserCode, true)
-                    .AddField("Expires In", TimeSpan.FromSeconds(deviceFlowResponse.ExpiresIn).ToString(@"hh\:mm\:ss"), true);
+                    .AddField("Expires In", TimeSpan.FromSeconds(deviceFlowResponse.ExpiresIn).ToString(@"hh\:mm\:ss"),
+                        true);
                 await FollowupAsync(embed: embedBuilder.Build()).ConfigureAwait(false);
                 Logger.LogInformation("Waiting for GitHub login token.");
                 var token = await GitHubClientProvider.WaitForTokenAsync(deviceFlowResponse).ConfigureAwait(false);
                 await GitHubClientProvider.SetCredentials(token.AccessToken).ConfigureAwait(false);
                 var account = await GitHubClientProvider.Client.User.Current().ConfigureAwait(false);
                 Logger.LogInformation("Successfully logged in to GitHub as {Account}.", account.Login);
-                await ModifyOriginalResponseAsync(x => { x.Embed = BuildUserInfoEmbed(account).Build(); }).ConfigureAwait(false);
+                await ModifyOriginalResponseAsync(x => { x.Embed = BuildUserInfoEmbed(account).Build(); })
+                    .ConfigureAwait(false);
             }
             catch (Exception ex)
             {

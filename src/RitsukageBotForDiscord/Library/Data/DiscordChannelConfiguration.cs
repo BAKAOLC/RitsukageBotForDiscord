@@ -11,7 +11,9 @@ namespace RitsukageBot.Library.Data
         /// <summary>
         ///     Channel ID.
         /// </summary>
-        [PrimaryKey] [Column("id")] public ulong Id { get; set; }
+        [PrimaryKey]
+        [Column("id")]
+        public ulong Id { get; set; }
 
         /// <summary>
         ///     Automatically resolve Bilibili links.

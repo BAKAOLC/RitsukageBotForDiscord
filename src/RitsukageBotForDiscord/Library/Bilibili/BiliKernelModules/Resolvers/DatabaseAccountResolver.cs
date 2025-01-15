@@ -21,6 +21,7 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Resolvers
         {
             if (_cacheCookies != null) return _cacheCookies;
 
+            // ReSharper disable once AsyncApostle.AsyncWait
             _cacheCookies = GetCookiesFromDatabaseAsync().Result;
             return _cacheCookies ?? new Dictionary<string, string>();
         }
@@ -37,6 +38,7 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Resolvers
         public void SaveCookies(IDictionary<string, string> cookies)
         {
             _cacheCookies = cookies;
+            // ReSharper disable once AsyncApostle.AsyncWait
             SaveCookiesToDatabaseAsync(cookies).Wait();
         }
 
@@ -44,6 +46,7 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Resolvers
         public void RemoveCookies()
         {
             _cacheCookies = null;
+            // ReSharper disable once AsyncApostle.AsyncWait
             RemoveCookiesFromDatabaseAsync().Wait();
         }
 
@@ -52,6 +55,7 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Resolvers
         {
             if (_cacheToken != null) return _cacheToken;
 
+            // ReSharper disable once AsyncApostle.AsyncWait
             _cacheToken = GetTokenFromDatabaseAsync().Result;
             return _cacheToken;
         }
@@ -60,6 +64,7 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Resolvers
         public void RemoveToken()
         {
             _cacheToken = null;
+            // ReSharper disable once AsyncApostle.AsyncWait
             RemoveTokenFromDatabaseAsync().Wait();
         }
 
@@ -67,6 +72,7 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Resolvers
         public void SaveToken(BiliToken token)
         {
             _cacheToken = token;
+            // ReSharper disable once AsyncApostle.AsyncWait
             SaveTokenToDatabaseAsync(token).Wait();
         }
 
@@ -96,7 +102,9 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Resolvers
             try
             {
                 var account = await database.GetAsync<BilibiliAccountConfiguration>(0);
-                return account.Token is null ? null : JsonSerializer.Deserialize<BiliToken>(account.Token, TokenSerializeContext.Default.BiliToken);
+                return account.Token is null
+                    ? null
+                    : JsonSerializer.Deserialize<BiliToken>(account.Token, TokenSerializeContext.Default.BiliToken);
             }
             catch (Exception)
             {
@@ -144,7 +152,10 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Resolvers
             try
             {
                 var account = await database.GetAsync<BilibiliAccountConfiguration>(0);
-                return account.Cookies is null ? null : JsonSerializer.Deserialize<Dictionary<string, string>>(account.Cookies, CookieSerializeContext.Default.DictionaryStringString);
+                return account.Cookies is null
+                    ? null
+                    : JsonSerializer.Deserialize<Dictionary<string, string>>(account.Cookies,
+                        CookieSerializeContext.Default.DictionaryStringString);
             }
             catch (Exception)
             {
