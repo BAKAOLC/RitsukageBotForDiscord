@@ -175,9 +175,10 @@ namespace RitsukageBot.Services.HostedServices
                 script.AppendLine("rmdir /s /q runtimes");
                 script.AppendLine("echo Done.");
                 script.AppendLine("echo Moving update folder...");
-                script.AppendLine("move /y update .");
+                script.AppendLine("xcopy /e /y update .");
+                script.AppendLine("rmdir /s /q update");
                 script.AppendLine("echo Restarting...");
-                script.AppendLine("start RitsukageBotForDiscord.exe");
+                script.AppendLine("start RitsukageBot.exe");
                 script.AppendLine("del %0");
 
                 await File.WriteAllTextAsync("update.bat", script.ToString()).ConfigureAwait(false);
@@ -192,10 +193,11 @@ namespace RitsukageBot.Services.HostedServices
             script.AppendLine("rm -rf runtimes");
             script.AppendLine("echo Done.");
             script.AppendLine("echo Moving update folder...");
-            script.AppendLine("mv update/* .");
+            script.AppendLine("cp -r update/* .");
+            script.AppendLine("rm -rf update");
             script.AppendLine("echo Restarting...");
-            script.AppendLine("chmod +x RitsukageBotForDiscord");
-            script.AppendLine("./RitsukageBotForDiscord &");
+            script.AppendLine("chmod +x RitsukageBot");
+            script.AppendLine("./RitsukageBot &");
             script.AppendLine("rm $0");
 
             await File.WriteAllTextAsync("update.sh", script.ToString()).ConfigureAwait(false);
