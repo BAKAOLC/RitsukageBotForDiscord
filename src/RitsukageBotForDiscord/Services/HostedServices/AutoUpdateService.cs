@@ -132,9 +132,8 @@ namespace RitsukageBot.Services.HostedServices
             {
                 var appSettings = JObject.Parse(await File.ReadAllTextAsync(appSettingsPath).ConfigureAwait(false));
                 var currentAppSettings = JObject.Parse(await File.ReadAllTextAsync("appsettings.json").ConfigureAwait(false));
-                foreach (var (key, value) in appSettings) currentAppSettings[key] = value;
-
-                await File.WriteAllTextAsync(appSettingsPath, currentAppSettings.ToString()).ConfigureAwait(false);
+                var combineAppSettings = CombineAppSettings(currentAppSettings, appSettings);
+                await File.WriteAllTextAsync(appSettingsPath, combineAppSettings.ToString()).ConfigureAwait(false);
             }
 
             var scriptPath = await GenerateUpdateScript().ConfigureAwait(false);
@@ -147,6 +146,18 @@ namespace RitsukageBot.Services.HostedServices
                 });
             else
                 Process.Start("sh", scriptPath);
+        }
+
+        private static JToken CombineAppSettings(JToken current, JToken update)
+        {
+            if (current is not JObject currentObj || update is not JObject updateObj) return update;
+            foreach (var property in updateObj.Properties())
+                if (currentObj[property.Name] is null)
+                    currentObj.Add(property);
+                else
+                    currentObj[property.Name] = CombineAppSettings(currentObj[property.Name]!, property.Value);
+
+            return currentObj;
         }
 
         private static async Task<string> GenerateUpdateScript()
