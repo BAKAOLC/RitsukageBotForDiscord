@@ -2,7 +2,6 @@ using System.Text.RegularExpressions;
 using Discord;
 using Discord.Interactions;
 using Microsoft.Extensions.Logging;
-using Richasy.BiliKernel.Models.Media;
 using RitsukageBot.Library.Bilibili.DiscordBridges;
 using RitsukageBot.Library.Bilibili.Utils;
 
@@ -10,39 +9,38 @@ namespace RitsukageBot.Modules.Bilibili
 {
     public partial class BilibiliInteractions
     {
-        public partial class LiveInteractions
+        public partial class UserInteractions
         {
-            private static readonly Regex MatchLiveIdRegex = GetMatchUserIdRegex();
+            private static readonly Regex MatchUserIdRegex = GetMatchUserIdRegex();
 
             /// <summary>
-            ///     Get live information
+            ///     Get user information
             /// </summary>
             /// <param name="id"></param>
-            [SlashCommand("info", "Get live information")]
-            public async Task GetVideoInfoAsync(string id)
+            [SlashCommand("info", "Get user information")]
+            public async Task GetUserInfoAsync(string id)
             {
                 await DeferAsync().ConfigureAwait(false);
 
                 id = id.Trim();
 
-                if (MatchLiveIdRegex.IsMatch(id))
+                if (MatchUserIdRegex.IsMatch(id))
                 {
-                    var match = MatchLiveIdRegex.Match(id);
+                    var match = MatchUserIdRegex.Match(id);
                     id = match.Groups["id"].Value;
                 }
 
-                if (!ulong.TryParse(id, out var roomId) || roomId == 0)
+                if (!ulong.TryParse(id, out var userId) || userId == 0)
                 {
                     await FollowupAsync(embed: new EmbedBuilder().WithColor(Color.Red).WithTitle("Error")
                         .WithDescription("Invalid video id.").Build()).ConfigureAwait(false);
                     return;
                 }
 
-                var media = new MediaIdentifier(roomId.ToString(), null, null);
                 try
                 {
-                    var detail = await PlayerService.GetLivePageDetailAsync(media).ConfigureAwait(false);
-                    var embed = InformationEmbedBuilder.BuildLiveInfo(detail);
+                    var detail = await UserService.GetUserInformationAsync(userId.ToString()).ConfigureAwait(false);
+                    var embed = InformationEmbedBuilder.BuildUserInfo(detail);
                     embed.WithColor(Color.Green);
                     var footerBuilder = new EmbedFooterBuilder();
                     footerBuilder.WithIconUrl("attachment://bilibili-icon.png");
@@ -53,21 +51,21 @@ namespace RitsukageBot.Modules.Bilibili
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError(ex, "Failed to get live information.");
+                    Logger.LogError(ex, "Failed to get user information.");
                     await FollowupAsync(embed: new EmbedBuilder().WithColor(Color.Red).WithTitle("Error")
-                            .WithDescription("Failed to get live information: " + ex.Message).Build())
+                            .WithDescription("Failed to get user information: " + ex.Message).Build())
                         .ConfigureAwait(false);
                 }
             }
 
-            [GeneratedRegex(@"((https?://)?live\.bilibili\.com/)(?<id>\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+            [GeneratedRegex(@"((https?://)?space\.bilibili\.com/)(?<id>\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
             private static partial Regex GetMatchUserIdRegex();
         }
     }
 
     public partial class BilibiliInteractionButton
     {
-        public partial class LiveInteractionsButton
+        public partial class UserInteractionsButton
         {
         }
     }

@@ -4,6 +4,7 @@ using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Richasy.BiliKernel.Bili.Media;
+using Richasy.BiliKernel.Bili.User;
 using Richasy.BiliKernel.Models.Media;
 using RitsukageBot.Library.Bilibili.DiscordBridges;
 using RitsukageBot.Library.Bilibili.Utils;
@@ -27,7 +28,6 @@ namespace RitsukageBot.Modules.Bilibili.Events
             var logger = messageNotification.Services.GetRequiredService<ILogger<AutomaticallyResolveBilibiliLinks>>();
 
             var biliKernelProvider = messageNotification.Services.GetRequiredService<BiliKernelProviderService>();
-            var playerService = biliKernelProvider.GetRequiredService<IPlayerService>();
             var databaseProviderService = messageNotification.Services.GetRequiredService<DatabaseProviderService>();
 
             var message = messageNotification.Message;
@@ -40,33 +40,49 @@ namespace RitsukageBot.Modules.Bilibili.Events
             var keyIds = await ResolveKeyId(message.Content).ConfigureAwait(false);
             if (keyIds.Length == 0) return;
 
+            var footerBuilder = new EmbedFooterBuilder();
+            footerBuilder.WithIconUrl("attachment://bilibili-icon.png");
+            footerBuilder.WithText("Bilibili");
+
             foreach (var keyId in keyIds)
-                switch (keyId.Type)
+            {
+                EmbedBuilder? embed = null;
+                try
                 {
-                    case KeyIdType.Video:
-                        var videoMediaIdentifier = new MediaIdentifier(keyId.Id, null, null);
-                        var videoPlayerView = await playerService.GetVideoPageDetailAsync(videoMediaIdentifier, cancellationToken).ConfigureAwait(false);
-                        var videoEmbed = InformationEmbedBuilder.BuildVideoInfo(videoPlayerView);
-                        var videoFooterBuilder = new EmbedFooterBuilder();
-                        videoFooterBuilder.WithIconUrl("attachment://bilibili-icon.png");
-                        videoFooterBuilder.WithText("Bilibili");
-                        videoEmbed.WithFooter(videoFooterBuilder);
-                        await message.Channel.SendFileAsync(BilibiliIconData.GetLogoIconStream(), "bilibili-icon.png", embed: videoEmbed.Build()).ConfigureAwait(false);
-                        break;
-                    case KeyIdType.Live:
-                        var liveMediaIdentifier = new MediaIdentifier(keyId.Id, null, null);
-                        var livePlayerView = await playerService.GetLivePageDetailAsync(liveMediaIdentifier, cancellationToken).ConfigureAwait(false);
-                        var liveEmbed = InformationEmbedBuilder.BuildLiveInfo(livePlayerView);
-                        var liveFooterBuilder = new EmbedFooterBuilder();
-                        liveFooterBuilder.WithIconUrl("attachment://bilibili-icon.png");
-                        liveFooterBuilder.WithText("Bilibili");
-                        liveEmbed.WithFooter(liveFooterBuilder);
-                        await message.Channel.SendFileAsync(BilibiliIconData.GetLogoIconStream(), "bilibili-icon.png", embed: liveEmbed.Build()).ConfigureAwait(false);
-                        break;
-                    case KeyIdType.Dynamic:
-                    case KeyIdType.User:
-                        break;
+                    switch (keyId.Type)
+                    {
+                        case KeyIdType.Video:
+                            logger.LogInformation("Try to resolve video {VideoId}", keyId.Id);
+                            var videoMediaIdentifier = new MediaIdentifier(keyId.Id, null, null);
+                            var videoPlayerView = await biliKernelProvider.GetRequiredService<IPlayerService>().GetVideoPageDetailAsync(videoMediaIdentifier, cancellationToken).ConfigureAwait(false);
+                            embed = InformationEmbedBuilder.BuildVideoInfo(videoPlayerView);
+                            break;
+                        case KeyIdType.Live:
+                            logger.LogInformation("Try to resolve live {LiveId}", keyId.Id);
+                            var liveMediaIdentifier = new MediaIdentifier(keyId.Id, null, null);
+                            var livePlayerView = await biliKernelProvider.GetRequiredService<IPlayerService>().GetLivePageDetailAsync(liveMediaIdentifier, cancellationToken).ConfigureAwait(false);
+                            embed = InformationEmbedBuilder.BuildLiveInfo(livePlayerView);
+                            break;
+                        case KeyIdType.Dynamic:
+                            break;
+                        case KeyIdType.User:
+                        {
+                            logger.LogInformation("Try to resolve user {UserId}", keyId.Id);
+                            var userCard = await biliKernelProvider.GetRequiredService<IUserService>().GetUserInformationAsync(keyId.Id, cancellationToken);
+                            embed = InformationEmbedBuilder.BuildUserInfo(userCard);
+                            break;
+                        }
+                    }
                 }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to resolve key id {KeyId}", keyId);
+                }
+
+                if (embed is null) continue;
+                embed.WithFooter(footerBuilder);
+                await message.Channel.SendFileAsync(BilibiliIconData.GetLogoIconStream(), "bilibili-icon.png", embed: embed.Build()).ConfigureAwait(false);
+            }
         }
 
         private static async Task<DiscordChannelConfiguration?> GetConfigAsync(DatabaseProviderService database, ulong channelId)

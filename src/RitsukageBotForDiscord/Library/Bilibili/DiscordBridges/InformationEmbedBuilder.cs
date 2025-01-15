@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Text;
 using Discord;
 using Richasy.BiliKernel.Models.Media;
@@ -20,35 +19,7 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
         /// <returns></returns>
         public static EmbedBuilder BuildMyInfo(UserDetailProfile myInfo, UserCommunityInformation myCommunityInfo)
         {
-            var embed = new EmbedBuilder();
-            embed.WithTitle("Bilibili User Info");
-            if (myInfo.User.Avatar is not null) embed.WithThumbnailUrl(myInfo.User.Avatar.SourceUri.ToString());
-            embed.AddField("Username", myInfo.User.Name);
-            embed.AddField("UID", myInfo.User.Id);
-            if (myInfo.Level.HasValue) embed.AddField("Level", myInfo.Level);
-            embed.AddField("Is Hardcore", myInfo.IsHardcore ?? false);
-            embed.AddField("Is Vip", myInfo.IsVip ?? false);
-            if (!string.IsNullOrWhiteSpace(myInfo.Introduce))
-                embed.WithDescription(myInfo.Introduce);
-
-            embed.AddField("Coins",
-                myCommunityInfo.CoinCount.HasValue
-                    ? myCommunityInfo.CoinCount.Value.ToString(CultureInfo.CurrentCulture)
-                    : "Unknown");
-            embed.AddField("Follows",
-                myCommunityInfo.FollowCount.HasValue
-                    ? myCommunityInfo.FollowCount.Value.ToString(CultureInfo.CurrentCulture)
-                    : "Unknown");
-            embed.AddField("Fans",
-                myCommunityInfo.FansCount.HasValue
-                    ? myCommunityInfo.FansCount.Value.ToString(CultureInfo.CurrentCulture)
-                    : "Unknown");
-            embed.AddField("Moments",
-                myCommunityInfo.MomentCount.HasValue
-                    ? myCommunityInfo.MomentCount.Value.ToString(CultureInfo.CurrentCulture)
-                    : "Unknown");
-
-            return embed;
+            return BuildUserInfo(new(myInfo, myCommunityInfo));
         }
 
         /// <summary>
@@ -181,6 +152,41 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
             }
 
             embed.WithUrl($"https://live.bilibili.com/{detail.Information.Identifier.Id}/");
+
+            return embed;
+        }
+
+        /// <summary>
+        ///     Build user info.
+        /// </summary>
+        /// <param name="detail"></param>
+        /// <returns></returns>
+        public static EmbedBuilder BuildUserInfo(UserCard detail)
+        {
+            if (detail.Profile is null) return new EmbedBuilder().WithTitle("User Not Found");
+            var embed = new EmbedBuilder();
+            embed.WithTitle(detail.Profile.User.Name);
+
+            if (detail.Profile.User.Avatar is not null)
+                embed.WithThumbnailUrl(detail.Profile.User.Avatar.SourceUri.ToString());
+
+            embed.AddField("UID", detail.Profile.User.Id, true);
+            if (detail.Profile.Level.HasValue) embed.AddField("Level", detail.Profile.Level, true);
+
+            embed.AddField("Is Hardcore", detail.Profile.IsHardcore ?? false, true);
+
+            if (!string.IsNullOrWhiteSpace(detail.Profile.Introduce))
+                embed.WithDescription(detail.Profile.Introduce);
+
+            if (detail.Community?.FollowCount is not null)
+                embed.AddField("Follows", detail.Community.FollowCount, true);
+
+            if (detail.Community?.FansCount is not null)
+                embed.AddField("Fans", detail.Community.FansCount, true);
+
+            embed.AddField("Is Vip", detail.Profile.IsVip ?? false, true);
+
+            embed.WithUrl($"https://space.bilibili.com/{detail.Profile.User.Id}");
 
             return embed;
         }
