@@ -1,4 +1,5 @@
 using System.Reflection;
+using Microsoft.Extensions.Logging;
 using QRCoder;
 using Richasy.BiliKernel.Authenticator;
 using Richasy.BiliKernel.Authorizers.TV.Core;
@@ -17,12 +18,14 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Authorizers
     /// <param name="localCookiesResolver"></param>
     /// <param name="localTokenResolver"></param>
     /// <param name="basicAuthenticator"></param>
+    /// <param name="logger"></param>
     public sealed class TvAuthenticationService(
         BiliHttpClient biliHttpClient,
         IQRCodeResolver qrCodeResolver,
         IBiliCookiesResolver localCookiesResolver,
         IBiliTokenResolver localTokenResolver,
-        BiliAuthenticator basicAuthenticator) : IAuthenticationService
+        BiliAuthenticator basicAuthenticator,
+        ILogger<TvAuthenticationService> logger) : IAuthenticationService
     {
         private readonly OriginalAuthenticationService _originalAuthenticationService = new(biliHttpClient,
             qrCodeResolver, localCookiesResolver, localTokenResolver, basicAuthenticator);
@@ -43,10 +46,12 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Authorizers
             _qrCode = await GetQrCodeAsync(client, cancellationToken).ConfigureAwait(false);
             if (string.IsNullOrEmpty(_qrCode.Url)) throw new("Cannot get the QR code URL.");
 
+            logger.LogDebug("Generate the QR code image.");
             var qrCodeGenerator = new QRCodeGenerator();
             var data = qrCodeGenerator.CreateQrCode(_qrCode.Url, QRCodeGenerator.ECCLevel.Q);
             var code = new PngByteQRCode(data);
             _qrCodeImage = code.GetGraphic(20);
+            logger.LogDebug("Generate the QR code image successfully.");
         }
 
         /// <summary>
@@ -97,6 +102,7 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Authorizers
         public Task WaitQrCodeScanAsync(TVQRCode qrCode, CancellationToken cancellationToken = default)
         {
             var client = GetClient();
+            logger.LogDebug("Try to invoke the method to wait for the QR code to be scanned.");
             return client.GetType().GetMethod("WaitQRCodeScanAsync")
                        ?.Invoke(client, [qrCode, cancellationToken]) as Task ??
                    throw new NullReferenceException("Cannot get the method.");
@@ -104,14 +110,16 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Authorizers
 
         private object GetClient()
         {
+            logger.LogDebug("Try to get the client from the original authentication service.");
             return _originalAuthenticationService.GetType()
                        .GetField("_client", BindingFlags.NonPublic | BindingFlags.Instance)
                        ?.GetValue(_originalAuthenticationService) ??
                    throw new NullReferenceException("Cannot get the client.");
         }
 
-        private static Task<TVQRCode> GetQrCodeAsync(object client, CancellationToken cancellationToken)
+        private Task<TVQRCode> GetQrCodeAsync(object client, CancellationToken cancellationToken)
         {
+            logger.LogDebug("Try to invoke the method to get the QR code.");
             var method = client.GetType().GetMethod("GetQRCodeAsync", BindingFlags.Public | BindingFlags.Instance) ??
                          throw new NullReferenceException($"Cannot get the method {nameof(GetQrCodeAsync)}.");
             return method.Invoke(client, [cancellationToken]) as Task<TVQRCode> ??

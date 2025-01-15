@@ -833,6 +833,9 @@ namespace RitsukageBot.Services.Providers
             await _connection.CreateTablesAsync(CreateFlags.None, types);
         }
 
+        /// <summary>
+        ///     Releases all resources used by the <see cref="DatabaseProviderService" /> object.
+        /// </summary>
         ~DatabaseProviderService()
         {
             Dispose(false);

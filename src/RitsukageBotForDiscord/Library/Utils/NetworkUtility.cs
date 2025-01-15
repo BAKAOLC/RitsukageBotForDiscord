@@ -1,5 +1,8 @@
 namespace RitsukageBot.Library.Utils
 {
+    /// <summary>
+    ///     Network utility.
+    /// </summary>
     public static class NetworkUtility
     {
         private static IHttpClientFactory? _httpClientFactory;

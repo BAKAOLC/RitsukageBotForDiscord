@@ -10,18 +10,10 @@ namespace RitsukageBot.Services.Providers
     /// <summary>
     ///     Bili kernel provider service.
     /// </summary>
-    public class BiliKernelProviderService
+    /// <param name="serviceProvider">Service provider.</param>
+    public class BiliKernelProviderService(IServiceProvider serviceProvider)
     {
-        private readonly Lazy<Kernel> _kernelInstance;
-
-        /// <summary>
-        ///     Bili kernel provider service.
-        /// </summary>
-        /// <param name="loggerFactory"></param>
-        public BiliKernelProviderService(ILoggerFactory? loggerFactory = null, DatabaseProviderService database = null)
-        {
-            _kernelInstance = new(() => BuildKernel(loggerFactory, database));
-        }
+        private readonly Lazy<Kernel> _kernelInstance = new(() => BuildKernel(serviceProvider));
 
         /// <summary>
         ///     Kernel.
@@ -48,11 +40,11 @@ namespace RitsukageBot.Services.Providers
             return Kernel.GetAllServices<T>();
         }
 
-        private Kernel BuildKernel(ILoggerFactory? loggerFactory, DatabaseProviderService database)
+        private static Kernel BuildKernel(IServiceProvider serviceProvider)
         {
             var kernelBuilder = Kernel.CreateBuilder();
+            var loggerFactory = serviceProvider.GetService<ILoggerFactory>();
             if (loggerFactory is not null) kernelBuilder.Services.AddSingleton(loggerFactory);
-
             kernelBuilder.AddArticleDiscoveryService();
             kernelBuilder.AddArticleOperationService();
             kernelBuilder.AddBasicAuthenticator();
@@ -78,6 +70,7 @@ namespace RitsukageBot.Services.Providers
             kernelBuilder.AddViewLaterService();
             kernelBuilder.Services.AddSingleton<IQRCodeResolver, EmptyQrCodeResolver>();
             kernelBuilder.Services.AddSingleton<IAuthenticationService, TvAuthenticationService>();
+            var database = serviceProvider.GetRequiredService<DatabaseProviderService>();
             var databaseAccountResolver = new DatabaseAccountResolver(database);
             kernelBuilder.Services.AddSingleton<IBiliTokenResolver>(databaseAccountResolver);
             kernelBuilder.Services.AddSingleton<IBiliCookiesResolver>(databaseAccountResolver);

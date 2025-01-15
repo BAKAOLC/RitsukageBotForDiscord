@@ -2,11 +2,10 @@ using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using RitsukageBot.Services.HostedServices;
 
 namespace RitsukageBot.Library.Modules
 {
-    internal class DiscordEventLoggerModule(DiscordBotService discordBotService, IServiceProvider services) : IDiscordBotModule
+    internal class DiscordEventLoggerModule(IServiceProvider services) : IDiscordBotModule
     {
         private readonly DiscordSocketClient _client = services.GetRequiredService<DiscordSocketClient>();
         private readonly ILogger<DiscordEventLoggerModule> _logger = services.GetRequiredService<ILogger<DiscordEventLoggerModule>>();

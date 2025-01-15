@@ -27,7 +27,7 @@ namespace RitsukageBot.Services.HostedServices
             _services = serviceProvider;
             _client = client;
             _client.Log += LogAsync;
-            _discordEventLoggerModule = new(this, serviceProvider);
+            _discordEventLoggerModule = new(serviceProvider);
             _scriptingModuleSupport = new(this, serviceProvider);
             _eventModuleSupport = new(serviceProvider);
         }
