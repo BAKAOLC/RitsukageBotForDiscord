@@ -151,11 +151,10 @@ namespace RitsukageBot.Services.HostedServices
         private static JToken CombineAppSettings(JToken current, JToken update)
         {
             if (current is not JObject currentObj || update is not JObject updateObj) return update;
-            foreach (var property in updateObj.Properties())
-                if (currentObj[property.Name] is null)
-                    currentObj.Add(property);
-                else
-                    currentObj[property.Name] = CombineAppSettings(currentObj[property.Name]!, property.Value);
+
+            foreach (var (key, value) in updateObj)
+                if (!currentObj.TryAdd(key, value))
+                    currentObj[key] = CombineAppSettings(currentObj[key]!, value!);
 
             return currentObj;
         }
