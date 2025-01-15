@@ -58,7 +58,6 @@ namespace RitsukageBot.Modules.Bilibili
 
                 var embed = InformationEmbedBuilder.BuildMyInfo(myInfo, myCommunityInfo);
                 embed.WithColor(Color.Green);
-                embed.WithTitle("Bilibili Login Info");
                 return embed;
             }
 

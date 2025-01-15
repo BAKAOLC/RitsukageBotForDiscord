@@ -18,9 +18,9 @@ namespace RitsukageBot.Services.Providers
         ///     Bili kernel provider service.
         /// </summary>
         /// <param name="loggerFactory"></param>
-        public BiliKernelProviderService(ILoggerFactory? loggerFactory = null)
+        public BiliKernelProviderService(ILoggerFactory? loggerFactory = null, DatabaseProviderService database = null)
         {
-            _kernelInstance = new(() => BuildKernel(loggerFactory));
+            _kernelInstance = new(() => BuildKernel(loggerFactory, database));
         }
 
         /// <summary>
@@ -48,7 +48,7 @@ namespace RitsukageBot.Services.Providers
             return Kernel.GetAllServices<T>();
         }
 
-        private Kernel BuildKernel(ILoggerFactory? loggerFactory)
+        private Kernel BuildKernel(ILoggerFactory? loggerFactory, DatabaseProviderService database)
         {
             var kernelBuilder = Kernel.CreateBuilder();
             if (loggerFactory is not null) kernelBuilder.Services.AddSingleton(loggerFactory);
@@ -66,8 +66,6 @@ namespace RitsukageBot.Services.Providers
             kernelBuilder.AddMomentDiscoveryService();
             kernelBuilder.AddMomentOperationService();
             kernelBuilder.AddMyProfileService();
-            kernelBuilder.AddNativeCookiesResolver();
-            kernelBuilder.AddNativeTokenResolver();
             //kernelBuilder.AddNativeQRCodeResolver();
             kernelBuilder.AddPlayerService();
             kernelBuilder.AddRelationshipService();
@@ -80,6 +78,9 @@ namespace RitsukageBot.Services.Providers
             kernelBuilder.AddViewLaterService();
             kernelBuilder.Services.AddSingleton<IQRCodeResolver, EmptyQrCodeResolver>();
             kernelBuilder.Services.AddSingleton<IAuthenticationService, TvAuthenticationService>();
+            var databaseAccountResolver = new DatabaseAccountResolver(database);
+            kernelBuilder.Services.AddSingleton<IBiliTokenResolver>(databaseAccountResolver);
+            kernelBuilder.Services.AddSingleton<IBiliCookiesResolver>(databaseAccountResolver);
             return kernelBuilder.Build();
         }
     }
