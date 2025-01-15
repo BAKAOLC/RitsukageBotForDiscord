@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using RitsukageBot.Library.Utils;
 
 namespace RitsukageBot.Library.Networking
 {
@@ -60,7 +61,8 @@ namespace RitsukageBot.Library.Networking
             $"{TagMozillaIos} {TagAppleWebKit} {TagChrome} {TagSafari} {TagEdge} {AssemblyUserAgent}";
 
         internal static string Default =>
-            Environment.OSVersion.Platform switch
+            // Environment.OSVersion.Platform switch // On MacOs, it will incorrectly return Unix
+            PlatformUtility.GetOperatingSystem() switch
             {
                 PlatformID.Win32NT => Windows,
                 PlatformID.Unix => Linux,
