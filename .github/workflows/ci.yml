@@ -36,13 +36,13 @@ jobs:
         run: |
           dotnet-gitversion /updateassemblyinfo
           echo "::set-output name=version::$(dotnet-gitversion /showvariable FullSemVer)"
-      - name: Cache BiliKernel.Grpc
-        uses: actions/cache@v4
+      - name: Restore cached
+        id: cache-restore
+        uses: actions/cache/restore@v4
         with:
           path: |
-            ./src/bili-kernel/src/BiliKernel.Grpc/obj
-            ./src/bili-kernel/src/BiliKernel.Grpc/bin
-          key: ${{ runner.os }}-bili-kernel-grpc
+            src/bili-kernel/src/BiliKernel.Grpc/obj
+          key: ${{ runner.os }}-deps
       - name: Build (Windows)
         env:
           IS_PR: ${{ !!github.head_ref }}
@@ -63,3 +63,10 @@ jobs:
         with:
           name: RitsukageBotForDiscord - ${{ steps.gitversion.outputs.version }} - ${{ matrix.os }}
           path: bin/Release/net9.0
+      - name: Save cache
+        id: cache-save
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            src/bili-kernel/src/BiliKernel.Grpc/obj
+          key: ${{ runner.os }}-deps
