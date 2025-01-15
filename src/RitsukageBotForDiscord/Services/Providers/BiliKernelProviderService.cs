@@ -43,8 +43,8 @@ namespace RitsukageBot.Services.Providers
         private static Kernel BuildKernel(IServiceProvider serviceProvider)
         {
             var kernelBuilder = Kernel.CreateBuilder();
-            var loggerFactory = serviceProvider.GetService<ILoggerFactory>();
-            if (loggerFactory is not null) kernelBuilder.Services.AddSingleton(loggerFactory);
+            var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+            kernelBuilder.Services.AddSingleton(loggerFactory);
             kernelBuilder.AddArticleDiscoveryService();
             kernelBuilder.AddArticleOperationService();
             kernelBuilder.AddBasicAuthenticator();
