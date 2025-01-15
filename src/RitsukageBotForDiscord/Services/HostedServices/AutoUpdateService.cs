@@ -87,7 +87,7 @@ namespace RitsukageBot.Services.HostedServices
             }
 
             logger.LogInformation("Newer version found, downloading...");
-            var artifactStream = await client.Actions.Artifacts.DownloadArtifact(RepositoryOwner, RepositoryName, targetArtifact.Id, ".zip").ConfigureAwait(false);
+            var artifactStream = await client.Actions.Artifacts.DownloadArtifact(RepositoryOwner, RepositoryName, targetArtifact.Id, "zip").ConfigureAwait(false);
             if (artifactStream is null)
             {
                 logger.LogError("Failed to download artifact.");
