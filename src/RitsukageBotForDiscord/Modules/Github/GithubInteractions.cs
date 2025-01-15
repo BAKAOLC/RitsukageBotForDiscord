@@ -53,7 +53,7 @@ namespace RitsukageBot.Modules.Github
                 await FollowupAsync(embed: embedBuilder.Build()).ConfigureAwait(false);
                 Logger.LogInformation("Waiting for GitHub login token.");
                 var token = await GitHubClientProvider.WaitForTokenAsync(deviceFlowResponse).ConfigureAwait(false);
-                GitHubClientProvider.SetCredentials(token.AccessToken);
+                await GitHubClientProvider.SetCredentials(token.AccessToken).ConfigureAwait(false);
                 var account = await GitHubClientProvider.Client.User.Current().ConfigureAwait(false);
                 Logger.LogInformation("Successfully logged in to GitHub as {Account}.", account.Login);
                 await ModifyOriginalResponseAsync(x => { x.Embed = BuildUserInfoEmbed(account).Build(); }).ConfigureAwait(false);
