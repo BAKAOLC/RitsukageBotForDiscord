@@ -32,6 +32,7 @@ namespace RitsukageBot.Services.HostedServices
         private Timer? _timer;
 
         private string RepositoryOwner => _option.Information.RepositoryOwner;
+
         private string RepositoryName => _option.Information.RepositoryName;
 
         private string BranchName => _option.Information.BranchName;
@@ -138,21 +139,34 @@ namespace RitsukageBot.Services.HostedServices
             }
         }
 
-        private static async Task UpdateAsync(Stream stream)
+        private async Task UpdateAsync(Stream stream)
         {
+            logger.LogInformation("Saving update to update.zip...");
             await using var fileStream =
                 new FileStream("update.zip", FileMode.Create, FileAccess.Write, FileShare.None);
             await stream.CopyToAsync(fileStream).ConfigureAwait(false);
             stream.Close();
             fileStream.Close();
 
+            logger.LogInformation("Extracting update...");
             ZipFile.ExtractToDirectory("update.zip", "update", true);
             File.Delete("update.zip");
 
+            logger.LogInformation("Moving appsettings.json...");
             var appSettingsPath = Path.Combine("update", "appsettings.json");
-            if (File.Exists(appSettingsPath)) File.Delete(appSettingsPath);
+            if (File.Exists(appSettingsPath))
+                try
+                {
+                    File.Move(appSettingsPath, Path.Combine("update", "appsettings.new.json"));
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to move appsettings.json.");
+                }
 
+            logger.LogInformation("Generating update script...");
             var scriptPath = await GenerateUpdateScriptAsync().ConfigureAwait(false);
+            logger.LogInformation("Executing update script...");
             if (PlatformUtility.GetOperatingSystem() == PlatformID.Win32NT)
                 Process.Start(new ProcessStartInfo
                 {
