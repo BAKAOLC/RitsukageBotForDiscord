@@ -88,7 +88,9 @@ using var host = Host.CreateDefaultBuilder()
         services.AddSingleton<InteractionService>(x => new(x.GetRequiredService<DiscordSocketClient>(),
             x.GetRequiredService<InteractionServiceConfig>()));
         services.AddHostedService<DiscordBotService>();
+#if !DEBUG // Auto update service is not needed in debug mode.
         services.AddHostedService<AutoUpdateService>();
+#endif
     }).Build();
 
 var logger = host.Services.GetRequiredService<ILogger<Program>>();
