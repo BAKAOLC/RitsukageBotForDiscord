@@ -36,6 +36,11 @@ namespace RitsukageBot.Services.HostedServices
         {
             _logger.LogInformation("Starting Discord bot service...");
             var token = _services.GetRequiredService<IConfiguration>().GetValue<string>("Discord:Token");
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                _logger.LogError("Discord bot token is not configured.");
+                return;
+            }
             await _discordEventLoggerModule.InitAsync().ConfigureAwait(false);
             await _scriptingModuleSupport.InitAsync().ConfigureAwait(false);
             await _eventModuleSupport.InitAsync().ConfigureAwait(false);

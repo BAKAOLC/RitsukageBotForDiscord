@@ -33,7 +33,7 @@ namespace RitsukageBot.Modules.Github
             await DeferAsync(true).ConfigureAwait(false);
             if (await CheckLoginAsync())
             {
-                var account = await GitHubClientProvider.Client.User.Current().ConfigureAwait(false);
+                var account = await GitHubClientProvider.User.Current().ConfigureAwait(false);
                 await FollowupAsync(embed: BuildUserInfoEmbed(account).Build()).ConfigureAwait(false);
                 return;
             }
@@ -55,12 +55,11 @@ namespace RitsukageBot.Modules.Github
                 Logger.LogInformation("Waiting for GitHub login token.");
                 var token = await GitHubClientProvider.WaitForTokenAsync(deviceFlowResponse).ConfigureAwait(false);
                 await GitHubClientProvider.SetCredentials(token.AccessToken).ConfigureAwait(false);
-                var account = await GitHubClientProvider.Client.User.Current().ConfigureAwait(false);
+                var account = await GitHubClientProvider.User.Current().ConfigureAwait(false);
                 Logger.LogInformation("Successfully logged in to GitHub as {Account}.", account.Login);
                 await ModifyOriginalResponseAsync(x =>
                     {
                         x.Embed = BuildUserInfoEmbed(account)
-                            .WithTitle("GitHub User")
                             .WithColor(Color.Green)
                             .Build();
                     })
@@ -89,21 +88,28 @@ namespace RitsukageBot.Modules.Github
         [SlashCommand("user", "Get user information.")]
         public async Task GetUserAsync(string username)
         {
-            await DeferAsync(true).ConfigureAwait(false);
+            await DeferAsync().ConfigureAwait(false);
             try
             {
-                var account = await GitHubClientProvider.Client.User.Get(username).ConfigureAwait(false);
-                await FollowupAsync(embed: BuildUserInfoEmbed(account)
-                    .WithTitle("GitHub User")
-                    .WithColor(Color.Green).Build()).ConfigureAwait(false);
+                var account = await GitHubClientProvider.User.Get(username).ConfigureAwait(false);
+                await FollowupAsync(embed: BuildUserInfoEmbed(account).WithColor(Color.Green).Build()).ConfigureAwait(false);
             }
             catch (NotFoundException)
             {
                 var embed = new EmbedBuilder()
-                    .WithTitle("GitHub User")
                     .WithColor(Color.Red)
                     .WithDescription("User not found.")
                     .AddField("Username", username);
+                await FollowupAsync(embed: embed.Build()).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Failed to get user information.");
+                var embed = new EmbedBuilder()
+                    .WithTitle("GitHub User")
+                    .WithColor(Color.Red)
+                    .WithDescription("Failed to get user information.")
+                    .AddField("Exception Message", ex.Message);
                 await FollowupAsync(embed: embed.Build()).ConfigureAwait(false);
             }
         }
@@ -112,7 +118,7 @@ namespace RitsukageBot.Modules.Github
         {
             try
             {
-                await GitHubClientProvider.Client.User.Current().ConfigureAwait(false);
+                await GitHubClientProvider.User.Current().ConfigureAwait(false);
                 return true;
             }
             catch
@@ -125,7 +131,7 @@ namespace RitsukageBot.Modules.Github
         {
             var embed = new EmbedBuilder();
 
-            // embed.WithTitle(account.Login);
+            embed.WithTitle(account.Login);
             embed.AddField("Name", account.Name, true);
             embed.AddField("Followers", account.Followers, true);
             embed.AddField("Following", account.Following, true);
