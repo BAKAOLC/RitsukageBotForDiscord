@@ -16,6 +16,8 @@ namespace RitsukageBot.Services.HostedServices
 {
     /// <summary>
     ///     Auto update service.
+    ///     This service will check for new version of the bot and update itself.
+    ///     Note: This service will only check for updates when logged in to GitHub.
     /// </summary>
     /// <param name="logger"></param>
     /// <param name="gitHubClientProviderService"></param>
