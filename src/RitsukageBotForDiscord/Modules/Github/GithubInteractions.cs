@@ -89,18 +89,53 @@ namespace RitsukageBot.Modules.Github
         public async Task GetUserAsync(string username)
         {
             await DeferAsync().ConfigureAwait(false);
+            User? account;
             try
             {
-                var account = await GitHubClientProvider.User.Get(username).ConfigureAwait(false);
-                await FollowupAsync(embed: BuildUserInfoEmbed(account).WithColor(Color.Green).Build()).ConfigureAwait(false);
+                Logger.LogInformation("Searching for user {Username}.", username);
+                var result = await GitHubClientProvider.Search.SearchUsers(new(username));
+                if (result.Items.Count == 0)
+                {
+                    Logger.LogInformation("User {Username} not found.", username);
+                    account = null;
+                }
+                else
+                {
+                    Logger.LogInformation("Search result: {Result}.", result.Items.Count);
+                    foreach (var item in result.Items)
+                        Logger.LogInformation("User: {Login}, Followers: {Followers}, Following: {Following}", item.Login, item.Name, item.Followers);
+                    account = result.Items.ToArray().FirstOrDefault();
+                }
             }
-            catch (NotFoundException)
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Failed to search user.");
+                var embed = new EmbedBuilder()
+                    .WithTitle("GitHub User")
+                    .WithColor(Color.Red)
+                    .WithDescription("Failed to search user.")
+                    .AddField("Exception Message", ex.Message);
+                await FollowupAsync(embed: embed.Build()).ConfigureAwait(false);
+                return;
+            }
+
+            if (account is null)
             {
                 var embed = new EmbedBuilder()
                     .WithColor(Color.Red)
                     .WithDescription("User not found.")
                     .AddField("Username", username);
                 await FollowupAsync(embed: embed.Build()).ConfigureAwait(false);
+                return;
+            }
+
+            try
+            {
+                Logger.LogInformation("Getting user information for {Login}.", account.Login);
+                account = await GitHubClientProvider.User.Get(account.Login).ConfigureAwait(false);
+                Logger.LogInformation("User: {Login}, Name: {Name}, Followers: {Followers}, Following: {Following}, Email: {Email}, Created At: {CreatedAt}, URL: {Url}, Avatar URL: {AvatarUrl}",
+                    account.Login, account.Name, account.Followers, account.Following, account.Email, account.CreatedAt, account.HtmlUrl, account.AvatarUrl);
+                await FollowupAsync(embed: BuildUserInfoEmbed(account).WithColor(Color.Green).Build()).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -132,10 +167,12 @@ namespace RitsukageBot.Modules.Github
             var embed = new EmbedBuilder();
 
             embed.WithTitle(account.Login);
-            embed.AddField("Name", account.Name, true);
+            if (!string.IsNullOrWhiteSpace(account.Name))
+                embed.AddField("Name", account.Name, true);
             embed.AddField("Followers", account.Followers, true);
             embed.AddField("Following", account.Following, true);
-            embed.AddField("Email", account.Email, true);
+            if (!string.IsNullOrWhiteSpace(account.Email))
+                embed.AddField("Email", account.Email, true);
             embed.AddField("Created At", account.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss zzz"), true);
             embed.WithUrl(account.HtmlUrl);
             embed.WithThumbnailUrl(account.AvatarUrl);
