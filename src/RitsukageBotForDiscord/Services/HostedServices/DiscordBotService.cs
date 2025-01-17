@@ -16,6 +16,7 @@ namespace RitsukageBot.Services.HostedServices
         private readonly DiscordEventLoggerModule _discordEventLoggerModule;
         private readonly EventModuleSupport _eventModuleSupport;
         private readonly ILogger<DiscordBotService> _logger;
+        private readonly ScheduleModuleSupport _scheduleModuleSupport;
         private readonly ScriptingModuleSupport _scriptingModuleSupport;
         private readonly IServiceProvider _services;
 
@@ -30,6 +31,7 @@ namespace RitsukageBot.Services.HostedServices
             _discordEventLoggerModule = new(serviceProvider);
             _scriptingModuleSupport = new(this, serviceProvider);
             _eventModuleSupport = new(serviceProvider);
+            _scheduleModuleSupport = new(serviceProvider);
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
@@ -41,23 +43,25 @@ namespace RitsukageBot.Services.HostedServices
                 _logger.LogError("Discord bot token is not configured.");
                 return;
             }
+
             await _discordEventLoggerModule.InitAsync().ConfigureAwait(false);
             await _scriptingModuleSupport.InitAsync().ConfigureAwait(false);
             await _eventModuleSupport.InitAsync().ConfigureAwait(false);
+            await _scheduleModuleSupport.InitAsync().ConfigureAwait(false);
             await _client.LoginAsync(TokenType.Bot, token).ConfigureAwait(false);
             await _client.StartAsync().ConfigureAwait(false);
             _logger.LogInformation("Discord bot service started.");
         }
 
-        public Task StopAsync(CancellationToken cancellationToken)
+        public async Task StopAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Stopping Discord bot service...");
-            _eventModuleSupport.Dispose();
-            _scriptingModuleSupport.Dispose();
-            _discordEventLoggerModule.Dispose();
-            _client.Dispose();
+            await _scheduleModuleSupport.DisposeAsync().ConfigureAwait(false);
+            await _eventModuleSupport.DisposeAsync().ConfigureAwait(false);
+            await _scriptingModuleSupport.DisposeAsync().ConfigureAwait(false);
+            await _discordEventLoggerModule.DisposeAsync();
+            await _client.DisposeAsync().ConfigureAwait(false);
             _logger.LogInformation("Discord bot service stopped.");
-            return Task.CompletedTask;
         }
 
         public Task LogAsync(LogMessage message)

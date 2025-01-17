@@ -8,9 +8,9 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
     internal sealed class EventModuleSupport(IServiceProvider services)
         : IDiscordBotModule
     {
-        private readonly CancellationTokenSource _cancellationTokenSource = new();
         private readonly DiscordSocketClient _client = services.GetRequiredService<DiscordSocketClient>();
         private readonly IServiceScopeFactory _serviceScope = services.GetRequiredService<IServiceScopeFactory>();
+        private CancellationTokenSource _cancellationTokenSource = new();
 
         private IMediator Mediator
         {
@@ -36,6 +36,7 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
 
         public Task InitAsync()
         {
+            _cancellationTokenSource = new();
             _client.MessageReceived += HandleMessageAsync;
             return Task.CompletedTask;
         }
@@ -59,14 +60,16 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
         private void Dispose(bool disposing)
         {
             if (!disposing) return;
-            _cancellationTokenSource.Cancel();
             _client.MessageReceived -= HandleMessageAsync;
+            _cancellationTokenSource.Cancel();
+            _cancellationTokenSource.Dispose();
         }
 
         private async ValueTask DisposeAsyncCore()
         {
+            _client.MessageReceived -= HandleMessageAsync;
             await _cancellationTokenSource.CancelAsync().ConfigureAwait(false);
-            await Task.Delay(1000).ConfigureAwait(false);
+            _cancellationTokenSource.Dispose();
         }
     }
 }

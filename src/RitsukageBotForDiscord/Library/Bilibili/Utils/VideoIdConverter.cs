@@ -50,7 +50,7 @@ namespace RitsukageBot.Library.Bilibili.Utils
         /// </summary>
         /// <param name="bv"></param>
         /// <returns></returns>
-        /// <exception cref="Exception"></exception>
+        /// <exception cref="ArgumentException"></exception>
         public static ulong ToAvid(string bv)
         {
             lock (CharValue)

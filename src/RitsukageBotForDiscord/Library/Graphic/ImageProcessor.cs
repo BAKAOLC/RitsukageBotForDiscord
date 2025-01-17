@@ -24,9 +24,7 @@ namespace RitsukageBot.Library.Graphic
             for (var i = 0; i < image.Frames.Count; i++) _images[i] = image.Frames.CloneFrame(i);
         }
 
-        /// <summary>
-        ///     Dispose async
-        /// </summary>
+        /// <inheritdoc />
         public async ValueTask DisposeAsync()
         {
             await DisposeAsyncCore().ConfigureAwait(false);
@@ -34,9 +32,7 @@ namespace RitsukageBot.Library.Graphic
             GC.SuppressFinalize(this);
         }
 
-        /// <summary>
-        ///     Dispose
-        /// </summary>
+        /// <inheritdoc />
         public void Dispose()
         {
             Dispose(true);

@@ -28,9 +28,7 @@ namespace RitsukageBot.Services.Providers
             InitializeAsync().Wait();
         }
 
-        /// <summary>
-        ///     Dispose async.
-        /// </summary>
+        /// <inheritdoc />
         public async ValueTask DisposeAsync()
         {
             await DisposeAsyncCore().ConfigureAwait(false);
@@ -38,9 +36,7 @@ namespace RitsukageBot.Services.Providers
             GC.SuppressFinalize(this);
         }
 
-        /// <summary>
-        ///     Dispose.
-        /// </summary>
+        /// <inheritdoc />
         public void Dispose()
         {
             Dispose(true);
