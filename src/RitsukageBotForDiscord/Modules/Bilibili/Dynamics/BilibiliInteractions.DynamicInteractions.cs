@@ -3,7 +3,6 @@ using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
 using Richasy.BiliKernel.Bili.Media;
 using Richasy.BiliKernel.Bili.User;
-using Richasy.BiliKernel.Services.User;
 using RitsukageBot.Services.Providers;
 
 namespace RitsukageBot.Modules.Bilibili
@@ -11,15 +10,15 @@ namespace RitsukageBot.Modules.Bilibili
     public partial class BilibiliInteractions
     {
         /// <summary>
-        ///     Bilibili live operations.
+        ///     Bilibili dynamic operations.
         /// </summary>
-        [Group("live", "Bilibili live operations.")]
-        public partial class LiveInteractions : InteractionModuleBase<SocketInteractionContext<SocketSlashCommand>>
+        [Group("dynamic", "Bilibili dynamic operations.")]
+        public partial class DynamicInteractions : InteractionModuleBase<SocketInteractionContext<SocketSlashCommand>>
         {
             /// <summary>
             ///     Logger.
             /// </summary>
-            public required ILogger<LiveInteractions> Logger { get; set; }
+            public required ILogger<DynamicInteractions> Logger { get; set; }
 
             /// <summary>
             ///     Database provider service.
@@ -54,12 +53,12 @@ namespace RitsukageBot.Modules.Bilibili
         ///     Bilibili live operations.
         /// </summary>
         public partial class
-            LiveInteractionsButton : InteractionModuleBase<SocketInteractionContext<SocketMessageComponent>>
+            DynamicInteractionsButton : InteractionModuleBase<SocketInteractionContext<SocketMessageComponent>>
         {
             /// <summary>
             ///     Logger.
             /// </summary>
-            public required ILogger<LiveInteractionsButton> Logger { get; set; }
+            public required ILogger<DynamicInteractionsButton> Logger { get; set; }
 
             /// <summary>
             ///     Bilibili kernel provider.

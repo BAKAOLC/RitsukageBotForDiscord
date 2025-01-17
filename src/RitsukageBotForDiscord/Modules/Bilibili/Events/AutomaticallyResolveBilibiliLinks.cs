@@ -85,7 +85,7 @@ namespace RitsukageBot.Modules.Bilibili.Events
                 if (embed is null) continue;
                 embed.WithFooter(footerBuilder);
                 await message.Channel
-                    .SendFileAsync(BilibiliIconData.GetLogoIconStream(), "bilibili-icon.png", embed: embed.Build())
+                    .SendFileAsync(BilibiliIconData.GetLogoIconStream(), BilibiliIconData.TagLogoIconFileName, embed: embed.Build())
                     .ConfigureAwait(false);
             }
         }

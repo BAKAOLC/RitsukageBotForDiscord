@@ -32,8 +32,13 @@ namespace RitsukageBot.Modules.Bilibili
 
                 if (!ulong.TryParse(id, out var userId) || userId == 0)
                 {
-                    await FollowupAsync(embed: new EmbedBuilder().WithColor(Color.Red).WithTitle("Error")
-                        .WithDescription("Invalid video id.").Build()).ConfigureAwait(false);
+                    var errorEmbed = new EmbedBuilder()
+                        .WithColor(Color.Red)
+                        .WithTitle("Error")
+                        .WithDescription("Invalid user id.")
+                        .WithBilibiliLogoIconFooter();
+                    await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(), BilibiliIconData.TagLogoIconFileName,
+                        embed: errorEmbed.Build()).ConfigureAwait(false);
                     return;
                 }
 
@@ -42,19 +47,20 @@ namespace RitsukageBot.Modules.Bilibili
                     var detail = await UserService.GetUserInformationAsync(userId.ToString()).ConfigureAwait(false);
                     var embed = InformationEmbedBuilder.BuildUserInfo(detail);
                     embed.WithColor(Color.Green);
-                    var footerBuilder = new EmbedFooterBuilder();
-                    footerBuilder.WithIconUrl("attachment://bilibili-icon.png");
-                    footerBuilder.WithText("Bilibili");
-                    embed.WithFooter(footerBuilder);
-                    await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(), "bilibili-icon.png",
+                    embed.WithBilibiliLogoIconFooter();
+                    await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(), BilibiliIconData.TagLogoIconFileName,
                         embed: embed.Build()).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex, "Failed to get user information.");
-                    await FollowupAsync(embed: new EmbedBuilder().WithColor(Color.Red).WithTitle("Error")
-                            .WithDescription("Failed to get user information: " + ex.Message).Build())
-                        .ConfigureAwait(false);
+                    var errorEmbed = new EmbedBuilder()
+                        .WithColor(Color.Red)
+                        .WithTitle("Error")
+                        .WithDescription("Failed to get user information: " + ex.Message)
+                        .WithBilibiliLogoIconFooter();
+                    await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(), BilibiliIconData.TagLogoIconFileName,
+                        embed: errorEmbed.Build()).ConfigureAwait(false);
                 }
             }
 

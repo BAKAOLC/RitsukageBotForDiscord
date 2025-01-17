@@ -1,6 +1,8 @@
 using System.Text;
 using Discord;
+using Richasy.BiliKernel.Models;
 using Richasy.BiliKernel.Models.Media;
+using Richasy.BiliKernel.Models.Moment;
 using Richasy.BiliKernel.Models.User;
 using RitsukageBot.Library.Utils;
 
@@ -165,6 +167,55 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
         }
 
         /// <summary>
+        ///     Build live info.
+        /// </summary>
+        /// <param name="detail"></param>
+        /// <returns></returns>
+        public static EmbedBuilder BuildLiveInfo(LiveInformation detail)
+        {
+            var embed = new EmbedBuilder();
+            embed.WithTitle(detail.Identifier.Title);
+
+            // cover
+            if (detail.Identifier.Cover is not null)
+                embed.WithImageUrl(detail.Identifier.Cover.SourceUri.ToString());
+
+            var description = detail.GetExtensionIfNotNull<string>(LiveExtensionDataId.Description);
+            if (!string.IsNullOrWhiteSpace(description)) embed.WithDescription(description.Replace("&amp;", "&"));
+
+            // author
+            var authorBuilder = new EmbedAuthorBuilder();
+            authorBuilder.WithName(detail.User.Name);
+            authorBuilder.WithUrl($"https://space.bilibili.com/{detail.User.Id}");
+            if (detail.User.Avatar != null)
+                authorBuilder.WithIconUrl(detail.User.Avatar.SourceUri.ToString());
+            embed.WithAuthor(authorBuilder);
+
+            // tag
+            var tagName = detail.GetExtensionIfNotNull<string>(LiveExtensionDataId.TagName);
+            if (!string.IsNullOrWhiteSpace(tagName)) embed.AddField("Tag", tagName, true);
+
+            // viewer count
+            var viewerCount = detail.GetExtensionIfNotNull<int>(LiveExtensionDataId.ViewerCount);
+            embed.AddField("Viewer Count", viewerCount.ToString(), true);
+
+            // is living
+            var isLiving = detail.GetExtensionIfNotNull<bool>(LiveExtensionDataId.IsLiving);
+            embed.AddField("Is Living", isLiving ? "Yes" : "No", true);
+
+            // start time
+            if (isLiving)
+            {
+                var startTime = detail.GetExtensionIfNotNull<DateTimeOffset>(LiveExtensionDataId.StartTime);
+                embed.WithTimestamp(startTime);
+            }
+
+            embed.WithUrl($"https://live.bilibili.com/{detail.Identifier.Id}/");
+
+            return embed;
+        }
+
+        /// <summary>
         ///     Build user info.
         /// </summary>
         /// <param name="detail"></param>
@@ -197,6 +248,42 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
             embed.WithUrl($"https://space.bilibili.com/{detail.Profile.User.Id}");
 
             return embed;
+        }
+
+        /// <summary>
+        ///     Build moment info.
+        /// </summary>
+        /// <param name="detail"></param>
+        /// <param name="fileAttachments"></param>
+        /// <returns></returns>
+        public static EmbedBuilder[] BuildMomentInfo(MomentInformation detail, out IEnumerable<FileAttachment> fileAttachments)
+        {
+            fileAttachments = [];
+            if (detail.User is null) return [new EmbedBuilder().WithTitle("User Not Found")];
+            var embed = new EmbedBuilder();
+
+            var authorBuilder = new EmbedAuthorBuilder();
+            authorBuilder.WithName(detail.User.Name);
+            authorBuilder.WithUrl($"https://space.bilibili.com/{detail.User.Id}");
+            if (detail.User.Avatar is not null)
+                authorBuilder.WithIconUrl(detail.User.Avatar.SourceUri.ToString());
+            embed.WithAuthor(authorBuilder);
+
+            switch (detail.MomentType)
+            {
+                case MomentItemType.Video:
+                case MomentItemType.Pgc:
+                case MomentItemType.Article:
+                case MomentItemType.Image:
+                case MomentItemType.PlainText:
+                case MomentItemType.Forward:
+                case MomentItemType.Unsupported:
+                    break;
+            }
+
+            embed.WithUrl($"https://www.bilibili.com/opus/{detail.Id}");
+
+            return [embed];
         }
     }
 }

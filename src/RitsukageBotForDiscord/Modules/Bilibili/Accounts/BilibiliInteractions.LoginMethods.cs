@@ -5,6 +5,7 @@ using Richasy.BiliKernel.Bili.Authorization;
 using Richasy.BiliKernel.Bili.User;
 using RitsukageBot.Library.Bilibili.BiliKernelModules.Authorizers;
 using RitsukageBot.Library.Bilibili.DiscordBridges;
+using RitsukageBot.Library.Bilibili.Utils;
 
 namespace RitsukageBot.Modules.Bilibili
 {
@@ -25,10 +26,12 @@ namespace RitsukageBot.Modules.Bilibili
                 {
                     var embedBuilder = await GetBotLoginInfoAsync().ConfigureAwait(false);
                     var componentBuilder = new ComponentBuilder();
-                    componentBuilder.WithButton(new ButtonBuilder().WithCustomId($"{TagCustomId}:account:bot:logout")
-                        .WithLabel("Logout").WithStyle(ButtonStyle.Danger));
-                    await FollowupAsync(embed: embedBuilder.Build(), components: componentBuilder.Build())
-                        .ConfigureAwait(false);
+                    componentBuilder.WithButton(new ButtonBuilder()
+                        .WithCustomId($"{TagCustomId}:account:bot:logout")
+                        .WithLabel("Logout")
+                        .WithStyle(ButtonStyle.Danger));
+                    await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(), BilibiliIconData.TagLogoIconFileName,
+                        embed: embedBuilder.WithBilibiliLogoIconFooter().Build(), components: componentBuilder.Build()).ConfigureAwait(false);
                     return;
                 }
 
@@ -81,8 +84,12 @@ namespace RitsukageBot.Modules.Bilibili
                     embed.WithTitle("Bilibili Login");
                     embed.WithDescription("Please scan the QR code to login.");
                     embed.WithImageUrl("attachment://qr_code.png");
-                    await FollowupWithFileAsync(new MemoryStream(qrCodeImage), "qr_code.png", embed: embed.Build())
-                        .ConfigureAwait(false);
+                    embed.WithBilibiliLogoIconFooter();
+                    await FollowupWithFilesAsync([
+                            new(new MemoryStream(qrCodeImage), "qr_code.png"),
+                            new(BilibiliIconData.GetLogoIconStream(), BilibiliIconData.TagLogoIconFileName),
+                        ],
+                        embed: embed.Build()).ConfigureAwait(false);
                     Logger.LogInformation("Waiting for Bilibili login.");
                     await service.WaitQrCodeScanAsync(qrCode).ConfigureAwait(false);
                     if (await VerifyBotLoginAsync().ConfigureAwait(false))
@@ -95,7 +102,7 @@ namespace RitsukageBot.Modules.Bilibili
                         await ModifyOriginalResponseAsync(x =>
                         {
                             x.Attachments = null;
-                            x.Embeds = new[] { embedBuilder.Build() };
+                            x.Embeds = new[] { embedBuilder.WithBilibiliLogoIconFooter().Build() };
                             x.Components = componentBuilder.Build();
                         }).ConfigureAwait(false);
                         return;
@@ -105,6 +112,7 @@ namespace RitsukageBot.Modules.Bilibili
                     embed.WithColor(Color.Red);
                     embed.WithTitle("Bilibili Login");
                     embed.WithDescription("Login failed.");
+                    embed.WithBilibiliLogoIconFooter();
                     await ModifyOriginalResponseAsync(x =>
                     {
                         x.Attachments = null;
@@ -114,8 +122,14 @@ namespace RitsukageBot.Modules.Bilibili
                 }
                 catch (Exception ex)
                 {
-                    await FollowupAsync(embed: new EmbedBuilder().WithColor(Color.Red).WithTitle("Error")
-                        .WithDescription(ex.Message).Build()).ConfigureAwait(false);
+                    var errorEmbed = new EmbedBuilder()
+                        .WithColor(Color.Red)
+                        .WithTitle("Error")
+                        .WithDescription(ex.Message)
+                        .WithBilibiliLogoIconFooter();
+
+                    await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(), BilibiliIconData.TagLogoIconFileName,
+                        embed: errorEmbed.Build()).ConfigureAwait(false);
                 }
             }
         }
@@ -137,8 +151,12 @@ namespace RitsukageBot.Modules.Bilibili
                 {
                     x.Embeds = new[]
                     {
-                        new EmbedBuilder().WithColor(Color.Green).WithTitle("Logout")
-                            .WithDescription("Logout successfully.").Build(),
+                        new EmbedBuilder()
+                            .WithColor(Color.Green)
+                            .WithTitle("Logout")
+                            .WithDescription("Logout successfully.")
+                            .WithBilibiliLogoIconFooter()
+                            .Build(),
                     };
                     x.Components = null;
                 }).ConfigureAwait(false);
