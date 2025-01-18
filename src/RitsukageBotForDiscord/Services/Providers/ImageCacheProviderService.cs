@@ -17,9 +17,9 @@ namespace RitsukageBot.Services.Providers
         IHttpClientFactory httpClientFactory)
     {
         /// <summary>
-        ///     Tag cache key
+        ///     Cache key
         /// </summary>
-        public const string TagCacheKey = "image_cache";
+        public const string CacheKey = "image_cache";
 
         /// <summary>
         ///     Get image
@@ -30,7 +30,7 @@ namespace RitsukageBot.Services.Providers
         /// <returns></returns>
         public async Task<Image<Rgba32>> GetImageAsync(string url, string tag = "default", TimeSpan cacheTime = default)
         {
-            var cacheKey = $"{TagCacheKey}:{tag}:{url}";
+            var cacheKey = $"{CacheKey}:{tag}:{url}";
             var imageCache = await cacheProvider.GetAsync<byte[]>(cacheKey).ConfigureAwait(false);
             if (imageCache?.Value is { Length: > 0 })
             {

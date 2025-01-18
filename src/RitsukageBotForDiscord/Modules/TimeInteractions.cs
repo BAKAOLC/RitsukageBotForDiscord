@@ -12,9 +12,9 @@ namespace RitsukageBot.Modules
     public class TimeInteractions : InteractionModuleBase<SocketInteractionContext<SocketSlashCommand>>
     {
         /// <summary>
-        ///     Tag custom ID
+        ///     Custom ID
         /// </summary>
-        public const string TagCustomId = "time_interaction";
+        public const string CustomId = "time_interaction";
 
         /// <summary>
         ///     Logger

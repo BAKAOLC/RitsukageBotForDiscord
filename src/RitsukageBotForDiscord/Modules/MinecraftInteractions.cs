@@ -16,7 +16,7 @@ namespace RitsukageBot.Modules
         /// <summary>
         ///     Tag custom ID
         /// </summary>
-        public const string TagCustomId = "minecraft_interaction";
+        public const string CustomId = "minecraft_interaction";
 
         /// <summary>
         ///     Logger

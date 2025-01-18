@@ -12,9 +12,9 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
     internal sealed class ScriptingModuleSupport(DiscordBotService discordBotService, IServiceProvider services)
         : IDiscordBotModule
     {
-        public const string TagScriptModulePath = "ModuleScripts";
-        public const string TagCommandModulePath = "Commands";
-        public const string TagInteractionModulePath = "Interactions";
+        public const string ScriptModulePath = "ModuleScripts";
+        public const string CommandModulePath = "Commands";
+        public const string InteractionModulePath = "Interactions";
         private readonly CommandService _command = services.GetRequiredService<CommandService>();
         private readonly Dictionary<ScriptRuntime.AssemblyInfo, List<Type>> _commandModules = [];
         private readonly CommandModuleSupport _commandModuleSupport = new(discordBotService, services);
@@ -65,14 +65,14 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
 
         public async Task LoadScriptsAsync()
         {
-            if (!Directory.Exists(TagScriptModulePath))
+            if (!Directory.Exists(ScriptModulePath))
             {
-                _logger.LogWarning("Script module path not found: {path}", TagScriptModulePath);
+                _logger.LogWarning("Script module path not found: {path}", ScriptModulePath);
                 _logger.LogWarning("Skip loading scripts.");
                 return;
             }
 
-            foreach (var directory in Directory.GetDirectories(Path.Combine(TagScriptModulePath, TagCommandModulePath)))
+            foreach (var directory in Directory.GetDirectories(Path.Combine(ScriptModulePath, CommandModulePath)))
             {
                 var directoryName = Path.GetFileName(directory);
                 var scriptFile = Path.Combine(directory, $"{directoryName}.cs");
@@ -85,7 +85,7 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
                     if (diagnostics.Any())
                     {
                         foreach (var diagnostic in diagnostics)
-                            _logger.LogError("[{tag}][{source}] {diagnostic}", TagCommandModulePath, directoryName,
+                            _logger.LogError("[{tag}][{source}] {diagnostic}", CommandModulePath, directoryName,
                                 diagnostic);
 
                         continue;
@@ -113,7 +113,7 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
                 catch (CompilationErrorException ex)
                 {
                     foreach (var diagnostic in ex.Diagnostics)
-                        _logger.LogError("[{tag}][{source}] {diagnostic}", TagCommandModulePath, directoryName,
+                        _logger.LogError("[{tag}][{source}] {diagnostic}", CommandModulePath, directoryName,
                             diagnostic);
 
                     _logger.LogError(ex, "Failed to load command module: {directory}", directoryName);
@@ -124,8 +124,8 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
                 }
             }
 
-            foreach (var directory in Directory.GetDirectories(Path.Combine(TagScriptModulePath,
-                         TagInteractionModulePath)))
+            foreach (var directory in Directory.GetDirectories(Path.Combine(ScriptModulePath,
+                         InteractionModulePath)))
             {
                 var directoryName = Path.GetFileName(directory);
                 var scriptFile = Path.Combine(directory, $"{directoryName}.cs");
@@ -138,7 +138,7 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
                     if (diagnostics.Any())
                     {
                         foreach (var diagnostic in diagnostics)
-                            _logger.LogError("[{tag}][{source}] {diagnostic}", TagInteractionModulePath, directoryName,
+                            _logger.LogError("[{tag}][{source}] {diagnostic}", InteractionModulePath, directoryName,
                                 diagnostic);
 
                         continue;
@@ -166,7 +166,7 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
                 catch (CompilationErrorException ex)
                 {
                     foreach (var diagnostic in ex.Diagnostics)
-                        _logger.LogError("[{tag}][{source}] {diagnostic}", TagCommandModulePath, directoryName,
+                        _logger.LogError("[{tag}][{source}] {diagnostic}", CommandModulePath, directoryName,
                             diagnostic);
 
                     _logger.LogError(ex, "Failed to load command module: {directory}", directoryName);

@@ -3,7 +3,6 @@ using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
 using Richasy.BiliKernel.Bili.Media;
 using Richasy.BiliKernel.Bili.User;
-using Richasy.BiliKernel.Services.User;
 using RitsukageBot.Services.Providers;
 
 namespace RitsukageBot.Modules.Bilibili

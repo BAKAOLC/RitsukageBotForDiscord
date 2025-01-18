@@ -7,25 +7,25 @@ namespace RitsukageBot.Library.Networking
     {
         private const string Unknown = "Unknown";
 
-        private const string TagMozilla = "Mozilla/5.0";
+        private const string Mozilla = "Mozilla/5.0";
 
-        private const string TagChrome = "Chrome/114.0.0.0";
+        private const string Chrome = "Chrome/114.0.0.0";
 
-        private const string TagSafari = "Safari/537.36";
+        private const string Safari = "Safari/537.36";
 
-        private const string TagEdge = "Edge/114.0.1823.43";
+        private const string Edge = "Edge/114.0.1823.43";
 
-        private const string TagAppleWebKit = "AppleWebKit/537.36 (KHTML, like Gecko)";
+        private const string AppleWebKit = "AppleWebKit/537.36 (KHTML, like Gecko)";
 
-        private const string TagMozillaWindows = $"{TagMozilla} (Windows NT 10.0; Win64; x64)";
+        private const string MozillaWindows = $"{Mozilla} (Windows NT 10.0; Win64; x64)";
 
-        private const string TagMozillaAndroid = $"{TagMozilla} (Linux; Android 12)";
+        private const string MozillaAndroid = $"{Mozilla} (Linux; Android 12)";
 
-        private const string TagMozillaLinux = $"{TagMozilla} (X11; Linux x86_64)";
+        private const string MozillaLinux = $"{Mozilla} (X11; Linux x86_64)";
 
-        private const string TagMozillaMac = $"{TagMozilla} (Macintosh; Intel Mac OS X 10_15_7)";
+        private const string MozillaMac = $"{Mozilla} (Macintosh; Intel Mac OS X 10_15_7)";
 
-        private const string TagMozillaIos = $"{TagMozilla} (iPhone; CPU iPhone OS 15_0 like Mac OS X)";
+        private const string MozillaIos = $"{Mozilla} (iPhone; CPU iPhone OS 15_0 like Mac OS X)";
 
         private static readonly string AssemblyAuthor = typeof(UserAgent).Assembly
             .GetCustomAttributes(false)
@@ -46,19 +46,19 @@ namespace RitsukageBot.Library.Networking
             $"{(string.IsNullOrWhiteSpace(AssemblyName) ? Unknown : AssemblyName)}/{(string.IsNullOrWhiteSpace(AssemblyVersion) ? Unknown : AssemblyVersion)} ({(string.IsNullOrWhiteSpace(AssemblyAuthor) ? Unknown : AssemblyAuthor)}{(string.IsNullOrWhiteSpace(AssemblyRepositoryUrl) ? string.Empty : $", {AssemblyRepositoryUrl}")})";
 
         internal static readonly string Windows =
-            $"{TagMozillaWindows} {TagAppleWebKit} {TagChrome} {TagSafari} {TagEdge} {AssemblyUserAgent}";
+            $"{MozillaWindows} {AppleWebKit} {Chrome} {Safari} {Edge} {AssemblyUserAgent}";
 
         internal static readonly string Android =
-            $"{TagMozillaAndroid} {TagAppleWebKit} {TagChrome} {TagSafari} {TagEdge} {AssemblyUserAgent}";
+            $"{MozillaAndroid} {AppleWebKit} {Chrome} {Safari} {Edge} {AssemblyUserAgent}";
 
         internal static readonly string Linux =
-            $"{TagMozillaLinux} {TagAppleWebKit} {TagChrome} {TagSafari} {TagEdge} {AssemblyUserAgent}";
+            $"{MozillaLinux} {AppleWebKit} {Chrome} {Safari} {Edge} {AssemblyUserAgent}";
 
         internal static readonly string Mac =
-            $"{TagMozillaMac} {TagAppleWebKit} {TagChrome} {TagSafari} {TagEdge} {AssemblyUserAgent}";
+            $"{MozillaMac} {AppleWebKit} {Chrome} {Safari} {Edge} {AssemblyUserAgent}";
 
         internal static readonly string Ios =
-            $"{TagMozillaIos} {TagAppleWebKit} {TagChrome} {TagSafari} {TagEdge} {AssemblyUserAgent}";
+            $"{MozillaIos} {AppleWebKit} {Chrome} {Safari} {Edge} {AssemblyUserAgent}";
 
         internal static string Default =>
             // Environment.OSVersion.Platform switch // On MacOs, it will incorrectly return Unix

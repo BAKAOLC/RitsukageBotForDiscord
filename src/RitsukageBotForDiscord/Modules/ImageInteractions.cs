@@ -17,25 +17,25 @@ namespace RitsukageBot.Modules
     public class ImageInteractions : InteractionModuleBase<SocketInteractionContext<SocketSlashCommand>>
     {
         /// <summary>
-        ///     Tag custom ID
+        ///     Custom ID
         /// </summary>
-        public const string TagCustomId = "image_interaction";
+        public const string CustomId = "image_interaction";
 
         /// <summary>
         ///     Allowed interactions
         /// </summary>
         public static readonly AllowedInteraction[] AllowedInteractions =
         [
-            new("Invert Color", $"{TagCustomId}:invert_color"),
-            new("Invert Frames", $"{TagCustomId}:invert_frames"),
-            new("Mirror Left", $"{TagCustomId}:mirror_left"),
-            new("Mirror Right", $"{TagCustomId}:mirror_right"),
-            new("Mirror Top", $"{TagCustomId}:mirror_top"),
-            new("Mirror Bottom", $"{TagCustomId}:mirror_bottom"),
-            new("Move Left", $"{TagCustomId}:move_left"),
-            new("Move Right", $"{TagCustomId}:move_right"),
-            new("Move Up", $"{TagCustomId}:move_up"),
-            new("Move Down", $"{TagCustomId}:move_down"),
+            new("Invert Color", $"{CustomId}:invert_color"),
+            new("Invert Frames", $"{CustomId}:invert_frames"),
+            new("Mirror Left", $"{CustomId}:mirror_left"),
+            new("Mirror Right", $"{CustomId}:mirror_right"),
+            new("Mirror Top", $"{CustomId}:mirror_top"),
+            new("Mirror Bottom", $"{CustomId}:mirror_bottom"),
+            new("Move Left", $"{CustomId}:move_left"),
+            new("Move Right", $"{CustomId}:move_right"),
+            new("Move Up", $"{CustomId}:move_up"),
+            new("Move Down", $"{CustomId}:move_down"),
         ];
 
         /// <summary>
@@ -226,7 +226,7 @@ namespace RitsukageBot.Modules
         public static readonly AllowedInteraction CancelInteraction = new()
         {
             Label = "Cancel",
-            CustomId = $"{TagCustomId}:cancel",
+            CustomId = $"{CustomId}:cancel",
             ButtonStyle = ButtonStyle.Danger,
         };
 
@@ -236,7 +236,7 @@ namespace RitsukageBot.Modules
         public static readonly AllowedInteraction CancelAndPublishInteraction = new()
         {
             Label = "Cancel and Publish",
-            CustomId = $"{TagCustomId}:cancel_and_publish",
+            CustomId = $"{CustomId}:cancel_and_publish",
             ButtonStyle = ButtonStyle.Danger,
         };
 
@@ -246,7 +246,7 @@ namespace RitsukageBot.Modules
         public static readonly AllowedInteraction LastPageInteraction = new()
         {
             Label = "Last Page",
-            CustomId = $"{TagCustomId}:last_page",
+            CustomId = $"{CustomId}:last_page",
             ButtonStyle = ButtonStyle.Secondary,
             Emote = new Emoji("⬅️"),
         };
@@ -257,7 +257,7 @@ namespace RitsukageBot.Modules
         public static readonly AllowedInteraction NextPageInteraction = new()
         {
             Label = "Next Page",
-            CustomId = $"{TagCustomId}:next_page",
+            CustomId = $"{CustomId}:next_page",
             ButtonStyle = ButtonStyle.Secondary,
             Emote = new Emoji("➡️"),
         };
@@ -284,7 +284,7 @@ namespace RitsukageBot.Modules
         /// <summary>
         ///     Invert color
         /// </summary>
-        [ComponentInteraction($"{ImageInteractions.TagCustomId}:invert_color")]
+        [ComponentInteraction($"{ImageInteractions.CustomId}:invert_color")]
         public Task InvertColorAsync()
         {
             return TriggerProcessAsync<InvertColor<Rgba32>>();
@@ -293,7 +293,7 @@ namespace RitsukageBot.Modules
         /// <summary>
         ///     Invert frames
         /// </summary>
-        [ComponentInteraction($"{ImageInteractions.TagCustomId}:invert_frames")]
+        [ComponentInteraction($"{ImageInteractions.CustomId}:invert_frames")]
         public Task InvertFrameAsync()
         {
             return TriggerProcessAsync<InvertFrames<Rgba32>>();
@@ -302,7 +302,7 @@ namespace RitsukageBot.Modules
         /// <summary>
         ///     Mirror left
         /// </summary>
-        [ComponentInteraction($"{ImageInteractions.TagCustomId}:mirror_left")]
+        [ComponentInteraction($"{ImageInteractions.CustomId}:mirror_left")]
         public Task MirrorLeftAsync()
         {
             return TriggerProcessAsync<HalfMirror<Rgba32>>(new(HalfMirror<Rgba32>.MirrorType.Left));
@@ -311,7 +311,7 @@ namespace RitsukageBot.Modules
         /// <summary>
         ///     Mirror right
         /// </summary>
-        [ComponentInteraction($"{ImageInteractions.TagCustomId}:mirror_right")]
+        [ComponentInteraction($"{ImageInteractions.CustomId}:mirror_right")]
         public Task MirrorRightAsync()
         {
             return TriggerProcessAsync<HalfMirror<Rgba32>>(new(HalfMirror<Rgba32>.MirrorType.Right));
@@ -320,7 +320,7 @@ namespace RitsukageBot.Modules
         /// <summary>
         ///     Mirror top
         /// </summary>
-        [ComponentInteraction($"{ImageInteractions.TagCustomId}:mirror_top")]
+        [ComponentInteraction($"{ImageInteractions.CustomId}:mirror_top")]
         public Task MirrorTopAsync()
         {
             return TriggerProcessAsync<HalfMirror<Rgba32>>(new(HalfMirror<Rgba32>.MirrorType.Top));
@@ -329,7 +329,7 @@ namespace RitsukageBot.Modules
         /// <summary>
         ///     Mirror bottom
         /// </summary>
-        [ComponentInteraction($"{ImageInteractions.TagCustomId}:mirror_bottom")]
+        [ComponentInteraction($"{ImageInteractions.CustomId}:mirror_bottom")]
         public Task MirrorBottomAsync()
         {
             return TriggerProcessAsync<HalfMirror<Rgba32>>(new(HalfMirror<Rgba32>.MirrorType.Bottom));
@@ -338,7 +338,7 @@ namespace RitsukageBot.Modules
         /// <summary>
         ///     Move up
         /// </summary>
-        [ComponentInteraction($"{ImageInteractions.TagCustomId}:move_left")]
+        [ComponentInteraction($"{ImageInteractions.CustomId}:move_left")]
         public Task MoveLeftAsync()
         {
             return TriggerProcessAsync<MoveAnimation<Rgba32>>(new(MoveAnimation<Rgba32>.MoveDirection.Left));
@@ -347,7 +347,7 @@ namespace RitsukageBot.Modules
         /// <summary>
         ///     Move right
         /// </summary>
-        [ComponentInteraction($"{ImageInteractions.TagCustomId}:move_right")]
+        [ComponentInteraction($"{ImageInteractions.CustomId}:move_right")]
         public Task MoveRightAsync()
         {
             return TriggerProcessAsync<MoveAnimation<Rgba32>>(new(MoveAnimation<Rgba32>.MoveDirection.Right));
@@ -356,7 +356,7 @@ namespace RitsukageBot.Modules
         /// <summary>
         ///     Move up
         /// </summary>
-        [ComponentInteraction($"{ImageInteractions.TagCustomId}:move_up")]
+        [ComponentInteraction($"{ImageInteractions.CustomId}:move_up")]
         public Task MoveUpAsync()
         {
             return TriggerProcessAsync<MoveAnimation<Rgba32>>(new(MoveAnimation<Rgba32>.MoveDirection.Up));
@@ -365,7 +365,7 @@ namespace RitsukageBot.Modules
         /// <summary>
         ///     Move down
         /// </summary>
-        [ComponentInteraction($"{ImageInteractions.TagCustomId}:move_down")]
+        [ComponentInteraction($"{ImageInteractions.CustomId}:move_down")]
         public Task MoveDownAsync()
         {
             return TriggerProcessAsync<MoveAnimation<Rgba32>>(new(MoveAnimation<Rgba32>.MoveDirection.Down));
@@ -453,7 +453,7 @@ namespace RitsukageBot.Modules
         /// <summary>
         ///     Cancel image interaction
         /// </summary>
-        [ComponentInteraction($"{ImageInteractions.TagCustomId}:cancel")]
+        [ComponentInteraction($"{ImageInteractions.CustomId}:cancel")]
         public Task CancelAsync()
         {
             Logger.LogInformation("Image interaction canceled");
@@ -463,7 +463,7 @@ namespace RitsukageBot.Modules
         /// <summary>
         ///     Cancel and publish image interaction
         /// </summary>
-        [ComponentInteraction($"{ImageInteractions.TagCustomId}:cancel_and_publish")]
+        [ComponentInteraction($"{ImageInteractions.CustomId}:cancel_and_publish")]
         public async Task CancelAndPublishAsync()
         {
             Logger.LogInformation("Image interaction canceled and published");
@@ -484,7 +484,7 @@ namespace RitsukageBot.Modules
         /// <summary>
         ///     Last page
         /// </summary>
-        [ComponentInteraction($"{ImageInteractions.TagCustomId}:last_page")]
+        [ComponentInteraction($"{ImageInteractions.CustomId}:last_page")]
         public async Task LastPageAsync()
         {
             var firstComponent = Context.Interaction.Message.Components?.FirstOrDefault()?.Components?.FirstOrDefault();
@@ -505,7 +505,7 @@ namespace RitsukageBot.Modules
         /// <summary>
         ///     Next page
         /// </summary>
-        [ComponentInteraction($"{ImageInteractions.TagCustomId}:next_page")]
+        [ComponentInteraction($"{ImageInteractions.CustomId}:next_page")]
         public async Task NextPageAsync()
         {
             var firstComponent = Context.Interaction.Message.Components?.FirstOrDefault()?.Components?.FirstOrDefault();
