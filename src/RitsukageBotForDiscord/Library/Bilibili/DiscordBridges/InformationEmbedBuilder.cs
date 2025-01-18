@@ -1,5 +1,4 @@
 using System.Text;
-using System.Text.RegularExpressions;
 using Discord;
 using Richasy.BiliKernel.Models;
 using Richasy.BiliKernel.Models.Appearance;
@@ -14,7 +13,7 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
     /// <summary>
     ///     Media information embed builder.
     /// </summary>
-    public static partial class InformationEmbedBuilder
+    public static class InformationEmbedBuilder
     {
         /// <summary>
         ///     Build my info.
@@ -273,34 +272,31 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
         /// <returns></returns>
         public static EmbedBuilder[] BuildMomentInfo(MomentInformation detail)
         {
-            if (detail.User is null) return [new EmbedBuilder().WithTitle("User Not Found")];
+            if (detail.User is null)
+            {
+                var errorEmbed = new EmbedBuilder()
+                    .WithColor(Color.Red)
+                    .WithTitle("Error")
+                    .WithDescription("Moment user is null.");
+                return [errorEmbed];
+            }
 
             List<EmbedBuilder> embeds = [];
+            var embed = new EmbedBuilder();
+            embeds.Add(embed);
+            var authorBuilder = new EmbedAuthorBuilder();
+            authorBuilder.WithName(detail.User.Name);
+            authorBuilder.WithUrl($"https://space.bilibili.com/{detail.User.Id}");
+            if (detail.User.Avatar is not null)
+                authorBuilder.WithIconUrl(detail.User.Avatar.SourceUri.ToString());
+            embed.WithAuthor(authorBuilder);
+            embed.WithUrl($"https://www.bilibili.com/opus/{detail.Id}");
 
-            {
-                var embed = new EmbedBuilder();
-                var authorBuilder = new EmbedAuthorBuilder();
-                authorBuilder.WithName(detail.User.Name);
-                authorBuilder.WithUrl($"https://space.bilibili.com/{detail.User.Id}");
-                if (detail.User.Avatar is not null)
-                    authorBuilder.WithIconUrl(detail.User.Avatar.SourceUri.ToString());
-                embed.WithAuthor(authorBuilder);
-                embed.WithUrl($"https://www.bilibili.com/opus/{detail.Id}");
-                embeds.Add(embed);
-            }
-
-            if (detail.Description is not null)
-            {
-                var descriptionEmbeds = detail.Description.ToEmbedBuilders();
-                embeds.AddRange(descriptionEmbeds);
-            }
+            if (detail.Description is not null && !string.IsNullOrWhiteSpace(detail.Description.Text))
+                embed.WithDescription(detail.Description.Text);
 
             switch (detail.MomentType)
             {
-                case MomentItemType.PlainText:
-                {
-                    break;
-                }
                 case MomentItemType.Video:
                 {
                     if (detail.Data is not VideoInformation videoInformation)
@@ -312,17 +308,16 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
                         embeds.Add(errorEmbed);
                         break;
                     }
-                    var embed = BuildVideoInfo(videoInformation);
-                    embeds.Add(embed);
+                    embeds.Add(BuildVideoInfo(videoInformation));
                     break;
                 }
                 case MomentItemType.Pgc:
                 {
-                    var embed = new EmbedBuilder();
-                    embed.WithTitle("Moment Type Error");
-                    embed.WithColor(Color.Red);
-                    embed.WithDescription("Moment type is not supported.");
-                    embeds.Add(embed);
+                    var errorEmbed = new EmbedBuilder();
+                    errorEmbed.WithTitle("Moment Type Error");
+                    errorEmbed.WithColor(Color.Red);
+                    errorEmbed.WithDescription("Moment type is not supported.");
+                    embeds.Add(errorEmbed);
                     break;
                 }
                 case MomentItemType.Article:
@@ -337,12 +332,12 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
                         break;
                     }
 
-                    // var embed = BuildArticleInfo(articleInformation);
-                    var embed = new EmbedBuilder();
-                    embed.WithTitle("Moment Type Error");
-                    embed.WithColor(Color.Red);
-                    embed.WithDescription("Moment type is not supported.");
-                    embeds.Add(embed);
+                    // extraEmbed = BuildArticleInfo(articleInformation);
+                    var extraEmbed = new EmbedBuilder();
+                    extraEmbed.WithTitle("Moment Type Error");
+                    extraEmbed.WithColor(Color.Red);
+                    extraEmbed.WithDescription("Moment type is not supported.");
+                    embeds.Add(extraEmbed);
                     break;
                 }
                 case MomentItemType.Image:
@@ -357,12 +352,9 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
                         break;
                     }
 
-                    foreach (var image in images)
-                    {
-                        var embed = new EmbedBuilder();
-                        embed.WithImageUrl(image.SourceUri.ToString());
-                        embeds.Add(embed);
-                    }
+                    var extraEmbed = new EmbedBuilder();
+                    extraEmbed.WithDescription(string.Join('\n', images.Select(image => image.SourceUri.ToString())));
+                    embeds.Add(extraEmbed);
                     break;
                 }
                 case MomentItemType.Forward:
@@ -376,8 +368,7 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
                         embeds.Add(errorEmbed);
                         break;
                     }
-                    var forwardEmbeds = BuildMomentInfo(forward);
-                    embeds.AddRange(forwardEmbeds);
+                    embeds.AddRange(BuildMomentInfo(forward));
                     break;
                 }
                 case MomentItemType.Unsupported:
@@ -390,40 +381,8 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
                     break;
                 }
             }
-            return [.. embeds];
+
+            return [..embeds];
         }
-
-        private static EmbedBuilder[] ToEmbedBuilders(this EmoteText emoteText)
-        {
-            if (emoteText.Emotes is null) return [new EmbedBuilder().WithDescription(emoteText.Text)];
-            List<EmbedBuilder> embeds = [];
-
-            var regex = EmojiTextRegex();
-            var matches = regex.Matches(emoteText.Text);
-            var index = 0;
-            foreach (Match match in matches)
-            {
-                if (!emoteText.Emotes.TryGetValue(match.Value, out var emote)) continue;
-                if (index < match.Index)
-                {
-                    var text = emoteText.Text[index..match.Index];
-                    embeds.Add(new EmbedBuilder().WithDescription(text));
-                }
-                index = match.Index + match.Length;
-                var embed = new EmbedBuilder();
-                embed.WithImageUrl(emote.SourceUri.ToString());
-                embeds.Add(embed);
-            }
-
-            if (index >= emoteText.Text.Length) return [.. embeds];
-
-            var endText = emoteText.Text[index..];
-            embeds.Add(new EmbedBuilder().WithDescription(endText));
-
-            return [.. embeds];
-        }
-
-        [GeneratedRegex(@"\[.*?\]")]
-        private static partial Regex EmojiTextRegex();
     }
 }
