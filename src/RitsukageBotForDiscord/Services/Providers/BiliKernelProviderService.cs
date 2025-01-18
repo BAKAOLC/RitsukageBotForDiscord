@@ -2,8 +2,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Richasy.BiliKernel;
 using Richasy.BiliKernel.Bili.Authorization;
+using Richasy.BiliKernel.Bili.Moment;
+using RitsukageBot.Library.Bilibili.BiliKernelModules.Abstractions.Moment;
 using RitsukageBot.Library.Bilibili.BiliKernelModules.Authorizers;
 using RitsukageBot.Library.Bilibili.BiliKernelModules.Resolvers;
+using RitsukageBot.Library.Bilibili.BiliKernelModules.Services.Moment;
 
 namespace RitsukageBot.Services.Providers
 {
@@ -55,14 +58,17 @@ namespace RitsukageBot.Services.Providers
             kernelBuilder.AddHttpClient();
             kernelBuilder.AddLiveDiscoveryService();
             kernelBuilder.AddMessageService();
-            kernelBuilder.AddMomentDiscoveryService();
-            kernelBuilder.AddMomentOperationService();
+
+            //kernelBuilder.AddMomentDiscoveryService();
+            //kernelBuilder.AddMomentOperationService();
             kernelBuilder.AddMyProfileService();
+
             //kernelBuilder.AddNativeQRCodeResolver();
             kernelBuilder.AddPlayerService();
             kernelBuilder.AddRelationshipService();
             kernelBuilder.AddSearchService();
             kernelBuilder.AddSubtitleService();
+
             //kernelBuilder.AddTVAuthentication();
             kernelBuilder.AddUserService();
             kernelBuilder.AddVideoDiscoveryService();
@@ -74,6 +80,9 @@ namespace RitsukageBot.Services.Providers
             var databaseAccountResolver = new DatabaseAccountResolver(database);
             kernelBuilder.Services.AddSingleton<IBiliTokenResolver>(databaseAccountResolver);
             kernelBuilder.Services.AddSingleton<IBiliCookiesResolver>(databaseAccountResolver);
+            kernelBuilder.Services.AddSingleton<IMomentService, MomentService>();
+            kernelBuilder.Services.AddSingleton<IMomentDiscoveryService, MomentService>();
+            kernelBuilder.Services.AddSingleton<IMomentOperationService, MomentService>();
             return kernelBuilder.Build();
         }
     }

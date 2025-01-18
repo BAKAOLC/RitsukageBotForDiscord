@@ -5,6 +5,7 @@ using Richasy.BiliKernel.Bili.Moment;
 using Richasy.BiliKernel.Models.Moment;
 using Richasy.BiliKernel.Models.User;
 using RitsukageBot.Library.Bilibili.DiscordBridges;
+using RitsukageBot.Library.Bilibili.Utils;
 using RitsukageBot.Library.Data;
 using RitsukageBot.Library.Enums.Bilibili;
 using RitsukageBot.Library.Modules.Schedules;
@@ -81,18 +82,22 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
                 if (lastMoment == null)
                 {
                     var moment = moments[0];
-                    var embeds = InformationEmbedBuilder.BuildMomentInfo(moment, out var fileAttachments);
+                    var embeds = InformationEmbedBuilder.BuildMomentInfo(moment);
+                    embeds[^1].WithBilibiliLogoIconFooter();
                     var text = $"User {moment.User?.Name} has a new moment!";
-                    await messageChannel.SendFilesAsync(fileAttachments, text, embeds: embeds.Select(x => x.Build()).ToArray()).ConfigureAwait(false);
+                    await messageChannel.SendFileAsync(BilibiliIconData.GetLogoIconStream(), BilibiliIconData.TagLogoIconFileName,
+                        text, embeds: embeds.Select(x => x.Build()).ToArray()).ConfigureAwait(false);
                     continue;
                 }
 
                 for (var i = index - 1; i >= 0; i--)
                 {
                     var moment = moments[i];
-                    var embeds = InformationEmbedBuilder.BuildMomentInfo(moment, out _);
+                    var embeds = InformationEmbedBuilder.BuildMomentInfo(moment);
+                    embeds[^1].WithBilibiliLogoIconFooter();
                     var text = $"User {moment.User?.Name} has a new moment!";
-                    await messageChannel.SendMessageAsync(text, embeds: embeds.Select(x => x.Build()).ToArray()).ConfigureAwait(false);
+                    await messageChannel.SendFileAsync(BilibiliIconData.GetLogoIconStream(), BilibiliIconData.TagLogoIconFileName,
+                        text, embeds: embeds.Select(x => x.Build()).ToArray()).ConfigureAwait(false);
                 }
             }
 

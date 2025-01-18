@@ -1,6 +1,9 @@
 using System.Text;
+using System.Text.RegularExpressions;
 using Discord;
 using Richasy.BiliKernel.Models;
+using Richasy.BiliKernel.Models.Appearance;
+using Richasy.BiliKernel.Models.Article;
 using Richasy.BiliKernel.Models.Media;
 using Richasy.BiliKernel.Models.Moment;
 using Richasy.BiliKernel.Models.User;
@@ -11,7 +14,7 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
     /// <summary>
     ///     Media information embed builder.
     /// </summary>
-    public static class InformationEmbedBuilder
+    public static partial class InformationEmbedBuilder
     {
         /// <summary>
         ///     Build my info.
@@ -31,45 +34,9 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
         /// <returns></returns>
         public static EmbedBuilder BuildVideoInfo(VideoPlayerView detail)
         {
-            const string textFormatVideoBvId = "[{0}](https://www.bilibili.com/video/{0}/)";
-            const string textFormatVideoAvId = "[av{0}](https://www.bilibili.com/video/av{0}/)";
-            const string textFormatAuthor = "[{0}](https://space.bilibili.com/{1})";
             const string textFormatTag = "[{0}](https://search.bilibili.com/all?keyword={1})";
 
-            var embed = new EmbedBuilder();
-            embed.WithTitle(detail.Information.Identifier.Title);
-
-            // cover
-            if (detail.Information.Identifier.Cover is not null)
-                embed.WithImageUrl(detail.Information.Identifier.Cover.SourceUri.ToString());
-
-            // video id
-            embed.AddField("BvId", string.Format(textFormatVideoBvId, detail.Information.BvId), true);
-            embed.AddField("AvId", string.Format(textFormatVideoAvId, detail.Information.Identifier.Id), true);
-
-            var content = new StringBuilder();
-
-            // author
-            {
-                var authorBuilder = new EmbedAuthorBuilder();
-                authorBuilder.WithName(detail.Information.Publisher.User.Name);
-                authorBuilder.WithUrl($"https://space.bilibili.com/{detail.Information.Publisher.User.Id}");
-                if (detail.Information.Publisher.User.Avatar != null)
-                    authorBuilder.WithIconUrl(detail.Information.Publisher.User.Avatar.SourceUri.ToString());
-                embed.WithAuthor(authorBuilder);
-
-                var multiAuthors = detail.Information.Collaborators is not null;
-                var authors = new List<string>
-                {
-                    string.Format(textFormatAuthor, detail.Information.Publisher.User.Name,
-                        detail.Information.Publisher.User.Id),
-                };
-                if (multiAuthors)
-                    authors.AddRange(detail.Information.Collaborators!.Select(collaborator =>
-                        string.Format(textFormatAuthor, collaborator.User.Name, collaborator.User.Id)));
-
-                embed.AddField(multiAuthors ? "Authors" : "Author", string.Join(", ", authors));
-            }
+            var embed = BuildVideoInfo(detail.Information);
 
             // tags
             if (detail.Tags is not null)
@@ -93,27 +60,76 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
                     TimeSpan.FromSeconds(detail.Information.Duration ?? 0).ToString(@"hh\:mm\:ss"));
             }
 
-            // statistics
-            if (detail.Information.CommunityInformation is not null)
+            return embed;
+        }
+
+        /// <summary>
+        ///     Build video info.
+        /// </summary>
+        /// <param name="detail"></param>
+        /// <returns></returns>
+        public static EmbedBuilder BuildVideoInfo(VideoInformation detail)
+        {
+            const string textFormatVideoBvId = "[{0}](https://www.bilibili.com/video/{0}/)";
+            const string textFormatVideoAvId = "[av{0}](https://www.bilibili.com/video/av{0}/)";
+            const string textFormatAuthor = "[{0}](https://space.bilibili.com/{1})";
+
+            var embed = new EmbedBuilder();
+            embed.WithTitle(detail.Identifier.Title);
+
+            // cover
+            if (detail.Identifier.Cover is not null)
+                embed.WithImageUrl(detail.Identifier.Cover.SourceUri.ToString());
+
+            // video id
+            embed.AddField("BvId", string.Format(textFormatVideoBvId, detail.BvId), true);
+            embed.AddField("AvId", string.Format(textFormatVideoAvId, detail.Identifier.Id), true);
+
+            var content = new StringBuilder();
+
+            // author
             {
-                embed.AddField("Play", detail.Information.CommunityInformation.PlayCount, true);
-                embed.AddField("Danmaku", detail.Information.CommunityInformation.DanmakuCount, true);
-                embed.AddField("Reply", detail.Information.CommunityInformation.CommentCount, true);
-                embed.AddField("Favorite", detail.Information.CommunityInformation.FavoriteCount, true);
-                embed.AddField("Coin", detail.Information.CommunityInformation.CoinCount, true);
-                embed.AddField("Share", detail.Information.CommunityInformation.ShareCount, true);
-                embed.AddField("Like", detail.Information.CommunityInformation.LikeCount, true);
+                var authorBuilder = new EmbedAuthorBuilder();
+                authorBuilder.WithName(detail.Publisher.User.Name);
+                authorBuilder.WithUrl($"https://space.bilibili.com/{detail.Publisher.User.Id}");
+                if (detail.Publisher.User.Avatar != null)
+                    authorBuilder.WithIconUrl(detail.Publisher.User.Avatar.SourceUri.ToString());
+                embed.WithAuthor(authorBuilder);
+
+                var multiAuthors = detail.Collaborators is not null;
+                var authors = new List<string>
+                {
+                    string.Format(textFormatAuthor, detail.Publisher.User.Name,
+                        detail.Publisher.User.Id),
+                };
+                if (multiAuthors)
+                    authors.AddRange(detail.Collaborators!.Select(collaborator =>
+                        string.Format(textFormatAuthor, collaborator.User.Name, collaborator.User.Id)));
+
+                embed.AddField(multiAuthors ? "Authors" : "Author", string.Join(", ", authors));
+            }
+
+            // statistics
+            if (detail.CommunityInformation is not null)
+            {
+                embed.AddField("Play", detail.CommunityInformation.PlayCount, true);
+                embed.AddField("Danmaku", detail.CommunityInformation.DanmakuCount, true);
+                embed.AddField("Reply", detail.CommunityInformation.CommentCount, true);
+                embed.AddField("Favorite", detail.CommunityInformation.FavoriteCount, true);
+                embed.AddField("Coin", detail.CommunityInformation.CoinCount, true);
+                embed.AddField("Share", detail.CommunityInformation.ShareCount, true);
+                embed.AddField("Like", detail.CommunityInformation.LikeCount, true);
             }
 
             // description
-            var description = detail.Information.GetExtensionIfNotNull<string>(VideoExtensionDataId.Description);
+            var description = detail.GetExtensionIfNotNull<string>(VideoExtensionDataId.Description);
             if (!string.IsNullOrWhiteSpace(description)) embed.WithDescription(description.Replace("&amp;", "&"));
 
             // publish time
-            if (detail.Information.PublishTime is not null)
-                embed.WithTimestamp(detail.Information.PublishTime.Value);
+            if (detail.PublishTime is not null)
+                embed.WithTimestamp(detail.PublishTime.Value);
 
-            embed.WithUrl($"https://www.bilibili.com/video/{detail.Information.BvId}/");
+            embed.WithUrl($"https://www.bilibili.com/video/{detail.BvId}/");
             embed.WithDescription(content.ToString());
             return embed;
         }
@@ -254,36 +270,160 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
         ///     Build moment info.
         /// </summary>
         /// <param name="detail"></param>
-        /// <param name="fileAttachments"></param>
         /// <returns></returns>
-        public static EmbedBuilder[] BuildMomentInfo(MomentInformation detail, out IEnumerable<FileAttachment> fileAttachments)
+        public static EmbedBuilder[] BuildMomentInfo(MomentInformation detail)
         {
-            fileAttachments = [];
             if (detail.User is null) return [new EmbedBuilder().WithTitle("User Not Found")];
-            var embed = new EmbedBuilder();
 
-            var authorBuilder = new EmbedAuthorBuilder();
-            authorBuilder.WithName(detail.User.Name);
-            authorBuilder.WithUrl($"https://space.bilibili.com/{detail.User.Id}");
-            if (detail.User.Avatar is not null)
-                authorBuilder.WithIconUrl(detail.User.Avatar.SourceUri.ToString());
-            embed.WithAuthor(authorBuilder);
+            List<EmbedBuilder> embeds = [];
+
+            {
+                var embed = new EmbedBuilder();
+                var authorBuilder = new EmbedAuthorBuilder();
+                authorBuilder.WithName(detail.User.Name);
+                authorBuilder.WithUrl($"https://space.bilibili.com/{detail.User.Id}");
+                if (detail.User.Avatar is not null)
+                    authorBuilder.WithIconUrl(detail.User.Avatar.SourceUri.ToString());
+                embed.WithAuthor(authorBuilder);
+                embed.WithUrl($"https://www.bilibili.com/opus/{detail.Id}");
+                embeds.Add(embed);
+            }
+
+            if (detail.Description is not null)
+            {
+                var descriptionEmbeds = detail.Description.ToEmbedBuilders();
+                embeds.AddRange(descriptionEmbeds);
+            }
 
             switch (detail.MomentType)
             {
-                case MomentItemType.Video:
-                case MomentItemType.Pgc:
-                case MomentItemType.Article:
-                case MomentItemType.Image:
                 case MomentItemType.PlainText:
-                case MomentItemType.Forward:
-                case MomentItemType.Unsupported:
+                {
                     break;
+                }
+                case MomentItemType.Video:
+                {
+                    if (detail.Data is not VideoInformation videoInformation)
+                    {
+                        var errorEmbed = new EmbedBuilder();
+                        errorEmbed.WithTitle("Moment Type Error");
+                        errorEmbed.WithColor(Color.Red);
+                        errorEmbed.WithDescription("Moment type is not video.");
+                        embeds.Add(errorEmbed);
+                        break;
+                    }
+                    var embed = BuildVideoInfo(videoInformation);
+                    embeds.Add(embed);
+                    break;
+                }
+                case MomentItemType.Pgc:
+                {
+                    var embed = new EmbedBuilder();
+                    embed.WithTitle("Moment Type Error");
+                    embed.WithColor(Color.Red);
+                    embed.WithDescription("Moment type is not supported.");
+                    embeds.Add(embed);
+                    break;
+                }
+                case MomentItemType.Article:
+                {
+                    if (detail.Data is not ArticleInformation articleInformation)
+                    {
+                        var errorEmbed = new EmbedBuilder();
+                        errorEmbed.WithTitle("Moment Type Error");
+                        errorEmbed.WithColor(Color.Red);
+                        errorEmbed.WithDescription("Moment type is not article.");
+                        embeds.Add(errorEmbed);
+                        break;
+                    }
+
+                    // var embed = BuildArticleInfo(articleInformation);
+                    var embed = new EmbedBuilder();
+                    embed.WithTitle("Moment Type Error");
+                    embed.WithColor(Color.Red);
+                    embed.WithDescription("Moment type is not supported.");
+                    embeds.Add(embed);
+                    break;
+                }
+                case MomentItemType.Image:
+                {
+                    if (detail.Data is not List<BiliImage> images)
+                    {
+                        var errorEmbed = new EmbedBuilder();
+                        errorEmbed.WithTitle("Moment Type Error");
+                        errorEmbed.WithColor(Color.Red);
+                        errorEmbed.WithDescription("Moment type is not image.");
+                        embeds.Add(errorEmbed);
+                        break;
+                    }
+
+                    foreach (var image in images)
+                    {
+                        var embed = new EmbedBuilder();
+                        embed.WithImageUrl(image.SourceUri.ToString());
+                        embeds.Add(embed);
+                    }
+                    break;
+                }
+                case MomentItemType.Forward:
+                {
+                    if (detail.Data is not MomentInformation forward)
+                    {
+                        var errorEmbed = new EmbedBuilder();
+                        errorEmbed.WithTitle("Moment Type Error");
+                        errorEmbed.WithColor(Color.Red);
+                        errorEmbed.WithDescription("Moment type is not forward.");
+                        embeds.Add(errorEmbed);
+                        break;
+                    }
+                    var forwardEmbeds = BuildMomentInfo(forward);
+                    embeds.AddRange(forwardEmbeds);
+                    break;
+                }
+                case MomentItemType.Unsupported:
+                {
+                    var errorEmbed = new EmbedBuilder();
+                    errorEmbed.WithTitle("Moment Type Error");
+                    errorEmbed.WithColor(Color.Red);
+                    errorEmbed.WithDescription("Moment type is not supported.");
+                    embeds.Add(errorEmbed);
+                    break;
+                }
+            }
+            return [.. embeds];
+        }
+
+        private static EmbedBuilder[] ToEmbedBuilders(this EmoteText emoteText)
+        {
+            if (emoteText.Emotes is null) return [new EmbedBuilder().WithDescription(emoteText.Text)];
+            List<EmbedBuilder> embeds = [];
+
+            var regex = EmojiTextRegex();
+            var matches = regex.Matches(emoteText.Text);
+            var index = 0;
+            foreach (Match match in matches)
+            {
+                if (!emoteText.Emotes.TryGetValue(match.Value, out var emote)) continue;
+                if (index < match.Index)
+                {
+                    var text = emoteText.Text[index..match.Index];
+                    embeds.Add(new EmbedBuilder().WithDescription(text));
+                }
+                index = match.Index + match.Length;
+                var embed = new EmbedBuilder();
+                embed.WithImageUrl(emote.SourceUri.ToString());
+                embeds.Add(embed);
             }
 
-            embed.WithUrl($"https://www.bilibili.com/opus/{detail.Id}");
+            if (index >= emoteText.Text.Length) return [.. embeds];
 
-            return [embed];
+            var endText = emoteText.Text[index..];
+            embeds.Add(new EmbedBuilder().WithDescription(endText));
+
+            return [.. embeds];
         }
+
+        [GeneratedRegex(@"\[.*?\]")]
+        private static partial Regex EmojiTextRegex();
     }
 }

@@ -15,6 +15,56 @@ namespace RitsukageBot.Modules.Bilibili
         public partial class DynamicInteractions
         {
             private static readonly Regex MatchUserIdRegex = GetMatchUserIdRegex();
+            private static readonly Regex MatchDynamicIdRegex = GetMatchDynamicIdRegex();
+
+            /// <summary>
+            ///     Get dynamic information
+            /// </summary>
+            /// <param name="id"></param>
+            [SlashCommand("info", "Get dynamic information")]
+            public async Task GetDynamicInfoAsync(string id)
+            {
+                await DeferAsync().ConfigureAwait(false);
+
+                id = id.Trim();
+
+                if (MatchDynamicIdRegex.IsMatch(id))
+                {
+                    var match = MatchDynamicIdRegex.Match(id);
+                    id = match.Groups["id"].Value;
+                }
+
+                if (!ulong.TryParse(id, out var dynamicId) || dynamicId == 0)
+                {
+                    var errorEmbed = new EmbedBuilder()
+                        .WithColor(Color.Red)
+                        .WithTitle("Error")
+                        .WithDescription("Invalid dynamic id.")
+                        .WithBilibiliLogoIconFooter();
+                    await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(), BilibiliIconData.TagLogoIconFileName,
+                        embed: errorEmbed.Build()).ConfigureAwait(false);
+                }
+
+                try
+                {
+                    var detail = await MomentService.GetMomentInformation(id).ConfigureAwait(false);
+                    var embeds = InformationEmbedBuilder.BuildMomentInfo(detail);
+                    embeds[^1].WithBilibiliLogoIconFooter();
+                    await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(), BilibiliIconData.TagLogoIconFileName,
+                        embeds: embeds.Select(x => x.Build()).ToArray()).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "Failed to get dynamic information.");
+                    var errorEmbed = new EmbedBuilder()
+                        .WithColor(Color.Red)
+                        .WithTitle("Error")
+                        .WithDescription("Failed to get dynamic information: " + ex.Message)
+                        .WithBilibiliLogoIconFooter();
+                    await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(), BilibiliIconData.TagLogoIconFileName,
+                        embed: errorEmbed.Build()).ConfigureAwait(false);
+                }
+            }
 
             /// <summary>
             ///     Follow a user
@@ -48,8 +98,8 @@ namespace RitsukageBot.Modules.Bilibili
                 var userIdStr = userId.ToString();
                 var table = DatabaseProviderService.Table<BilibiliWatcherConfiguration>();
                 var config = await table.FirstOrDefaultAsync(x => x.Type == WatcherType.Dynamic
-                                                                  && x.Target == userIdStr
-                                                                  && x.ChannelId == Context.Channel.Id);
+                    && x.Target == userIdStr
+                    && x.ChannelId == Context.Channel.Id);
                 if (config is not null)
                 {
                     var errorEmbed = new EmbedBuilder()
@@ -147,8 +197,8 @@ namespace RitsukageBot.Modules.Bilibili
                 var userIdStr = userId.ToString();
                 var table = DatabaseProviderService.Table<BilibiliWatcherConfiguration>();
                 var config = await table.FirstOrDefaultAsync(x => x.Type == WatcherType.Dynamic
-                                                                  && x.Target == userIdStr
-                                                                  && x.ChannelId == Context.Channel.Id);
+                    && x.Target == userIdStr
+                    && x.ChannelId == Context.Channel.Id);
                 if (config is null)
                 {
                     var errorEmbed = new EmbedBuilder()
@@ -188,6 +238,10 @@ namespace RitsukageBot.Modules.Bilibili
             [GeneratedRegex(@"((https?://)?space\.bilibili\.com/)(?<id>\d+)",
                 RegexOptions.IgnoreCase | RegexOptions.Compiled)]
             private static partial Regex GetMatchUserIdRegex();
+
+            [GeneratedRegex(@"((https?://)?(www\.bilibili\.com/opus/)|(t\.bilibili\.com/))(?<id>\d+)",
+                RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+            private static partial Regex GetMatchDynamicIdRegex();
         }
     }
 

@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
 using Richasy.BiliKernel.Bili.Media;
 using Richasy.BiliKernel.Bili.User;
+using RitsukageBot.Library.Bilibili.BiliKernelModules.Abstractions.Moment;
 using RitsukageBot.Services.Providers;
 
 namespace RitsukageBot.Modules.Bilibili
@@ -44,6 +45,11 @@ namespace RitsukageBot.Modules.Bilibili
             ///     Relationship service.
             /// </summary>
             public IRelationshipService RelationshipService => BiliKernelProvider.GetRequiredService<IRelationshipService>();
+            
+            /// <summary>
+            ///     Moment service.
+            /// </summary>
+            public IMomentService MomentService => BiliKernelProvider.GetRequiredService<IMomentService>();
         }
     }
 
