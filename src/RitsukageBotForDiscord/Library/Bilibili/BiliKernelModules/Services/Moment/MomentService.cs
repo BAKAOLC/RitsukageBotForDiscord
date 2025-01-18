@@ -12,7 +12,10 @@ using RitsukageBot.Library.Bilibili.BiliKernelModules.Abstractions.Moment;
 namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Services.Moment
 {
     /// <inheritdoc />
-    public class MomentService(BiliHttpClient httpClient, BiliAuthenticator authenticator, IBiliTokenResolver tokenResolver) : IMomentService
+    public class MomentService(
+        BiliHttpClient httpClient,
+        BiliAuthenticator authenticator,
+        IBiliTokenResolver tokenResolver) : IMomentService
     {
         private readonly MomentDiscoveryService _momentDiscoveryService = new(httpClient, authenticator, tokenResolver);
         private readonly MomentOperationService _momentOperationService = new(httpClient, authenticator, tokenResolver);
@@ -20,7 +23,8 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Services.Moment
         #region IMomentService
 
         /// <inheritdoc />
-        public async Task<MomentInformation> GetMomentInformation(string momentId, CancellationToken cancellationToken = default)
+        public async Task<MomentInformation> GetMomentInformation(string momentId,
+            CancellationToken cancellationToken = default)
         {
             var req = new DynDetailReq
             {
@@ -42,37 +46,44 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Services.Moment
         #region IMomentDiscoveryService
 
         /// <inheritdoc />
-        public Task<(IReadOnlyList<MomentInformation> Moments, string Offset, bool HasMore)> GetUserMomentsAsync(UserProfile user, string? offset = null, CancellationToken cancellationToken = default)
+        public Task<(IReadOnlyList<MomentInformation> Moments, string Offset, bool HasMore)> GetUserMomentsAsync(
+            UserProfile user, string? offset = null, CancellationToken cancellationToken = default)
         {
             return _momentDiscoveryService.GetUserComprehensiveMomentsAsync(user, offset, cancellationToken);
         }
 
         /// <inheritdoc />
-        public Task<MomentView> GetComprehensiveMomentsAsync(string? offset = null, string? baseline = null, CancellationToken cancellationToken = default)
+        public Task<MomentView> GetComprehensiveMomentsAsync(string? offset = null, string? baseline = null,
+            CancellationToken cancellationToken = default)
         {
             return _momentDiscoveryService.GetComprehensiveMomentsAsync(offset, baseline, cancellationToken);
         }
 
         /// <inheritdoc />
-        public Task<MomentView> GetVideoMomentsAsync(string? offset = null, string? baseline = null, CancellationToken cancellationToken = default)
+        public Task<MomentView> GetVideoMomentsAsync(string? offset = null, string? baseline = null,
+            CancellationToken cancellationToken = default)
         {
             return _momentDiscoveryService.GetVideoMomentsAsync(offset, baseline, cancellationToken);
         }
 
         /// <inheritdoc />
-        public Task<(IReadOnlyList<MomentInformation> Moments, string Offset, bool HasMore)> GetMyMomentsAsync(string? offset = null, CancellationToken cancellationToken = default)
+        public Task<(IReadOnlyList<MomentInformation> Moments, string Offset, bool HasMore)> GetMyMomentsAsync(
+            string? offset = null, CancellationToken cancellationToken = default)
         {
             return _momentDiscoveryService.GetMyMomentsAsync(offset, cancellationToken);
         }
 
         /// <inheritdoc />
-        public Task<(IReadOnlyList<MomentInformation> Moments, string Offset, bool HasMore)> GetUserComprehensiveMomentsAsync(UserProfile user, string? offset = null, CancellationToken cancellationToken = default)
+        public Task<(IReadOnlyList<MomentInformation> Moments, string Offset, bool HasMore)>
+            GetUserComprehensiveMomentsAsync(UserProfile user, string? offset = null,
+                CancellationToken cancellationToken = default)
         {
             return _momentDiscoveryService.GetUserComprehensiveMomentsAsync(user, offset, cancellationToken);
         }
 
         /// <inheritdoc />
-        public Task<(IReadOnlyList<MomentInformation> Moments, string Offset, bool HasMore)> GetUserVideoMomentsAsync(UserProfile user, string? offset = null, CancellationToken cancellationToken = default)
+        public Task<(IReadOnlyList<MomentInformation> Moments, string Offset, bool HasMore)> GetUserVideoMomentsAsync(
+            UserProfile user, string? offset = null, CancellationToken cancellationToken = default)
         {
             return _momentDiscoveryService.GetUserVideoMomentsAsync(user, offset, cancellationToken);
         }
@@ -94,7 +105,8 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Services.Moment
         }
 
         /// <inheritdoc />
-        public Task MarkUserMomentAsReadAsync(MomentProfile user, string? offset = null, CancellationToken cancellationToken = default)
+        public Task MarkUserMomentAsReadAsync(MomentProfile user, string? offset = null,
+            CancellationToken cancellationToken = default)
         {
             return _momentOperationService.MarkUserMomentAsReadAsync(user, offset, cancellationToken);
         }

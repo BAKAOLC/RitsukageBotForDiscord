@@ -16,7 +16,7 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
     /// <inheritdoc />
     public class DynamicWatcherScheduleTask(IServiceProvider serviceProvider) : PeriodicScheduleTask(serviceProvider)
     {
-        private readonly Dictionary<string, UserMoments> _follows = [];
+        private readonly Dictionary<string, IReadOnlyList<MomentInformation>> _follows = [];
 
         /// <inheritdoc />
         public override ScheduleConfigurationBase Configuration { get; } = new PeriodicScheduleConfiguration
@@ -33,7 +33,8 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
 
         private BiliKernelProviderService BiliKernelProvider => GetRequiredService<BiliKernelProviderService>();
 
-        private IMomentDiscoveryService MomentDiscoveryService => BiliKernelProvider.GetRequiredService<IMomentDiscoveryService>();
+        private IMomentDiscoveryService MomentDiscoveryService =>
+            BiliKernelProvider.GetRequiredService<IMomentDiscoveryService>();
 
         /// <inheritdoc />
         public override async Task ExecuteAsync(CancellationToken cancellationToken)
@@ -44,7 +45,7 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
             List<BilibiliWatcherConfiguration> needRemoved = [];
             foreach (var config in configs)
             {
-                if (ulong.TryParse(config.Target, out var userId)) continue;
+                if (ulong.TryParse(config.Target, out _)) continue;
                 Logger.LogWarning("Invalid user id: {Target}", config.Target);
                 needRemoved.Add(config);
             }
@@ -57,7 +58,7 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
             foreach (var config in configs)
             {
                 if (!_follows.TryGetValue(config.Target, out var userMoments)) continue;
-                var moments = userMoments.Moments.ToArray();
+                var moments = userMoments.ToArray();
                 if (moments.Length == 0)
                 {
                     Logger.LogWarning("No moments found for user: {UserId}", config.Target);
@@ -72,7 +73,7 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
                     lastMoment = null;
                 }
 
-                var channel = await DiscordClient.GetChannelAsync(config.ChannelId);
+                var channel = await DiscordClient.GetChannelAsync(config.ChannelId).ConfigureAwait(false);
                 if (channel is not IMessageChannel messageChannel)
                 {
                     Logger.LogWarning("Channel {ChannelId} is not found.", config.ChannelId);
@@ -85,7 +86,8 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
                     var embeds = InformationEmbedBuilder.BuildMomentInfo(moment);
                     embeds[^1].WithBilibiliLogoIconFooter();
                     var text = $"User {moment.User?.Name} has a new moment!";
-                    await messageChannel.SendFileAsync(BilibiliIconData.GetLogoIconStream(), BilibiliIconData.TagLogoIconFileName,
+                    await messageChannel.SendFileAsync(BilibiliIconData.GetLogoIconStream(),
+                        BilibiliIconData.TagLogoIconFileName,
                         text, embeds: embeds.Select(x => x.Build()).ToArray()).ConfigureAwait(false);
                     continue;
                 }
@@ -96,7 +98,8 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
                     var embeds = InformationEmbedBuilder.BuildMomentInfo(moment);
                     embeds[^1].WithBilibiliLogoIconFooter();
                     var text = $"User {moment.User?.Name} has a new moment!";
-                    await messageChannel.SendFileAsync(BilibiliIconData.GetLogoIconStream(), BilibiliIconData.TagLogoIconFileName,
+                    await messageChannel.SendFileAsync(BilibiliIconData.GetLogoIconStream(),
+                        BilibiliIconData.TagLogoIconFileName,
                         text, embeds: embeds.Select(x => x.Build()).ToArray()).ConfigureAwait(false);
                 }
             }
@@ -116,27 +119,25 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
             foreach (var request in requests)
             {
                 var userProfile = new UserProfile(request.UserId);
-                var (moments, offset, hasMore) = await MomentDiscoveryService.GetUserVideoMomentsAsync(userProfile, request.Offset).ConfigureAwait(false);
+                var (moments, offset, hasMore) = await MomentDiscoveryService
+                    .GetUserVideoMomentsAsync(userProfile, request.Offset).ConfigureAwait(false);
                 if (moments.Count == 0) continue;
                 while (IsSmallerOffset(request.Offset, offset) && hasMore)
                 {
-                    (var addMoments, offset, hasMore) = await MomentDiscoveryService.GetUserVideoMomentsAsync(userProfile, offset).ConfigureAwait(false);
+                    (var addMoments, offset, hasMore) = await MomentDiscoveryService
+                        .GetUserVideoMomentsAsync(userProfile, offset).ConfigureAwait(false);
                     if (addMoments.Count == 0) break;
                     moments = [.. moments, .. addMoments];
                 }
 
-                var userMoments = new UserMoments
-                {
-                    UserId = request.UserId,
-                    Moments = moments,
-                };
-                _follows[request.UserId] = userMoments;
+                _follows[request.UserId] = moments;
             }
 
             Logger.LogInformation("Moments updated.");
         }
 
-        private static IEnumerable<UserMomentsRequest> GetMomentsRequests(IEnumerable<BilibiliWatcherConfiguration> configs)
+        private static IEnumerable<UserMomentsRequest> GetMomentsRequests(
+            IEnumerable<BilibiliWatcherConfiguration> configs)
         {
             var totalRequests = configs.Select(x => new UserMomentsRequest
             {
@@ -156,7 +157,8 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
 
         private static bool IsSmallerOffset(string offset, string target)
         {
-            if (ulong.TryParse(offset, out var offsetValue) && ulong.TryParse(target, out var targetValue)) return offsetValue < targetValue;
+            if (ulong.TryParse(offset, out var offsetValue) && ulong.TryParse(target, out var targetValue))
+                return offsetValue < targetValue;
             return false;
         }
 
@@ -165,13 +167,6 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
             public string UserId { get; init; }
 
             public string Offset { get; init; }
-        }
-
-        private class UserMoments
-        {
-            public required string UserId { get; set; }
-
-            public IReadOnlyList<MomentInformation> Moments { get; init; } = [];
         }
     }
 }

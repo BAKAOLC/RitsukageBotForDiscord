@@ -9,14 +9,17 @@ namespace RitsukageBot.Library.Modules.Schedules
         ///     Run once.
         /// </summary>
         Once,
+
         /// <summary>
         ///     Run every x.
         /// </summary>
         Periodic,
+
         /// <summary>
         ///     Run x times.
         /// </summary>
         Countdown,
+
         /// <summary>
         ///     Run until.
         /// </summary>

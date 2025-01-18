@@ -170,12 +170,12 @@ namespace RitsukageBot.Modules
         ///     Allowed interaction
         /// </summary>
         /// <param name="Label"></param>
-        /// <param name="CustomId"></param>
+        /// <param name="Id"></param>
         /// <param name="ButtonStyle"></param>
         /// <param name="Emote"></param>
         public readonly record struct AllowedInteraction(
             string Label,
-            string CustomId,
+            string Id,
             ButtonStyle? ButtonStyle = null,
             IEmote? Emote = null)
         {
@@ -185,9 +185,9 @@ namespace RitsukageBot.Modules
             public string Label { get; init; } = Label;
 
             /// <summary>
-            ///     Custom ID
+            ///     ID
             /// </summary>
-            public string CustomId { get; init; } = CustomId;
+            public string Id { get; init; } = Id;
 
             /// <summary>
             ///     Button style
@@ -206,7 +206,7 @@ namespace RitsukageBot.Modules
             /// <returns></returns>
             public ButtonBuilder AsButtonBuilder(bool disabled = false)
             {
-                var builder = new ButtonBuilder().WithLabel(Label).WithCustomId(CustomId);
+                var builder = new ButtonBuilder().WithLabel(Label).WithCustomId(Id);
                 builder.WithStyle(ButtonStyle ?? Discord.ButtonStyle.Primary);
 
                 if (Emote is not null) builder.WithEmote(Emote);
@@ -226,7 +226,7 @@ namespace RitsukageBot.Modules
         public static readonly AllowedInteraction CancelInteraction = new()
         {
             Label = "Cancel",
-            CustomId = $"{CustomId}:cancel",
+            Id = $"{CustomId}:cancel",
             ButtonStyle = ButtonStyle.Danger,
         };
 
@@ -236,7 +236,7 @@ namespace RitsukageBot.Modules
         public static readonly AllowedInteraction CancelAndPublishInteraction = new()
         {
             Label = "Cancel and Publish",
-            CustomId = $"{CustomId}:cancel_and_publish",
+            Id = $"{CustomId}:cancel_and_publish",
             ButtonStyle = ButtonStyle.Danger,
         };
 
@@ -246,7 +246,7 @@ namespace RitsukageBot.Modules
         public static readonly AllowedInteraction LastPageInteraction = new()
         {
             Label = "Last Page",
-            CustomId = $"{CustomId}:last_page",
+            Id = $"{CustomId}:last_page",
             ButtonStyle = ButtonStyle.Secondary,
             Emote = new Emoji("⬅️"),
         };
@@ -257,7 +257,7 @@ namespace RitsukageBot.Modules
         public static readonly AllowedInteraction NextPageInteraction = new()
         {
             Label = "Next Page",
-            CustomId = $"{CustomId}:next_page",
+            Id = $"{CustomId}:next_page",
             ButtonStyle = ButtonStyle.Secondary,
             Emote = new Emoji("➡️"),
         };
@@ -491,8 +491,8 @@ namespace RitsukageBot.Modules
             if (firstComponent is not null)
             {
                 var componentInteraction =
-                    ImageInteractions.AllowedInteractions.FirstOrDefault(x => x.CustomId == firstComponent.CustomId);
-                if (componentInteraction.CustomId is not null)
+                    ImageInteractions.AllowedInteractions.FirstOrDefault(x => x.Id == firstComponent.CustomId);
+                if (componentInteraction.Id is not null)
                 {
                     var index = Array.IndexOf(ImageInteractions.AllowedInteractions, componentInteraction);
                     var page = index / 8 - 1;
@@ -512,8 +512,8 @@ namespace RitsukageBot.Modules
             if (firstComponent is not null)
             {
                 var componentInteraction =
-                    ImageInteractions.AllowedInteractions.FirstOrDefault(x => x.CustomId == firstComponent.CustomId);
-                if (componentInteraction.CustomId is not null)
+                    ImageInteractions.AllowedInteractions.FirstOrDefault(x => x.Id == firstComponent.CustomId);
+                if (componentInteraction.Id is not null)
                 {
                     var index = Array.IndexOf(ImageInteractions.AllowedInteractions, componentInteraction);
                     var page = index / 8 + 1;

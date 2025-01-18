@@ -59,7 +59,7 @@ namespace RitsukageBot.Services.HostedServices
             await _scheduleModuleSupport.DisposeAsync().ConfigureAwait(false);
             await _eventModuleSupport.DisposeAsync().ConfigureAwait(false);
             await _scriptingModuleSupport.DisposeAsync().ConfigureAwait(false);
-            await _discordEventLoggerModule.DisposeAsync();
+            await _discordEventLoggerModule.DisposeAsync().ConfigureAwait(false);
             await _client.DisposeAsync().ConfigureAwait(false);
             _logger.LogInformation("Discord bot service stopped.");
         }

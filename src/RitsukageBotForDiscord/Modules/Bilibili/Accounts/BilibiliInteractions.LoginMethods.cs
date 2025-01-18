@@ -30,8 +30,11 @@ namespace RitsukageBot.Modules.Bilibili
                         .WithCustomId($"{TagCustomId}:account:bot:logout")
                         .WithLabel("Logout")
                         .WithStyle(ButtonStyle.Danger));
-                    await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(), BilibiliIconData.TagLogoIconFileName,
-                        embed: embedBuilder.WithBilibiliLogoIconFooter().Build(), components: componentBuilder.Build()).ConfigureAwait(false);
+                    await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(),
+                            BilibiliIconData.TagLogoIconFileName,
+                            embed: embedBuilder.WithBilibiliLogoIconFooter().Build(),
+                            components: componentBuilder.Build())
+                        .ConfigureAwait(false);
                     return;
                 }
 
@@ -128,7 +131,8 @@ namespace RitsukageBot.Modules.Bilibili
                         .WithDescription(ex.Message)
                         .WithBilibiliLogoIconFooter();
 
-                    await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(), BilibiliIconData.TagLogoIconFileName,
+                    await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(),
+                        BilibiliIconData.TagLogoIconFileName,
                         embed: errorEmbed.Build()).ConfigureAwait(false);
                 }
             }

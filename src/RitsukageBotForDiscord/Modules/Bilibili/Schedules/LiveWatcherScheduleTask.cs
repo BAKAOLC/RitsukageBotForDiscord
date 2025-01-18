@@ -33,7 +33,8 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
 
         private IPlayerService PlayerService => BiliKernelProvider.GetRequiredService<IPlayerService>();
 
-        private ILiveDiscoveryService LiveDiscoveryService => BiliKernelProvider.GetRequiredService<ILiveDiscoveryService>();
+        private ILiveDiscoveryService LiveDiscoveryService =>
+            BiliKernelProvider.GetRequiredService<ILiveDiscoveryService>();
 
         /// <inheritdoc />
         public override async Task ExecuteAsync(CancellationToken cancellationToken)
@@ -42,7 +43,7 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
             var table = DatabaseProviderService.Table<BilibiliWatcherConfiguration>();
             var configs = await table.Where(x => x.Type == WatcherType.Live).ToArrayAsync().ConfigureAwait(false);
             List<BilibiliWatcherConfiguration> needRemoved = [];
-            await UpdateFollowsAsync(cancellationToken);
+            await UpdateFollowsAsync(cancellationToken).ConfigureAwait(false);
             foreach (var config in configs)
             {
                 if (!ulong.TryParse(config.Target, out var roomId))
@@ -60,7 +61,7 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
                 config.LastInformation = isLivingStr;
 
                 var embed = InformationEmbedBuilder.BuildLiveInfo(liveInfo);
-                var channel = await DiscordClient.GetChannelAsync(config.ChannelId);
+                var channel = await DiscordClient.GetChannelAsync(config.ChannelId).ConfigureAwait(false);
                 if (channel is not IMessageChannel messageChannel)
                 {
                     Logger.LogWarning("Channel {ChannelId} is not found.", config.ChannelId);
@@ -71,11 +72,13 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
                 if (!isLiving)
                 {
                     await messageChannel.SendMessageAsync(text, embed: embed.Build()).ConfigureAwait(false);
-                    return;
+                    continue;
                 }
 
-                var components = new ComponentBuilder().WithButton("Watch Stream", $"bilibili://live/{roomIdStr}", ButtonStyle.Link);
-                await messageChannel.SendMessageAsync(text, embed: embed.Build(), components: components.Build()).ConfigureAwait(false);
+                var components = new ComponentBuilder().WithButton("Watch Stream", $"bilibili://live/{roomIdStr}",
+                    ButtonStyle.Link);
+                await messageChannel.SendMessageAsync(text, embed: embed.Build(), components: components.Build())
+                    .ConfigureAwait(false);
             }
 
             Logger.LogInformation("Updating database.");
@@ -90,12 +93,14 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
         {
             Logger.LogInformation("Updating follows list.");
             List<LiveInformation> lives = [];
-            var (follows, _, nextPageNumber) = await LiveDiscoveryService.GetFeedAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+            var (follows, _, nextPageNumber) = await LiveDiscoveryService
+                .GetFeedAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
             while (follows is not null && follows.Any())
             {
                 lives.AddRange(follows);
                 Logger.LogInformation("Page {PageNumber} is loaded.", nextPageNumber);
-                (follows, _, nextPageNumber) = await LiveDiscoveryService.GetFeedAsync(nextPageNumber, cancellationToken).ConfigureAwait(false);
+                (follows, _, nextPageNumber) = await LiveDiscoveryService
+                    .GetFeedAsync(nextPageNumber, cancellationToken).ConfigureAwait(false);
             }
 
             _records.Clear();
@@ -112,7 +117,8 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
         {
             if (_records.TryGetValue(roomId, out var info)) return info;
             var mediaIdentifier = new MediaIdentifier(roomId, null, null);
-            var detail = await PlayerService.GetLivePageDetailAsync(mediaIdentifier, cancellationToken).ConfigureAwait(false);
+            var detail = await PlayerService.GetLivePageDetailAsync(mediaIdentifier, cancellationToken)
+                .ConfigureAwait(false);
             _records[detail.Information.Identifier.Id] = detail.Information;
             return detail.Information;
         }

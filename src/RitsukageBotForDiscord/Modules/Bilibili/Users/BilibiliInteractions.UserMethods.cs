@@ -37,7 +37,8 @@ namespace RitsukageBot.Modules.Bilibili
                         .WithTitle("Error")
                         .WithDescription("Invalid user id.")
                         .WithBilibiliLogoIconFooter();
-                    await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(), BilibiliIconData.TagLogoIconFileName,
+                    await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(),
+                        BilibiliIconData.TagLogoIconFileName,
                         embed: errorEmbed.Build()).ConfigureAwait(false);
                     return;
                 }
@@ -48,7 +49,8 @@ namespace RitsukageBot.Modules.Bilibili
                     var embed = InformationEmbedBuilder.BuildUserInfo(detail);
                     embed.WithColor(Color.Green);
                     embed.WithBilibiliLogoIconFooter();
-                    await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(), BilibiliIconData.TagLogoIconFileName,
+                    await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(),
+                        BilibiliIconData.TagLogoIconFileName,
                         embed: embed.Build()).ConfigureAwait(false);
                 }
                 catch (Exception ex)
@@ -59,7 +61,8 @@ namespace RitsukageBot.Modules.Bilibili
                         .WithTitle("Error")
                         .WithDescription("Failed to get user information: " + ex.Message)
                         .WithBilibiliLogoIconFooter();
-                    await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(), BilibiliIconData.TagLogoIconFileName,
+                    await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(),
+                        BilibiliIconData.TagLogoIconFileName,
                         embed: errorEmbed.Build()).ConfigureAwait(false);
                 }
             }

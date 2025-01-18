@@ -71,7 +71,7 @@ namespace RitsukageBot.Modules.Bilibili.Events
                         {
                             logger.LogInformation("Try to resolve user {UserId}", keyId.Id);
                             var userCard = await biliKernelProvider.GetRequiredService<IUserService>()
-                                .GetUserInformationAsync(keyId.Id, cancellationToken);
+                                .GetUserInformationAsync(keyId.Id, cancellationToken).ConfigureAwait(false);
                             embed = InformationEmbedBuilder.BuildUserInfo(userCard);
                             break;
                         }
@@ -85,7 +85,8 @@ namespace RitsukageBot.Modules.Bilibili.Events
                 if (embed is null) continue;
                 embed.WithFooter(footerBuilder);
                 await message.Channel
-                    .SendFileAsync(BilibiliIconData.GetLogoIconStream(), BilibiliIconData.TagLogoIconFileName, embed: embed.Build())
+                    .SendFileAsync(BilibiliIconData.GetLogoIconStream(), BilibiliIconData.TagLogoIconFileName,
+                        embed: embed.Build())
                     .ConfigureAwait(false);
             }
         }
@@ -227,7 +228,6 @@ namespace RitsukageBot.Modules.Bilibili.Events
 
         private enum KeyIdType
         {
-            Unknown,
             Video,
             Live,
             Dynamic,
@@ -236,9 +236,9 @@ namespace RitsukageBot.Modules.Bilibili.Events
 
         private record struct KeyId
         {
-            public KeyIdType Type { get; set; }
+            public KeyIdType Type { get; init; }
 
-            public string Id { get; set; }
+            public string Id { get; init; }
         }
     }
 }

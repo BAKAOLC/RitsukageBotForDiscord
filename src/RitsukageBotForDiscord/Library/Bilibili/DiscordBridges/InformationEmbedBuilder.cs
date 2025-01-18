@@ -308,6 +308,7 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
                         embeds.Add(errorEmbed);
                         break;
                     }
+
                     embeds.Add(BuildVideoInfo(videoInformation));
                     break;
                 }
@@ -322,7 +323,7 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
                 }
                 case MomentItemType.Article:
                 {
-                    if (detail.Data is not ArticleInformation articleInformation)
+                    if (detail.Data is not ArticleInformation)
                     {
                         var errorEmbed = new EmbedBuilder();
                         errorEmbed.WithTitle("Moment Type Error");
@@ -368,6 +369,7 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
                         embeds.Add(errorEmbed);
                         break;
                     }
+
                     embeds.AddRange(BuildMomentInfo(forward));
                     break;
                 }

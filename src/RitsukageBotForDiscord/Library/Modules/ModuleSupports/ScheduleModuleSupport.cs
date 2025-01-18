@@ -67,7 +67,8 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
                 var minNextExecutedTime = taskNextExecutedTimes.Min();
                 if (minNextExecutedTime < now) minNextExecutedTime = now;
                 var minNextInterval = minNextExecutedTime - now;
-                if (minNextInterval > TimeSpan.Zero) await Task.Delay(minNextInterval, _cancellationTokenSource.Token).ConfigureAwait(false);
+                if (minNextInterval > TimeSpan.Zero)
+                    await Task.Delay(minNextInterval, _cancellationTokenSource.Token).ConfigureAwait(false);
                 if (_cancellationTokenSource.Token.IsCancellationRequested) return;
                 tasks = _tasks.Where(task => task.IsEnabled && task.NextExecutedTime <= minNextExecutedTime).ToArray();
                 foreach (var task in tasks)

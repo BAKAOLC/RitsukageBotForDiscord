@@ -35,7 +35,7 @@ namespace RitsukageBot.Library.Modules.Schedules
         DatabaseProviderService Database => GetRequiredService<DatabaseProviderService>();
 
         /// <summary>
-        ///     Get service of type T from the <see cref="IServiceProvider"/>
+        ///     Get service of type T from the <see cref="IServiceProvider" />
         /// </summary>
         /// <typeparam name="T">The type of service object to get.</typeparam>
         /// <returns>A service object of type T.</returns>

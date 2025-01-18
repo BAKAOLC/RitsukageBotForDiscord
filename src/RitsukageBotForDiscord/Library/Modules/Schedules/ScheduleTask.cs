@@ -67,8 +67,10 @@ namespace RitsukageBot.Library.Modules.Schedules
             Configuration.ExecutedTimes++;
             Configuration.LastExecutedTime = triggerTime;
             if (Configuration is OneTimeScheduleConfiguration ||
-                Configuration is CountdownScheduleConfiguration countdownConfiguration && countdownConfiguration.TargetTimes == Configuration.ExecutedTimes ||
-                Configuration is UntilTimeScheduleConfiguration untilTimeConfiguration && untilTimeConfiguration.TargetTime <= Configuration.LastExecutedTime
+                (Configuration is CountdownScheduleConfiguration countdownConfiguration &&
+                 countdownConfiguration.TargetTimes == Configuration.ExecutedTimes) ||
+                (Configuration is UntilTimeScheduleConfiguration untilTimeConfiguration &&
+                 untilTimeConfiguration.TargetTime <= Configuration.LastExecutedTime)
                ) IsFinished = true;
             _ = Task.Run(() => ExecuteAsync(cancellationToken), cancellationToken);
             return Task.CompletedTask;
@@ -91,19 +93,22 @@ namespace RitsukageBot.Library.Modules.Schedules
         {
             get
             {
-                if (Configuration is PeriodicScheduleConfiguration periodicConfiguration) return periodicConfiguration.Interval;
+                if (Configuration is PeriodicScheduleConfiguration periodicConfiguration)
+                    return periodicConfiguration.Interval;
                 return TimeSpan.Zero;
             }
             set
             {
-                if (Configuration is PeriodicScheduleConfiguration periodicConfiguration) periodicConfiguration.Interval = value;
+                if (Configuration is PeriodicScheduleConfiguration periodicConfiguration)
+                    periodicConfiguration.Interval = value;
                 throw new InvalidOperationException("Cannot set interval for a non-periodic schedule.");
             }
         }
     }
 
     /// <inheritdoc />
-    public abstract class CountdownScheduleTask(IServiceProvider serviceProvider) : PeriodicScheduleTask(serviceProvider)
+    public abstract class CountdownScheduleTask(IServiceProvider serviceProvider)
+        : PeriodicScheduleTask(serviceProvider)
     {
         /// <summary>
         ///     Target times.
@@ -122,14 +127,16 @@ namespace RitsukageBot.Library.Modules.Schedules
             }
             set
             {
-                if (Configuration is CountdownScheduleConfiguration countdownConfiguration) countdownConfiguration.TargetTimes = value;
+                if (Configuration is CountdownScheduleConfiguration countdownConfiguration)
+                    countdownConfiguration.TargetTimes = value;
                 throw new InvalidOperationException("Cannot set target times for a non-countdown schedule.");
             }
         }
     }
 
     /// <inheritdoc />
-    public abstract class UntilTimeScheduleTask(IServiceProvider serviceProvider) : PeriodicScheduleTask(serviceProvider)
+    public abstract class UntilTimeScheduleTask(IServiceProvider serviceProvider)
+        : PeriodicScheduleTask(serviceProvider)
     {
         /// <summary>
         ///     Target time.
@@ -148,7 +155,8 @@ namespace RitsukageBot.Library.Modules.Schedules
             }
             set
             {
-                if (Configuration is UntilTimeScheduleConfiguration untilTimeConfiguration) untilTimeConfiguration.TargetTime = value;
+                if (Configuration is UntilTimeScheduleConfiguration untilTimeConfiguration)
+                    untilTimeConfiguration.TargetTime = value;
                 throw new InvalidOperationException("Cannot set target time for a non-until-time schedule.");
             }
         }
@@ -161,13 +169,16 @@ namespace RitsukageBot.Library.Modules.Schedules
         {
             get => Configuration switch
             {
-                UntilTimeScheduleConfiguration untilTimeConfiguration => untilTimeConfiguration.ForceExecuteWhenTargetTime,
+                UntilTimeScheduleConfiguration untilTimeConfiguration => untilTimeConfiguration
+                    .ForceExecuteWhenTargetTime,
                 _ => false,
             };
             set
             {
-                if (Configuration is UntilTimeScheduleConfiguration untilTimeConfiguration) untilTimeConfiguration.ForceExecuteWhenTargetTime = value;
-                throw new InvalidOperationException("Cannot set force execute when target time for a non-until-time schedule.");
+                if (Configuration is UntilTimeScheduleConfiguration untilTimeConfiguration)
+                    untilTimeConfiguration.ForceExecuteWhenTargetTime = value;
+                throw new InvalidOperationException(
+                    "Cannot set force execute when target time for a non-until-time schedule.");
             }
         }
     }

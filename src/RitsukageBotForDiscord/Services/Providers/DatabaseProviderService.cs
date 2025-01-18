@@ -365,7 +365,7 @@ namespace RitsukageBot.Services.Providers
         {
             return _connection.QueryAsync(map, query, args);
         }
-        
+
         /// <inheritdoc cref="SQLiteAsyncConnection.DeferredQueryAsync{T}(string, object[])" />
         public Task<IEnumerable<T>> DeferredQueryAsync<T>(string query, params object[] args) where T : new()
         {
@@ -380,7 +380,7 @@ namespace RitsukageBot.Services.Providers
         {
             return _connection.DeferredQueryAsync(map, query, args);
         }
-        
+
         /// <inheritdoc cref="SQLiteAsyncConnection.ReKeyAsync(string)" />
         public Task ReKeyAsync(string key)
         {
@@ -398,7 +398,7 @@ namespace RitsukageBot.Services.Providers
             var types = Assembly.GetExecutingAssembly().GetTypes()
                 .Where(type => type.GetCustomAttributes<TableAttribute>().Any()).ToArray();
 
-            await _connection.CreateTablesAsync(CreateFlags.None, types);
+            await _connection.CreateTablesAsync(CreateFlags.None, types).ConfigureAwait(false);
         }
 
         /// <summary>

@@ -128,7 +128,8 @@ namespace RitsukageBot.Library.Modules.Schedules
             get
             {
                 if (IsFinished) return DateTime.MaxValue;
-                if (base.NextExecutedTime >= TargetTime) return ForceExecuteWhenTargetTime ? TargetTime : DateTime.MaxValue;
+                if (base.NextExecutedTime >= TargetTime)
+                    return ForceExecuteWhenTargetTime ? TargetTime : DateTime.MaxValue;
                 return base.NextExecutedTime;
             }
         }

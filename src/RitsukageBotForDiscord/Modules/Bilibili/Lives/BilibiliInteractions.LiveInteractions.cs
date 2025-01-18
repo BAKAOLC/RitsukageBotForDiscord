@@ -43,7 +43,8 @@ namespace RitsukageBot.Modules.Bilibili
             /// <summary>
             ///     Relationship service.
             /// </summary>
-            public IRelationshipService RelationshipService => BiliKernelProvider.GetRequiredService<IRelationshipService>();
+            public IRelationshipService RelationshipService =>
+                BiliKernelProvider.GetRequiredService<IRelationshipService>();
         }
     }
 

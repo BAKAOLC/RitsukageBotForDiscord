@@ -82,9 +82,9 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Resolvers
             BilibiliAccountConfiguration account;
             try
             {
-                account = await database.GetAsync<BilibiliAccountConfiguration>(0);
+                account = await database.GetAsync<BilibiliAccountConfiguration>(0).ConfigureAwait(false);
                 account.Token = data;
-                await database.UpdateAsync(account);
+                await database.UpdateAsync(account).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -93,7 +93,7 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Resolvers
                     Id = 0,
                     Token = data,
                 };
-                await database.InsertAsync(account);
+                await database.InsertAsync(account).ConfigureAwait(false);
             }
         }
 
@@ -101,7 +101,7 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Resolvers
         {
             try
             {
-                var account = await database.GetAsync<BilibiliAccountConfiguration>(0);
+                var account = await database.GetAsync<BilibiliAccountConfiguration>(0).ConfigureAwait(false);
                 return account.Token is null
                     ? null
                     : JsonSerializer.Deserialize<BiliToken>(account.Token, TokenSerializeContext.Default.BiliToken);
@@ -116,9 +116,9 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Resolvers
         {
             try
             {
-                var account = await database.GetAsync<BilibiliAccountConfiguration>(0);
+                var account = await database.GetAsync<BilibiliAccountConfiguration>(0).ConfigureAwait(false);
                 account.Token = null;
-                await database.UpdateAsync(account);
+                await database.UpdateAsync(account).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -132,9 +132,9 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Resolvers
             BilibiliAccountConfiguration account;
             try
             {
-                account = await database.GetAsync<BilibiliAccountConfiguration>(0);
+                account = await database.GetAsync<BilibiliAccountConfiguration>(0).ConfigureAwait(false);
                 account.Cookies = data;
-                await database.UpdateAsync(account);
+                await database.UpdateAsync(account).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -143,7 +143,7 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Resolvers
                     Id = 0,
                     Cookies = data,
                 };
-                await database.InsertAsync(account);
+                await database.InsertAsync(account).ConfigureAwait(false);
             }
         }
 
@@ -151,7 +151,7 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Resolvers
         {
             try
             {
-                var account = await database.GetAsync<BilibiliAccountConfiguration>(0);
+                var account = await database.GetAsync<BilibiliAccountConfiguration>(0).ConfigureAwait(false);
                 return account.Cookies is null
                     ? null
                     : JsonSerializer.Deserialize<Dictionary<string, string>>(account.Cookies,
@@ -167,9 +167,9 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Resolvers
         {
             try
             {
-                var account = await database.GetAsync<BilibiliAccountConfiguration>(0);
+                var account = await database.GetAsync<BilibiliAccountConfiguration>(0).ConfigureAwait(false);
                 account.Cookies = null;
-                await database.UpdateAsync(account);
+                await database.UpdateAsync(account).ConfigureAwait(false);
             }
             catch (Exception)
             {

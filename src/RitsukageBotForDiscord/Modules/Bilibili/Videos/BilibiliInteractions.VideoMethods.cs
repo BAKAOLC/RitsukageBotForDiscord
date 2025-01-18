@@ -72,7 +72,8 @@ namespace RitsukageBot.Modules.Bilibili
                     footerBuilder.WithIconUrl("attachment://bilibili-icon.png");
                     footerBuilder.WithText("Bilibili");
                     embed.WithFooter(footerBuilder);
-                    await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(), BilibiliIconData.TagLogoIconFileName,
+                    await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(),
+                        BilibiliIconData.TagLogoIconFileName,
                         embed: embed.Build()).ConfigureAwait(false);
                 }
                 catch (Exception ex)

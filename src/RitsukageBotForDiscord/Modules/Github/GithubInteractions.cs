@@ -31,7 +31,7 @@ namespace RitsukageBot.Modules.Github
         public async Task LoginAsync()
         {
             await DeferAsync(true).ConfigureAwait(false);
-            if (await CheckLoginAsync())
+            if (await CheckLoginAsync().ConfigureAwait(false))
             {
                 var account = await GitHubClientProvider.User.Current().ConfigureAwait(false);
                 await FollowupAsync(embed: BuildUserInfoEmbed(account).Build()).ConfigureAwait(false);
@@ -93,7 +93,7 @@ namespace RitsukageBot.Modules.Github
             try
             {
                 Logger.LogInformation("Searching for user {Username}.", username);
-                var result = await GitHubClientProvider.Search.SearchUsers(new(username));
+                var result = await GitHubClientProvider.Search.SearchUsers(new(username)).ConfigureAwait(false);
                 if (result.Items.Count == 0)
                 {
                     Logger.LogInformation("User {Username} not found.", username);
@@ -103,7 +103,8 @@ namespace RitsukageBot.Modules.Github
                 {
                     Logger.LogInformation("Search result: {Result}.", result.Items.Count);
                     foreach (var item in result.Items)
-                        Logger.LogInformation("User: {Login}, Followers: {Followers}, Following: {Following}", item.Login, item.Name, item.Followers);
+                        Logger.LogInformation("User: {Login}, Followers: {Followers}, Following: {Following}",
+                            item.Login, item.Name, item.Followers);
                     account = result.Items.ToArray().FirstOrDefault();
                 }
             }
@@ -133,9 +134,12 @@ namespace RitsukageBot.Modules.Github
             {
                 Logger.LogInformation("Getting user information for {Login}.", account.Login);
                 account = await GitHubClientProvider.User.Get(account.Login).ConfigureAwait(false);
-                Logger.LogInformation("User: {Login}, Name: {Name}, Followers: {Followers}, Following: {Following}, Email: {Email}, Created At: {CreatedAt}, URL: {Url}, Avatar URL: {AvatarUrl}",
-                    account.Login, account.Name, account.Followers, account.Following, account.Email, account.CreatedAt, account.HtmlUrl, account.AvatarUrl);
-                await FollowupAsync(embed: BuildUserInfoEmbed(account).WithColor(Color.Green).Build()).ConfigureAwait(false);
+                Logger.LogInformation(
+                    "User: {Login}, Name: {Name}, Followers: {Followers}, Following: {Following}, Email: {Email}, Created At: {CreatedAt}, URL: {Url}, Avatar URL: {AvatarUrl}",
+                    account.Login, account.Name, account.Followers, account.Following, account.Email, account.CreatedAt,
+                    account.HtmlUrl, account.AvatarUrl);
+                await FollowupAsync(embed: BuildUserInfoEmbed(account).WithColor(Color.Green).Build())
+                    .ConfigureAwait(false);
             }
             catch (Exception ex)
             {
