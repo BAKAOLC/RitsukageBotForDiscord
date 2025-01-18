@@ -68,7 +68,14 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
                 }
 
                 var text = $"{liveInfo.User.Name}'s live room is now {(isLiving ? "living!" : "offline...")}";
-                await messageChannel.SendMessageAsync(text, embed: embed.Build()).ConfigureAwait(false);
+                if (!isLiving)
+                {
+                    await messageChannel.SendMessageAsync(text, embed: embed.Build()).ConfigureAwait(false);
+                    return;
+                }
+
+                var components = new ComponentBuilder().WithButton("Watch Stream", $"bilibili://live/{roomIdStr}", ButtonStyle.Link);
+                await messageChannel.SendMessageAsync(text, embed: embed.Build(), components: components.Build()).ConfigureAwait(false);
             }
 
             Logger.LogInformation("Updating database.");
