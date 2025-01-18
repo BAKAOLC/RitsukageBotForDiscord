@@ -14,13 +14,13 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
     /// <inheritdoc />
     public class LiveWatcherScheduleTask(IServiceProvider serviceProvider) : PeriodicScheduleTask(serviceProvider)
     {
-        private readonly List<LiveInformation> _follows = [];
+        private readonly Dictionary<string, LiveInformation> _records = [];
 
         /// <inheritdoc />
         public override ScheduleConfigurationBase Configuration { get; } = new PeriodicScheduleConfiguration
         {
             IsEnabled = true,
-            Interval = TimeSpan.FromMinutes(10),
+            Interval = TimeSpan.FromMinutes(1),
         };
 
         private ILogger<LiveWatcherScheduleTask> Logger => GetRequiredService<ILogger<LiveWatcherScheduleTask>>();
@@ -30,6 +30,8 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
         private DatabaseProviderService DatabaseProviderService => GetRequiredService<DatabaseProviderService>();
 
         private BiliKernelProviderService BiliKernelProvider => GetRequiredService<BiliKernelProviderService>();
+
+        private IPlayerService PlayerService => BiliKernelProvider.GetRequiredService<IPlayerService>();
 
         private ILiveDiscoveryService LiveDiscoveryService => BiliKernelProvider.GetRequiredService<ILiveDiscoveryService>();
 
@@ -51,13 +53,7 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
                 }
 
                 var roomIdStr = roomId.ToString();
-                var liveInfo = _follows.FirstOrDefault(x => x.Identifier.Id == roomIdStr);
-                if (liveInfo is null)
-                {
-                    Logger.LogWarning("Room {RoomId} is not found.", roomId);
-                    continue;
-                }
-
+                var liveInfo = await GetRoomInformationAsync(roomIdStr, cancellationToken).ConfigureAwait(false);
                 var isLiving = liveInfo.GetExtensionIfNotNull<bool>(LiveExtensionDataId.IsLiving);
                 var isLivingStr = isLiving.ToString();
                 if (config.LastInformation == isLivingStr) continue;
@@ -71,7 +67,7 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
                     continue;
                 }
 
-                var text = $"Room {roomId} is now {(liveInfo.GetExtensionIfNotNull<bool>(LiveExtensionDataId.IsLiving) ? "live!" : "offline...")}";
+                var text = $"{liveInfo.User.Name}'s live room is now {(isLiving ? "living!" : "offline...")}";
                 await messageChannel.SendMessageAsync(text, embed: embed.Build()).ConfigureAwait(false);
             }
 
@@ -86,16 +82,32 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
         private async Task UpdateFollowsAsync(CancellationToken cancellationToken)
         {
             Logger.LogInformation("Updating follows list.");
-            _follows.Clear();
+            List<LiveInformation> lives = [];
             var (follows, _, nextPageNumber) = await LiveDiscoveryService.GetFeedAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
             while (follows is not null && follows.Any())
             {
-                _follows.AddRange(follows);
+                lives.AddRange(follows);
                 Logger.LogInformation("Page {PageNumber} is loaded.", nextPageNumber);
                 (follows, _, nextPageNumber) = await LiveDiscoveryService.GetFeedAsync(nextPageNumber, cancellationToken).ConfigureAwait(false);
             }
 
+            _records.Clear();
+            foreach (var live in lives)
+            {
+                live.AddExtensionIfNotNull(LiveExtensionDataId.IsLiving, true);
+                _records[live.Identifier.Id] = live;
+            }
+
             Logger.LogInformation("Follows list updated.");
+        }
+
+        private async Task<LiveInformation> GetRoomInformationAsync(string roomId, CancellationToken cancellationToken)
+        {
+            if (_records.TryGetValue(roomId, out var info)) return info;
+            var mediaIdentifier = new MediaIdentifier(roomId, null, null);
+            var detail = await PlayerService.GetLivePageDetailAsync(mediaIdentifier, cancellationToken).ConfigureAwait(false);
+            _records[detail.Information.Identifier.Id] = detail.Information;
+            return detail.Information;
         }
     }
 }

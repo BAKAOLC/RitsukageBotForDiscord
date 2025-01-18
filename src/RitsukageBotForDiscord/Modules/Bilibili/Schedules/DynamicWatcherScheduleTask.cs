@@ -21,7 +21,7 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
         public override ScheduleConfigurationBase Configuration { get; } = new PeriodicScheduleConfiguration
         {
             IsEnabled = true,
-            Interval = TimeSpan.FromMinutes(30),
+            Interval = TimeSpan.FromMinutes(5),
         };
 
         private ILogger<DynamicWatcherScheduleTask> Logger => GetRequiredService<ILogger<DynamicWatcherScheduleTask>>();
