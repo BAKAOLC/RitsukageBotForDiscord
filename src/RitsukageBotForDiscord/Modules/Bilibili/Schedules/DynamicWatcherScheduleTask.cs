@@ -122,12 +122,12 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
             {
                 var userProfile = new UserProfile(request.UserId);
                 var (moments, offset, hasMore) = await MomentDiscoveryService
-                    .GetUserVideoMomentsAsync(userProfile, request.Offset).ConfigureAwait(false);
+                    .GetUserMomentsAsync(userProfile, request.Offset).ConfigureAwait(false);
                 if (moments.Count == 0) continue;
                 while (IsSmallerOffset(request.Offset, offset) && hasMore)
                 {
                     (var addMoments, offset, hasMore) = await MomentDiscoveryService
-                        .GetUserVideoMomentsAsync(userProfile, offset).ConfigureAwait(false);
+                        .GetUserMomentsAsync(userProfile, offset).ConfigureAwait(false);
                     if (addMoments.Count == 0) break;
                     moments = [.. moments, .. addMoments];
                 }

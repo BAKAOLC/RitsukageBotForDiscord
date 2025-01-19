@@ -125,13 +125,20 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
             // statistics
             if (detail.CommunityInformation is not null)
             {
-                embed.AddField("Play", detail.CommunityInformation.PlayCount, true);
-                embed.AddField("Danmaku", detail.CommunityInformation.DanmakuCount, true);
-                embed.AddField("Reply", detail.CommunityInformation.CommentCount, true);
-                embed.AddField("Favorite", detail.CommunityInformation.FavoriteCount, true);
-                embed.AddField("Coin", detail.CommunityInformation.CoinCount, true);
-                embed.AddField("Share", detail.CommunityInformation.ShareCount, true);
-                embed.AddField("Like", detail.CommunityInformation.LikeCount, true);
+                if (detail.CommunityInformation.PlayCount.HasValue)
+                    embed.AddField("Play", detail.CommunityInformation.PlayCount, true);
+                if (detail.CommunityInformation.DanmakuCount.HasValue)
+                    embed.AddField("Danmaku", detail.CommunityInformation.DanmakuCount, true);
+                if (detail.CommunityInformation.CommentCount.HasValue)
+                    embed.AddField("Reply", detail.CommunityInformation.CommentCount, true);
+                if (detail.CommunityInformation.FavoriteCount.HasValue)
+                    embed.AddField("Favorite", detail.CommunityInformation.FavoriteCount, true);
+                if (detail.CommunityInformation.CoinCount.HasValue)
+                    embed.AddField("Coin", detail.CommunityInformation.CoinCount, true);
+                if (detail.CommunityInformation.ShareCount.HasValue)
+                    embed.AddField("Share", detail.CommunityInformation.ShareCount, true);
+                if (detail.CommunityInformation.LikeCount.HasValue)
+                    embed.AddField("Like", detail.CommunityInformation.LikeCount, true);
             }
 
             // description
