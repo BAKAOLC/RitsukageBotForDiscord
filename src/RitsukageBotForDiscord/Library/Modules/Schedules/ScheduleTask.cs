@@ -72,8 +72,7 @@ namespace RitsukageBot.Library.Modules.Schedules
                 (Configuration is UntilTimeScheduleConfiguration untilTimeConfiguration &&
                  untilTimeConfiguration.TargetTime <= Configuration.LastExecutedTime)
                ) IsFinished = true;
-            _ = Task.Run(() => ExecuteAsync(cancellationToken), cancellationToken);
-            return Task.CompletedTask;
+            return ExecuteAsync(cancellationToken);
         }
     }
 

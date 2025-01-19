@@ -1,4 +1,6 @@
 using System.Reflection;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using RitsukageBot.Library.Modules.Schedules;
 
 namespace RitsukageBot.Library.Modules.ModuleSupports
@@ -9,6 +11,9 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
     /// <param name="services"></param>
     public class ScheduleModuleSupport(IServiceProvider services) : IDiscordBotModule
     {
+        private readonly ILogger<ScheduleModuleSupport> _logger =
+            services.GetRequiredService<ILogger<ScheduleModuleSupport>>();
+
         private readonly List<ScheduleTask> _tasks = [];
         private CancellationTokenSource _cancellationTokenSource = new();
 
@@ -72,7 +77,17 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
                 if (_cancellationTokenSource.Token.IsCancellationRequested) return;
                 tasks = _tasks.Where(task => task.IsEnabled && task.NextExecutedTime <= minNextExecutedTime).ToArray();
                 foreach (var task in tasks)
-                    await task.TriggerAsync(minNextExecutedTime, _cancellationTokenSource.Token).ConfigureAwait(false);
+                {
+                    var scheduleTask = task.TriggerAsync(minNextExecutedTime, _cancellationTokenSource.Token);
+                    _ = scheduleTask.ContinueWith(t =>
+                    {
+                        if (!t.IsFaulted) return;
+                        var exception = t.Exception!;
+                        var message = exception.InnerException?.Message ?? exception.Message;
+                        _logger.LogError(exception, "An error occurred while executing the task: {Message}", message);
+                    }, TaskContinuationOptions.OnlyOnFaulted);
+                }
+
                 RemoveAllInvalidTasks();
             }
         }
