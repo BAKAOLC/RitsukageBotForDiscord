@@ -94,7 +94,7 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
                     continue;
                 }
 
-                config.LastInformation = moments[^1].Id;
+                config.LastInformation = moments.First().Id;
                 for (var i = index - 1; i >= 0; i--)
                 {
                     var moment = moments[i];
