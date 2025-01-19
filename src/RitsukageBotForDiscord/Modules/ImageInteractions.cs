@@ -456,7 +456,7 @@ namespace RitsukageBot.Modules
         [ComponentInteraction($"{ImageInteractions.CustomId}:cancel")]
         public Task CancelAsync()
         {
-            Logger.LogInformation("Image interaction canceled");
+            Logger.LogInformation("Image interaction canceled for {MessageId}", Context.Interaction.Message.Id);
             return Context.Interaction.UpdateAsync(x => x.Components = null);
         }
 
@@ -466,7 +466,7 @@ namespace RitsukageBot.Modules
         [ComponentInteraction($"{ImageInteractions.CustomId}:cancel_and_publish")]
         public async Task CancelAndPublishAsync()
         {
-            Logger.LogInformation("Image interaction canceled and published");
+            Logger.LogInformation("Image interaction canceled and published for {MessageId}", Context.Interaction.Message.Id);
             var attachment = Context.Interaction.Message.Attachments.FirstOrDefault();
             await Context.Interaction.UpdateAsync(x => x.Components = null).ConfigureAwait(false);
             if (attachment is not null)

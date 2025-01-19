@@ -1,5 +1,6 @@
 using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Richasy.BiliKernel.Bili.Moment;
 using Richasy.BiliKernel.Models.Moment;
@@ -13,40 +14,40 @@ using RitsukageBot.Services.Providers;
 
 namespace RitsukageBot.Modules.Bilibili.Schedules
 {
-    /// <inheritdoc />
-    public class DynamicWatcherScheduleTask(IServiceProvider serviceProvider) : PeriodicScheduleTask(serviceProvider)
+    internal class DynamicWatcherScheduleTask(IServiceProvider serviceProvider) : PeriodicScheduleTask(serviceProvider)
     {
+        private readonly BiliKernelProviderService _biliKernelProvider =
+            serviceProvider.GetRequiredService<BiliKernelProviderService>();
+
+        private readonly DatabaseProviderService _databaseProviderService =
+            serviceProvider.GetRequiredService<DatabaseProviderService>();
+
+        private readonly DiscordSocketClient _discordClient = serviceProvider.GetRequiredService<DiscordSocketClient>();
+
         private readonly Dictionary<string, IReadOnlyList<MomentInformation>> _follows = [];
 
-        /// <inheritdoc />
+        private readonly ILogger<DynamicWatcherScheduleTask> _logger =
+            serviceProvider.GetRequiredService<ILogger<DynamicWatcherScheduleTask>>();
+
         public override ScheduleConfigurationBase Configuration { get; } = new PeriodicScheduleConfiguration
         {
             IsEnabled = true,
             Interval = TimeSpan.FromMinutes(5),
         };
 
-        private ILogger<DynamicWatcherScheduleTask> Logger => GetRequiredService<ILogger<DynamicWatcherScheduleTask>>();
-
-        private DiscordSocketClient DiscordClient => GetRequiredService<DiscordSocketClient>();
-
-        private DatabaseProviderService DatabaseProviderService => GetRequiredService<DatabaseProviderService>();
-
-        private BiliKernelProviderService BiliKernelProvider => GetRequiredService<BiliKernelProviderService>();
-
         private IMomentDiscoveryService MomentDiscoveryService =>
-            BiliKernelProvider.GetRequiredService<IMomentDiscoveryService>();
+            _biliKernelProvider.GetRequiredService<IMomentDiscoveryService>();
 
-        /// <inheritdoc />
         public override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            Logger.LogInformation("DynamicWatcherScheduleTask is triggered.");
-            var table = DatabaseProviderService.Table<BilibiliWatcherConfiguration>();
+            _logger.LogDebug("DynamicWatcherScheduleTask is triggered.");
+            var table = _databaseProviderService.Table<BilibiliWatcherConfiguration>();
             var configs = await table.Where(x => x.Type == WatcherType.Dynamic).ToArrayAsync().ConfigureAwait(false);
             List<BilibiliWatcherConfiguration> needRemoved = [];
             foreach (var config in configs)
             {
                 if (ulong.TryParse(config.Target, out _)) continue;
-                Logger.LogWarning("Invalid user id: {Target}", config.Target);
+                _logger.LogWarning("Invalid user id: {Target}", config.Target);
                 needRemoved.Add(config);
             }
 
@@ -61,7 +62,7 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
                 var moments = userMoments.ToArray();
                 if (moments.Length == 0)
                 {
-                    Logger.LogWarning("No moments found for user: {UserId}", config.Target);
+                    _logger.LogWarning("No moments found for user: {UserId}", config.Target);
                     continue;
                 }
 
@@ -69,14 +70,14 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
                 var index = Array.IndexOf(moments, lastMoment);
                 if (index == -1)
                 {
-                    Logger.LogWarning("Moment {MomentId} is not found.", config.LastInformation);
+                    _logger.LogWarning("Moment {MomentId} is not found.", config.LastInformation);
                     lastMoment = null;
                 }
 
-                var channel = await DiscordClient.GetChannelAsync(config.ChannelId).ConfigureAwait(false);
+                var channel = await _discordClient.GetChannelAsync(config.ChannelId).ConfigureAwait(false);
                 if (channel is not IMessageChannel messageChannel)
                 {
-                    Logger.LogWarning("Channel {ChannelId} is not found.", config.ChannelId);
+                    _logger.LogWarning("Channel {ChannelId} is not found.", config.ChannelId);
                     continue;
                 }
 
@@ -104,17 +105,18 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
                 }
             }
 
-            Logger.LogInformation("Updating database.");
-            await DatabaseProviderService.UpdateAllAsync(configs).ConfigureAwait(false);
-            foreach (var config in needRemoved) await DatabaseProviderService.DeleteAsync(config).ConfigureAwait(false);
-            Logger.LogInformation("Database updated.");
+            _logger.LogDebug("Updating database.");
+            await _databaseProviderService.UpdateAllAsync(configs).ConfigureAwait(false);
+            foreach (var config in needRemoved)
+                await _databaseProviderService.DeleteAsync(config).ConfigureAwait(false);
+            _logger.LogDebug("Database updated.");
 
-            Logger.LogInformation("DynamicWatcherScheduleTask is completed.");
+            _logger.LogDebug("DynamicWatcherScheduleTask is completed.");
         }
 
         private async Task UpdateMomentsAsync(params IEnumerable<UserMomentsRequest> requests)
         {
-            Logger.LogInformation("Updating follows moments.");
+            _logger.LogDebug("Updating follows moments.");
             _follows.Clear();
             foreach (var request in requests)
             {
@@ -133,7 +135,7 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
                 _follows[request.UserId] = moments;
             }
 
-            Logger.LogInformation("Moments updated.");
+            _logger.LogDebug("Moments updated.");
         }
 
         private static IEnumerable<UserMomentsRequest> GetMomentsRequests(

@@ -50,12 +50,6 @@ namespace RitsukageBot.Library.Modules.Schedules
         /// <inheritdoc />
         public abstract Task ExecuteAsync(CancellationToken cancellationToken);
 
-        /// <inheritdoc />
-        public T GetRequiredService<T>() where T : notnull
-        {
-            return Services.GetRequiredService<T>();
-        }
-
         /// <summary>
         ///     Trigger the task.
         /// </summary>

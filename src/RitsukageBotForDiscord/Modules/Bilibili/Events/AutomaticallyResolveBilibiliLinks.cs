@@ -52,14 +52,14 @@ namespace RitsukageBot.Modules.Bilibili.Events
                     switch (keyId.Type)
                     {
                         case KeyIdType.Video:
-                            logger.LogInformation("Try to resolve video {VideoId}", keyId.Id);
+                            logger.LogDebug("Try to resolve video {VideoId}", keyId.Id);
                             var videoMediaIdentifier = new MediaIdentifier(keyId.Id, null, null);
                             var videoPlayerView = await biliKernelProvider.GetRequiredService<IPlayerService>()
                                 .GetVideoPageDetailAsync(videoMediaIdentifier, cancellationToken).ConfigureAwait(false);
                             embed = InformationEmbedBuilder.BuildVideoInfo(videoPlayerView);
                             break;
                         case KeyIdType.Live:
-                            logger.LogInformation("Try to resolve live {LiveId}", keyId.Id);
+                            logger.LogDebug("Try to resolve live {LiveId}", keyId.Id);
                             var liveMediaIdentifier = new MediaIdentifier(keyId.Id, null, null);
                             var livePlayerView = await biliKernelProvider.GetRequiredService<IPlayerService>()
                                 .GetLivePageDetailAsync(liveMediaIdentifier, cancellationToken).ConfigureAwait(false);
@@ -69,7 +69,7 @@ namespace RitsukageBot.Modules.Bilibili.Events
                             break;
                         case KeyIdType.User:
                         {
-                            logger.LogInformation("Try to resolve user {UserId}", keyId.Id);
+                            logger.LogDebug("Try to resolve user {UserId}", keyId.Id);
                             var userCard = await biliKernelProvider.GetRequiredService<IUserService>()
                                 .GetUserInformationAsync(keyId.Id, cancellationToken).ConfigureAwait(false);
                             embed = InformationEmbedBuilder.BuildUserInfo(userCard);

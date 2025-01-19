@@ -1,7 +1,3 @@
-using Discord.WebSocket;
-using Microsoft.Extensions.DependencyInjection;
-using RitsukageBot.Services.Providers;
-
 namespace RitsukageBot.Library.Modules.Schedules
 {
     /// <summary>
@@ -23,27 +19,6 @@ namespace RitsukageBot.Library.Modules.Schedules
         ///     Services provider.
         /// </summary>
         IServiceProvider Services { get; }
-
-        /// <summary>
-        ///     Discord client.
-        /// </summary>
-        DiscordSocketClient Client => GetRequiredService<DiscordSocketClient>();
-
-        /// <summary>
-        ///     Database provider.
-        /// </summary>
-        DatabaseProviderService Database => GetRequiredService<DatabaseProviderService>();
-
-        /// <summary>
-        ///     Get service of type T from the <see cref="IServiceProvider" />
-        /// </summary>
-        /// <typeparam name="T">The type of service object to get.</typeparam>
-        /// <returns>A service object of type T.</returns>
-        /// <exception cref="InvalidOperationException">There is no service of type T.</exception>
-        T GetRequiredService<T>() where T : notnull
-        {
-            return Services.GetRequiredService<T>();
-        }
 
         /// <summary>
         ///     Execute the task.

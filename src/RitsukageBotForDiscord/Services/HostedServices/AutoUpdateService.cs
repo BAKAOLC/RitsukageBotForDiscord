@@ -99,17 +99,17 @@ namespace RitsukageBot.Services.HostedServices
                     artifact.Name.EndsWith(TargetOsArtifactPlatform));
             if (targetArtifact is null) return;
 
-            logger.LogInformation(
+            logger.LogDebug(
                 "Latest run: {RunId}, Latest job: {JobId}, Created at: {CreatedAt}, Target artifact: {ArtifactName}",
                 latestRun.Id, targetJob.Id, latestRun.CreatedAt, targetArtifact.Name);
 
             if (!CheckVersion(targetArtifact.Name))
             {
-                logger.LogInformation("Not a newer version, skipping.");
+                logger.LogDebug("Not a newer version, skipping.");
                 return;
             }
 
-            logger.LogInformation("Newer version found, downloading...");
+            logger.LogDebug("Newer version found, downloading...");
             var artifactStream = await client.Actions.Artifacts
                 .DownloadArtifact(RepositoryOwner, RepositoryName, targetArtifact.Id, "zip").ConfigureAwait(false);
             if (artifactStream is null)
@@ -143,18 +143,18 @@ namespace RitsukageBot.Services.HostedServices
 
         private async Task UpdateAsync(Stream stream)
         {
-            logger.LogInformation("Saving update to update.zip...");
+            logger.LogDebug("Saving update to update.zip...");
             await using var fileStream =
                 new FileStream("update.zip", FileMode.Create, FileAccess.Write, FileShare.None);
             await stream.CopyToAsync(fileStream).ConfigureAwait(false);
             stream.Close();
             fileStream.Close();
 
-            logger.LogInformation("Extracting update...");
+            logger.LogDebug("Extracting update...");
             ZipFile.ExtractToDirectory("update.zip", "update", true);
             File.Delete("update.zip");
 
-            logger.LogInformation("Moving appsettings.json...");
+            logger.LogDebug("Moving appsettings.json...");
             var appSettingsPath = Path.Combine("update", "appsettings.json");
             if (File.Exists(appSettingsPath))
                 try
@@ -166,9 +166,9 @@ namespace RitsukageBot.Services.HostedServices
                     logger.LogError(ex, "Failed to move appsettings.json.");
                 }
 
-            logger.LogInformation("Generating update script...");
+            logger.LogDebug("Generating update script...");
             var scriptPath = await GenerateUpdateScriptAsync().ConfigureAwait(false);
-            logger.LogInformation("Executing update script...");
+            logger.LogDebug("Executing update script...");
             if (PlatformUtility.GetOperatingSystem() == PlatformID.Win32NT)
                 Process.Start(new ProcessStartInfo
                 {

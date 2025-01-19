@@ -72,13 +72,13 @@ namespace RitsukageBot.Modules.Bilibili
             {
                 try
                 {
-                    Logger.LogInformation("Requesting Bilibili login.");
+                    Logger.LogDebug("Requesting Bilibili login.");
                     var tokenResolver = BiliKernelProvider.GetRequiredService<IAuthenticationService>();
                     if (tokenResolver is not TvAuthenticationService service)
                         throw new InvalidOperationException(
                             "The authentication service is not a modified version of the TV authentication service.");
                     await service.SignInAsync().ConfigureAwait(false);
-                    Logger.LogInformation("Generating QR code.");
+                    Logger.LogDebug("Generating QR code.");
                     var qrCode = service.GetQrCode() ?? throw new InvalidOperationException("The QR code is null.");
                     var qrCodeImage = service.GetQrCodeImage() ??
                                       throw new InvalidOperationException("The QR code image is null.");
@@ -93,7 +93,7 @@ namespace RitsukageBot.Modules.Bilibili
                             new(BilibiliIconData.GetLogoIconStream(), BilibiliIconData.LogoIconFileName),
                         ],
                         embed: embed.Build()).ConfigureAwait(false);
-                    Logger.LogInformation("Waiting for Bilibili login.");
+                    Logger.LogDebug("Waiting for Bilibili login.");
                     await service.WaitQrCodeScanAsync(qrCode).ConfigureAwait(false);
                     if (await VerifyBotLoginAsync().ConfigureAwait(false))
                     {

@@ -1,5 +1,6 @@
 using Discord;
 using Discord.WebSocket;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Richasy.BiliKernel.Bili.Media;
 using Richasy.BiliKernel.Models.Media;
@@ -12,36 +13,36 @@ using RitsukageBot.Services.Providers;
 
 namespace RitsukageBot.Modules.Bilibili.Schedules
 {
-    /// <inheritdoc />
-    public class LiveWatcherScheduleTask(IServiceProvider serviceProvider) : PeriodicScheduleTask(serviceProvider)
+    internal class LiveWatcherScheduleTask(IServiceProvider serviceProvider) : PeriodicScheduleTask(serviceProvider)
     {
+        private readonly BiliKernelProviderService _biliKernelProvider =
+            serviceProvider.GetRequiredService<BiliKernelProviderService>();
+
+        private readonly DatabaseProviderService _databaseProviderService =
+            serviceProvider.GetRequiredService<DatabaseProviderService>();
+
+        private readonly DiscordSocketClient _discordClient = serviceProvider.GetRequiredService<DiscordSocketClient>();
+
+        private readonly ILogger<LiveWatcherScheduleTask> _logger =
+            serviceProvider.GetRequiredService<ILogger<LiveWatcherScheduleTask>>();
+
         private readonly Dictionary<string, LiveInformation> _records = [];
 
-        /// <inheritdoc />
         public override ScheduleConfigurationBase Configuration { get; } = new PeriodicScheduleConfiguration
         {
             IsEnabled = true,
             Interval = TimeSpan.FromMinutes(1),
         };
 
-        private ILogger<LiveWatcherScheduleTask> Logger => GetRequiredService<ILogger<LiveWatcherScheduleTask>>();
-
-        private DiscordSocketClient DiscordClient => GetRequiredService<DiscordSocketClient>();
-
-        private DatabaseProviderService DatabaseProviderService => GetRequiredService<DatabaseProviderService>();
-
-        private BiliKernelProviderService BiliKernelProvider => GetRequiredService<BiliKernelProviderService>();
-
-        private IPlayerService PlayerService => BiliKernelProvider.GetRequiredService<IPlayerService>();
+        private IPlayerService PlayerService => _biliKernelProvider.GetRequiredService<IPlayerService>();
 
         private ILiveDiscoveryService LiveDiscoveryService =>
-            BiliKernelProvider.GetRequiredService<ILiveDiscoveryService>();
+            _biliKernelProvider.GetRequiredService<ILiveDiscoveryService>();
 
-        /// <inheritdoc />
         public override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            Logger.LogInformation("LiveWatcherScheduleTask is triggered.");
-            var table = DatabaseProviderService.Table<BilibiliWatcherConfiguration>();
+            _logger.LogDebug("LiveWatcherScheduleTask is triggered.");
+            var table = _databaseProviderService.Table<BilibiliWatcherConfiguration>();
             var configs = await table.Where(x => x.Type == WatcherType.Live).ToArrayAsync().ConfigureAwait(false);
             List<BilibiliWatcherConfiguration> needRemoved = [];
             await UpdateFollowsAsync(cancellationToken).ConfigureAwait(false);
@@ -49,7 +50,7 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
             {
                 if (!ulong.TryParse(config.Target, out var roomId))
                 {
-                    Logger.LogWarning("Invalid room id: {Target}", config.Target);
+                    _logger.LogWarning("Invalid room id: {Target}", config.Target);
                     needRemoved.Add(config);
                     continue;
                 }
@@ -61,10 +62,10 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
                 if (config.LastInformation == isLivingStr) continue;
                 config.LastInformation = isLivingStr;
 
-                var channel = await DiscordClient.GetChannelAsync(config.ChannelId).ConfigureAwait(false);
+                var channel = await _discordClient.GetChannelAsync(config.ChannelId).ConfigureAwait(false);
                 if (channel is not IMessageChannel messageChannel)
                 {
-                    Logger.LogWarning("Channel {ChannelId} is not found.", config.ChannelId);
+                    _logger.LogWarning("Channel {ChannelId} is not found.", config.ChannelId);
                     continue;
                 }
 
@@ -87,24 +88,25 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
                     text, embed: embed.Build(), components: components.Build()).ConfigureAwait(false);
             }
 
-            Logger.LogInformation("Updating database.");
-            await DatabaseProviderService.UpdateAllAsync(configs).ConfigureAwait(false);
-            foreach (var config in needRemoved) await DatabaseProviderService.DeleteAsync(config).ConfigureAwait(false);
-            Logger.LogInformation("Database updated.");
+            _logger.LogDebug("Updating database.");
+            await _databaseProviderService.UpdateAllAsync(configs).ConfigureAwait(false);
+            foreach (var config in needRemoved)
+                await _databaseProviderService.DeleteAsync(config).ConfigureAwait(false);
+            _logger.LogDebug("Database updated.");
 
-            Logger.LogInformation("LiveWatcherScheduleTask is completed.");
+            _logger.LogDebug("LiveWatcherScheduleTask is completed.");
         }
 
         private async Task UpdateFollowsAsync(CancellationToken cancellationToken)
         {
-            Logger.LogInformation("Updating follows list.");
+            _logger.LogDebug("Updating follows list.");
             List<LiveInformation> lives = [];
             var (follows, _, nextPageNumber) = await LiveDiscoveryService
                 .GetFeedAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
             while (follows is not null && follows.Any())
             {
                 lives.AddRange(follows);
-                Logger.LogInformation("Page {PageNumber} is loaded.", nextPageNumber);
+                _logger.LogDebug("Page {PageNumber} is loaded.", nextPageNumber);
                 (follows, _, nextPageNumber) = await LiveDiscoveryService
                     .GetFeedAsync(nextPageNumber, cancellationToken).ConfigureAwait(false);
             }
@@ -116,7 +118,7 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
                 _records[live.Identifier.Id] = live;
             }
 
-            Logger.LogInformation("Follows list updated.");
+            _logger.LogDebug("Follows list updated.");
         }
 
         private async Task<LiveInformation> GetRoomInformationAsync(string roomId, CancellationToken cancellationToken)

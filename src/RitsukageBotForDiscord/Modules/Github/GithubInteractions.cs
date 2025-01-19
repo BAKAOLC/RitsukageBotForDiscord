@@ -40,7 +40,7 @@ namespace RitsukageBot.Modules.Github
 
             try
             {
-                Logger.LogInformation("Requesting GitHub login.");
+                Logger.LogDebug("Requesting GitHub login.");
                 var deviceFlowResponse = await GitHubClientProvider.GetDeviceFlowResponseAsync().ConfigureAwait(false);
                 var embedBuilder = new EmbedBuilder()
                     .WithTitle("GitHub Login")
@@ -52,11 +52,11 @@ namespace RitsukageBot.Modules.Github
                     .AddField("Expires In", TimeSpan.FromSeconds(deviceFlowResponse.ExpiresIn).ToString(@"hh\:mm\:ss"),
                         true);
                 await FollowupAsync(embed: embedBuilder.Build()).ConfigureAwait(false);
-                Logger.LogInformation("Waiting for GitHub login token.");
+                Logger.LogDebug("Waiting for GitHub login token.");
                 var token = await GitHubClientProvider.WaitForTokenAsync(deviceFlowResponse).ConfigureAwait(false);
                 await GitHubClientProvider.SetCredentials(token.AccessToken).ConfigureAwait(false);
                 var account = await GitHubClientProvider.User.Current().ConfigureAwait(false);
-                Logger.LogInformation("Successfully logged in to GitHub as {Account}.", account.Login);
+                Logger.LogDebug("Successfully logged in to GitHub as {Account}.", account.Login);
                 await ModifyOriginalResponseAsync(x =>
                     {
                         x.Embed = BuildUserInfoEmbed(account)
@@ -92,18 +92,18 @@ namespace RitsukageBot.Modules.Github
             User? account;
             try
             {
-                Logger.LogInformation("Searching for user {Username}.", username);
+                Logger.LogDebug("Searching for user {Username}.", username);
                 var result = await GitHubClientProvider.Search.SearchUsers(new(username)).ConfigureAwait(false);
                 if (result.Items.Count == 0)
                 {
-                    Logger.LogInformation("User {Username} not found.", username);
+                    Logger.LogDebug("User {Username} not found.", username);
                     account = null;
                 }
                 else
                 {
-                    Logger.LogInformation("Search result: {Result}.", result.Items.Count);
+                    Logger.LogDebug("Search result: {Result}.", result.Items.Count);
                     foreach (var item in result.Items)
-                        Logger.LogInformation("User: {Login}, Followers: {Followers}, Following: {Following}",
+                        Logger.LogDebug("User: {Login}, Followers: {Followers}, Following: {Following}",
                             item.Login, item.Name, item.Followers);
                     account = result.Items.ToArray().FirstOrDefault();
                 }
@@ -132,9 +132,9 @@ namespace RitsukageBot.Modules.Github
 
             try
             {
-                Logger.LogInformation("Getting user information for {Login}.", account.Login);
+                Logger.LogDebug("Getting user information for {Login}.", account.Login);
                 account = await GitHubClientProvider.User.Get(account.Login).ConfigureAwait(false);
-                Logger.LogInformation(
+                Logger.LogDebug(
                     "User: {Login}, Name: {Name}, Followers: {Followers}, Following: {Following}, Email: {Email}, Created At: {CreatedAt}, URL: {Url}, Avatar URL: {AvatarUrl}",
                     account.Login, account.Name, account.Followers, account.Following, account.Email, account.CreatedAt,
                     account.HtmlUrl, account.AvatarUrl);

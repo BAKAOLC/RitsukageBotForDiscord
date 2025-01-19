@@ -139,12 +139,12 @@ namespace RitsukageBot.Modules.Bilibili
                     }
 
                     var userRelation = detail.Community.Relation;
-                    Logger.LogInformation("User {UserId} is {Relation}", detail.Profile.User.Id, userRelation);
+                    Logger.LogDebug("User {UserId} is {Relation}", detail.Profile.User.Id, userRelation);
                     if (userRelation != UserRelationStatus.Following &&
                         userRelation != UserRelationStatus.Friends &&
                         userRelation != UserRelationStatus.SpeciallyFollowed)
                     {
-                        Logger.LogInformation("Follow user {UserId}", detail.Profile.User.Id);
+                        Logger.LogDebug("Follow user {UserId}", detail.Profile.User.Id);
                         await RelationshipService.FollowUserAsync(detail.Profile.User.Id).ConfigureAwait(false);
                     }
 
