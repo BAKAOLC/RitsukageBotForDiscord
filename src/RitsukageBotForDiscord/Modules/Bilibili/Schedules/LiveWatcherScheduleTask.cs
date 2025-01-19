@@ -75,8 +75,8 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
                     continue;
                 }
 
-                var components = new ComponentBuilder().WithButton("Watch Stream", $"bilibili://live/{roomIdStr}",
-                    ButtonStyle.Link);
+                var components = new ComponentBuilder().WithButton("Watch Stream", style: ButtonStyle.Link,
+                    url: $"https://live.bilibili.com/{roomIdStr}");
                 await messageChannel.SendMessageAsync(text, embed: embed.Build(), components: components.Build())
                     .ConfigureAwait(false);
             }

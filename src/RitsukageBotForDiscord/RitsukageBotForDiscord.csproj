@@ -18,6 +18,7 @@
 		<RepositoryType>git</RepositoryType>
 		<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
 		<CETCompat>false</CETCompat>
+		<NoWarn>$(NoWarn);NETSDK1206</NoWarn>
 	</PropertyGroup>
 
 	<PropertyGroup>

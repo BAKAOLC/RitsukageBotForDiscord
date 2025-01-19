@@ -120,6 +120,9 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
             _tasks.RemoveAll(task => !task.IsEnabled || task.IsFinished);
         }
 
+        /// <summary>
+        ///     Dispose the object.
+        /// </summary>
         ~ScheduleModuleSupport()
         {
             Dispose(false);
