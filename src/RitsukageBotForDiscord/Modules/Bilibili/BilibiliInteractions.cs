@@ -1,3 +1,4 @@
+using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
@@ -36,6 +37,10 @@ namespace RitsukageBot.Modules.Bilibili
         ///     Automatically resolve Bilibili links.
         /// </summary>
         /// <param name="active"></param>
+        [RequireUserPermission(GuildPermission.Administrator
+                               | GuildPermission.ManageGuild
+                               | GuildPermission.ManageChannels)]
+        [RequireUserPermission(ChannelPermission.ManageChannels)]
         [SlashCommand("auto-resolve", "Automatically resolve Bilibili links.")]
         public async Task AutoResolveBilibiliLinkAsync(bool active = true)
         {

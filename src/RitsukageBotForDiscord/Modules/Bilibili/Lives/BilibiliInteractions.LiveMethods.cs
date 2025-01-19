@@ -76,6 +76,10 @@ namespace RitsukageBot.Modules.Bilibili
             ///     Follow a live
             /// </summary>
             /// <param name="id"></param>
+            [RequireUserPermission(GuildPermission.Administrator
+                                   | GuildPermission.ManageGuild
+                                   | GuildPermission.ManageChannels)]
+            [RequireUserPermission(ChannelPermission.ManageChannels)]
             [SlashCommand("follow", "Follow a live")]
             public async Task FollowLiveAsync(string id)
             {
@@ -185,6 +189,10 @@ namespace RitsukageBot.Modules.Bilibili
             ///     Unfollow a live
             /// </summary>
             /// <param name="id"></param>
+            [RequireUserPermission(GuildPermission.Administrator
+                                   | GuildPermission.ManageGuild
+                                   | GuildPermission.ManageChannels)]
+            [RequireUserPermission(ChannelPermission.ManageChannels)]
             [SlashCommand("unfollow", "Unfollow a live")]
             public async Task UnfollowLiveAsync(string id)
             {
