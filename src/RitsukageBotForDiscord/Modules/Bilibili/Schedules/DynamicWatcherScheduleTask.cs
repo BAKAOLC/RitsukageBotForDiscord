@@ -84,6 +84,7 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
                 if (lastMoment == null)
                 {
                     var moment = moments[0];
+                    config.LastInformation = moment.Id;
                     var embeds = InformationEmbedBuilder.BuildMomentInfo(moment);
                     embeds[^1].WithBilibiliLogoIconFooter();
                     var text = $"User {moment.User?.Name} has a new moment!";
@@ -93,6 +94,7 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
                     continue;
                 }
 
+                config.LastInformation = moments[^1].Id;
                 for (var i = index - 1; i >= 0; i--)
                 {
                     var moment = moments[i];
