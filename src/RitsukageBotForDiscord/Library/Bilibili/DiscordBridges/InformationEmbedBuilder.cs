@@ -89,13 +89,20 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
 
             // author
             {
+                var multiAuthors = detail.Collaborators is not null;
+                List<string> authors = [];
+
                 var authorBuilder = new EmbedAuthorBuilder();
+                embed.WithAuthor(authorBuilder);
                 if (momentInformation is null)
                 {
                     authorBuilder.WithName(detail.Publisher.User.Name);
                     authorBuilder.WithUrl($"https://space.bilibili.com/{detail.Publisher.User.Id}");
                     if (detail.Publisher.User.Avatar != null)
                         authorBuilder.WithIconUrl(detail.Publisher.User.Avatar.SourceUri.ToString());
+
+                    authors.Add(string.Format(textFormatAuthor, detail.Publisher.User.Name,
+                        detail.Publisher.User.Id));
                 }
                 else if (momentInformation.User is not null)
                 {
@@ -103,16 +110,11 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
                     authorBuilder.WithUrl($"https://space.bilibili.com/{momentInformation.User.Id}");
                     if (momentInformation.User.Avatar is not null)
                         authorBuilder.WithIconUrl(momentInformation.User.Avatar.SourceUri.ToString());
+
+                    authors.Add(string.Format(textFormatAuthor, momentInformation.User.Name,
+                        momentInformation.User.Id));
                 }
 
-                embed.WithAuthor(authorBuilder);
-
-                var multiAuthors = detail.Collaborators is not null;
-                var authors = new List<string>
-                {
-                    string.Format(textFormatAuthor, detail.Publisher.User.Name,
-                        detail.Publisher.User.Id),
-                };
                 if (multiAuthors)
                     authors.AddRange(detail.Collaborators!.Select(collaborator =>
                         string.Format(textFormatAuthor, collaborator.User.Name, collaborator.User.Id)));
