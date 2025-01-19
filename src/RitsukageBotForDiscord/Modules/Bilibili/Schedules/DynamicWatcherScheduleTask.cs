@@ -124,7 +124,7 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
             {
                 var userProfile = new UserProfile(request.UserId);
                 var (moments, offset, hasMore) = await MomentDiscoveryService
-                    .GetUserMomentsAsync(userProfile, request.Offset).ConfigureAwait(false);
+                    .GetUserMomentsAsync(userProfile).ConfigureAwait(false);
                 if (moments.Count == 0) continue;
                 while (IsSmallerOffset(request.Offset, offset) && hasMore)
                 {
