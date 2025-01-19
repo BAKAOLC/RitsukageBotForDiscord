@@ -66,8 +66,9 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
         ///     Build video info.
         /// </summary>
         /// <param name="detail"></param>
+        /// <param name="momentInformation"></param>
         /// <returns></returns>
-        public static EmbedBuilder BuildVideoInfo(VideoInformation detail)
+        public static EmbedBuilder BuildVideoInfo(VideoInformation detail, MomentInformation? momentInformation = null)
         {
             const string textFormatVideoBvId = "[{0}](https://www.bilibili.com/video/{0}/)";
             const string textFormatVideoAvId = "[av{0}](https://www.bilibili.com/video/av{0}/)";
@@ -89,10 +90,21 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
             // author
             {
                 var authorBuilder = new EmbedAuthorBuilder();
-                authorBuilder.WithName(detail.Publisher.User.Name);
-                authorBuilder.WithUrl($"https://space.bilibili.com/{detail.Publisher.User.Id}");
-                if (detail.Publisher.User.Avatar != null)
-                    authorBuilder.WithIconUrl(detail.Publisher.User.Avatar.SourceUri.ToString());
+                if (momentInformation is null)
+                {
+                    authorBuilder.WithName(detail.Publisher.User.Name);
+                    authorBuilder.WithUrl($"https://space.bilibili.com/{detail.Publisher.User.Id}");
+                    if (detail.Publisher.User.Avatar != null)
+                        authorBuilder.WithIconUrl(detail.Publisher.User.Avatar.SourceUri.ToString());
+                }
+                else if (momentInformation.User is not null)
+                {
+                    authorBuilder.WithName(momentInformation.User.Name);
+                    authorBuilder.WithUrl($"https://space.bilibili.com/{momentInformation.User.Id}");
+                    if (momentInformation.User.Avatar is not null)
+                        authorBuilder.WithIconUrl(momentInformation.User.Avatar.SourceUri.ToString());
+                }
+
                 embed.WithAuthor(authorBuilder);
 
                 var multiAuthors = detail.Collaborators is not null;
@@ -309,7 +321,7 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
                         break;
                     }
 
-                    embeds.Add(BuildVideoInfo(videoInformation));
+                    embeds.Add(BuildVideoInfo(videoInformation, detail));
                     break;
                 }
                 case MomentItemType.Pgc:
