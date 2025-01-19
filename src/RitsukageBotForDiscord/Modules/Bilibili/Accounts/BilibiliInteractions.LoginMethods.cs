@@ -31,7 +31,7 @@ namespace RitsukageBot.Modules.Bilibili
                         .WithLabel("Logout")
                         .WithStyle(ButtonStyle.Danger));
                     await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(),
-                            BilibiliIconData.TagLogoIconFileName,
+                            BilibiliIconData.LogoIconFileName,
                             embed: embedBuilder.WithBilibiliLogoIconFooter().Build(),
                             components: componentBuilder.Build())
                         .ConfigureAwait(false);
@@ -90,7 +90,7 @@ namespace RitsukageBot.Modules.Bilibili
                     embed.WithBilibiliLogoIconFooter();
                     await FollowupWithFilesAsync([
                             new(new MemoryStream(qrCodeImage), "qr_code.png"),
-                            new(BilibiliIconData.GetLogoIconStream(), BilibiliIconData.TagLogoIconFileName),
+                            new(BilibiliIconData.GetLogoIconStream(), BilibiliIconData.LogoIconFileName),
                         ],
                         embed: embed.Build()).ConfigureAwait(false);
                     Logger.LogInformation("Waiting for Bilibili login.");
@@ -132,7 +132,7 @@ namespace RitsukageBot.Modules.Bilibili
                         .WithBilibiliLogoIconFooter();
 
                     await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(),
-                        BilibiliIconData.TagLogoIconFileName,
+                        BilibiliIconData.LogoIconFileName,
                         embed: errorEmbed.Build()).ConfigureAwait(false);
                 }
             }

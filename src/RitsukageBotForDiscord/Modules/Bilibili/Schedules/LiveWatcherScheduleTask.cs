@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Richasy.BiliKernel.Bili.Media;
 using Richasy.BiliKernel.Models.Media;
 using RitsukageBot.Library.Bilibili.DiscordBridges;
+using RitsukageBot.Library.Bilibili.Utils;
 using RitsukageBot.Library.Data;
 using RitsukageBot.Library.Enums.Bilibili;
 using RitsukageBot.Library.Modules.Schedules;
@@ -60,7 +61,6 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
                 if (config.LastInformation == isLivingStr) continue;
                 config.LastInformation = isLivingStr;
 
-                var embed = InformationEmbedBuilder.BuildLiveInfo(liveInfo);
                 var channel = await DiscordClient.GetChannelAsync(config.ChannelId).ConfigureAwait(false);
                 if (channel is not IMessageChannel messageChannel)
                 {
@@ -68,17 +68,23 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
                     continue;
                 }
 
+                var embed = InformationEmbedBuilder.BuildLiveInfo(liveInfo);
+                embed.WithBilibiliLogoIconFooter();
+                embed.Timestamp = null; // Remove timestamp
                 var text = $"{liveInfo.User.Name}'s live room is now {(isLiving ? "living!" : "offline...")}";
                 if (!isLiving)
                 {
-                    await messageChannel.SendMessageAsync(text, embed: embed.Build()).ConfigureAwait(false);
+                    await messageChannel.SendFileAsync(BilibiliIconData.GetLogoIconStream(),
+                        BilibiliIconData.LogoIconFileName,
+                        text, embed: embed.Build()).ConfigureAwait(false);
                     continue;
                 }
 
                 var components = new ComponentBuilder().WithButton("Watch Stream", style: ButtonStyle.Link,
                     url: $"https://live.bilibili.com/{roomIdStr}");
-                await messageChannel.SendMessageAsync(text, embed: embed.Build(), components: components.Build())
-                    .ConfigureAwait(false);
+                await messageChannel.SendFileAsync(BilibiliIconData.GetLogoIconStream(),
+                    BilibiliIconData.LogoIconFileName,
+                    text, embed: embed.Build(), components: components.Build()).ConfigureAwait(false);
             }
 
             Logger.LogInformation("Updating database.");

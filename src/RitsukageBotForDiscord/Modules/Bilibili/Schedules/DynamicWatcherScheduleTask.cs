@@ -87,7 +87,7 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
                     embeds[^1].WithBilibiliLogoIconFooter();
                     var text = $"User {moment.User?.Name} has a new moment!";
                     await messageChannel.SendFileAsync(BilibiliIconData.GetLogoIconStream(),
-                        BilibiliIconData.TagLogoIconFileName,
+                        BilibiliIconData.LogoIconFileName,
                         text, embeds: embeds.Select(x => x.Build()).ToArray()).ConfigureAwait(false);
                     continue;
                 }
@@ -99,7 +99,7 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
                     embeds[^1].WithBilibiliLogoIconFooter();
                     var text = $"User {moment.User?.Name} has a new moment!";
                     await messageChannel.SendFileAsync(BilibiliIconData.GetLogoIconStream(),
-                        BilibiliIconData.TagLogoIconFileName,
+                        BilibiliIconData.LogoIconFileName,
                         text, embeds: embeds.Select(x => x.Build()).ToArray()).ConfigureAwait(false);
                 }
             }

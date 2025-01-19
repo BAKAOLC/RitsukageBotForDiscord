@@ -42,7 +42,7 @@ namespace RitsukageBot.Modules.Bilibili
                         .WithDescription("Invalid dynamic id.")
                         .WithBilibiliLogoIconFooter();
                     await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(),
-                        BilibiliIconData.TagLogoIconFileName,
+                        BilibiliIconData.LogoIconFileName,
                         embed: errorEmbed.Build()).ConfigureAwait(false);
                 }
 
@@ -52,7 +52,7 @@ namespace RitsukageBot.Modules.Bilibili
                     var embeds = InformationEmbedBuilder.BuildMomentInfo(detail);
                     embeds[^1].WithBilibiliLogoIconFooter();
                     await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(),
-                        BilibiliIconData.TagLogoIconFileName,
+                        BilibiliIconData.LogoIconFileName,
                         embeds: embeds.Select(x => x.Build()).ToArray()).ConfigureAwait(false);
                 }
                 catch (Exception ex)
@@ -64,7 +64,7 @@ namespace RitsukageBot.Modules.Bilibili
                         .WithDescription("Failed to get dynamic information: " + ex.Message)
                         .WithBilibiliLogoIconFooter();
                     await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(),
-                        BilibiliIconData.TagLogoIconFileName,
+                        BilibiliIconData.LogoIconFileName,
                         embed: errorEmbed.Build()).ConfigureAwait(false);
                 }
             }
@@ -94,7 +94,7 @@ namespace RitsukageBot.Modules.Bilibili
                         .WithDescription("Invalid user id.")
                         .WithBilibiliLogoIconFooter();
                     await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(),
-                        BilibiliIconData.TagLogoIconFileName,
+                        BilibiliIconData.LogoIconFileName,
                         embed: errorEmbed.Build()).ConfigureAwait(false);
                     return;
                 }
@@ -113,7 +113,7 @@ namespace RitsukageBot.Modules.Bilibili
                         .WithDescription("This user is already followed.")
                         .WithBilibiliLogoIconFooter();
                     await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(),
-                        BilibiliIconData.TagLogoIconFileName,
+                        BilibiliIconData.LogoIconFileName,
                         embed: errorEmbed.Build()).ConfigureAwait(false);
                     return;
                 }
@@ -129,7 +129,7 @@ namespace RitsukageBot.Modules.Bilibili
                             .WithDescription("Failed to get user information.")
                             .WithBilibiliLogoIconFooter();
                         await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(),
-                            BilibiliIconData.TagLogoIconFileName,
+                            BilibiliIconData.LogoIconFileName,
                             embed: errorEmbed.Build()).ConfigureAwait(false);
                         return;
                     }
@@ -158,7 +158,7 @@ namespace RitsukageBot.Modules.Bilibili
                         "This user is now followed. You will receive notifications when they post a new dynamic.";
                     var embed = InformationEmbedBuilder.BuildUserInfo(detail).WithBilibiliLogoIconFooter();
                     await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(),
-                        BilibiliIconData.TagLogoIconFileName,
+                        BilibiliIconData.LogoIconFileName,
                         text, embed: embed.Build()).ConfigureAwait(false);
                 }
                 catch (Exception ex)
@@ -170,7 +170,7 @@ namespace RitsukageBot.Modules.Bilibili
                         .WithDescription("Failed to get user information: " + ex.Message)
                         .WithBilibiliLogoIconFooter();
                     await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(),
-                        BilibiliIconData.TagLogoIconFileName,
+                        BilibiliIconData.LogoIconFileName,
                         embed: errorEmbed.Build()).ConfigureAwait(false);
                 }
             }
@@ -200,7 +200,7 @@ namespace RitsukageBot.Modules.Bilibili
                         .WithDescription("Invalid user id.")
                         .WithBilibiliLogoIconFooter();
                     await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(),
-                        BilibiliIconData.TagLogoIconFileName,
+                        BilibiliIconData.LogoIconFileName,
                         embed: errorEmbed.Build()).ConfigureAwait(false);
                     return;
                 }
@@ -219,7 +219,7 @@ namespace RitsukageBot.Modules.Bilibili
                         .WithDescription("This user is not followed.")
                         .WithBilibiliLogoIconFooter();
                     await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(),
-                        BilibiliIconData.TagLogoIconFileName,
+                        BilibiliIconData.LogoIconFileName,
                         embed: errorEmbed.Build()).ConfigureAwait(false);
                     return;
                 }
@@ -234,7 +234,7 @@ namespace RitsukageBot.Modules.Bilibili
                         "This user is now unfollowed. You will no longer receive notifications when they post a new dynamic.";
                     var embed = InformationEmbedBuilder.BuildUserInfo(detail).WithBilibiliLogoIconFooter();
                     await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(),
-                        BilibiliIconData.TagLogoIconFileName,
+                        BilibiliIconData.LogoIconFileName,
                         text, embed: embed.Build()).ConfigureAwait(false);
                 }
                 catch (Exception ex)
@@ -246,7 +246,7 @@ namespace RitsukageBot.Modules.Bilibili
                         .WithDescription("Failed to get user information: " + ex.Message)
                         .WithBilibiliLogoIconFooter();
                     await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(),
-                        BilibiliIconData.TagLogoIconFileName,
+                        BilibiliIconData.LogoIconFileName,
                         embed: errorEmbed.Build()).ConfigureAwait(false);
                 }
             }
