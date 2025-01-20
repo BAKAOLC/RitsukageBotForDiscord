@@ -27,17 +27,17 @@ namespace RitsukageBot.Library.Networking
 
         private const string MozillaIos = $"{Mozilla} (iPhone; CPU iPhone OS 15_0 like Mac OS X)";
 
-        private static readonly string AssemblyAuthor = typeof(UserAgent).Assembly
+        private static readonly string AssemblyAuthor = Assembly.GetExecutingAssembly()
             .GetCustomAttributes(false)
             .OfType<AssemblyCompanyAttribute>()
             .FirstOrDefault()?.Company ?? Unknown;
 
-        private static readonly string AssemblyName = typeof(UserAgent).Assembly.GetName().Name ?? string.Empty;
+        private static readonly string AssemblyName = Assembly.GetExecutingAssembly().GetName().Name ?? string.Empty;
 
         private static readonly string AssemblyVersion =
-            typeof(UserAgent).Assembly.GetName().Version?.ToString() ?? string.Empty;
+            Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? string.Empty;
 
-        private static readonly string AssemblyRepositoryUrl = typeof(UserAgent).Assembly
+        private static readonly string AssemblyRepositoryUrl = Assembly.GetExecutingAssembly()
             .GetCustomAttributes(false)
             .OfType<AssemblyMetadataAttribute>()
             .FirstOrDefault(x => x.Key == "RepositoryUrl")?.Value ?? string.Empty;
