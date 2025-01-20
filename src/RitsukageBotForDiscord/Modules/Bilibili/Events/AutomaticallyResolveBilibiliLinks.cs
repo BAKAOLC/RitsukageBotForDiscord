@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Richasy.BiliKernel.Bili.Media;
 using Richasy.BiliKernel.Bili.User;
 using Richasy.BiliKernel.Models.Media;
+using RitsukageBot.Library.Bilibili.BiliKernelModules.Abstractions.Moment;
 using RitsukageBot.Library.Bilibili.DiscordBridges;
 using RitsukageBot.Library.Bilibili.Utils;
 using RitsukageBot.Library.Data;
@@ -46,7 +47,7 @@ namespace RitsukageBot.Modules.Bilibili.Events
 
             foreach (var keyId in keyIds)
             {
-                EmbedBuilder? embed = null;
+                EmbedBuilder[] embeds = [];
                 try
                 {
                     switch (keyId.Type)
@@ -56,23 +57,27 @@ namespace RitsukageBot.Modules.Bilibili.Events
                             var videoMediaIdentifier = new MediaIdentifier(keyId.Id, null, null);
                             var videoPlayerView = await biliKernelProvider.GetRequiredService<IPlayerService>()
                                 .GetVideoPageDetailAsync(videoMediaIdentifier, cancellationToken).ConfigureAwait(false);
-                            embed = InformationEmbedBuilder.BuildVideoInfo(videoPlayerView);
+                            embeds = [InformationEmbedBuilder.BuildVideoInfo(videoPlayerView)];
                             break;
                         case KeyIdType.Live:
                             logger.LogDebug("Try to resolve live {LiveId}", keyId.Id);
                             var liveMediaIdentifier = new MediaIdentifier(keyId.Id, null, null);
                             var livePlayerView = await biliKernelProvider.GetRequiredService<IPlayerService>()
                                 .GetLivePageDetailAsync(liveMediaIdentifier, cancellationToken).ConfigureAwait(false);
-                            embed = InformationEmbedBuilder.BuildLiveInfo(livePlayerView);
+                            embeds = [InformationEmbedBuilder.BuildLiveInfo(livePlayerView)];
                             break;
                         case KeyIdType.Dynamic:
+                            logger.LogDebug("Try to resolve dynamic {DynamicId}", keyId.Id);
+                            var dynamicCard = await biliKernelProvider.GetRequiredService<IMomentService>()
+                                .GetMomentInformation(keyId.Id, cancellationToken).ConfigureAwait(false);
+                            embeds = InformationEmbedBuilder.BuildMomentInfo(dynamicCard);
                             break;
                         case KeyIdType.User:
                         {
                             logger.LogDebug("Try to resolve user {UserId}", keyId.Id);
                             var userCard = await biliKernelProvider.GetRequiredService<IUserService>()
                                 .GetUserInformationAsync(keyId.Id, cancellationToken).ConfigureAwait(false);
-                            embed = InformationEmbedBuilder.BuildUserInfo(userCard);
+                            embeds = [InformationEmbedBuilder.BuildUserInfo(userCard)];
                             break;
                         }
                     }
@@ -82,11 +87,11 @@ namespace RitsukageBot.Modules.Bilibili.Events
                     logger.LogError(ex, "Failed to resolve key id {KeyId}", keyId);
                 }
 
-                if (embed is null) continue;
-                embed.WithFooter(footerBuilder);
+                if (embeds.Length == 0) continue;
+                foreach (var embed in embeds) embed.WithBilibiliLogoIconFooter();
                 await message.Channel
                     .SendFileAsync(BilibiliIconData.GetLogoIconStream(), BilibiliIconData.LogoIconFileName,
-                        embed: embed.Build())
+                        embeds: embeds.Select(x => x.Build()).ToArray())
                     .ConfigureAwait(false);
             }
         }
@@ -157,6 +162,7 @@ namespace RitsukageBot.Modules.Bilibili.Events
                 }
 
             var userMatches = GetUserRegex().Matches(content);
+
             // ReSharper disable once InvertIf
             if (userMatches.Count > 0)
                 foreach (Match match in userMatches)
