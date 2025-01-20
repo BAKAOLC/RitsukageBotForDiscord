@@ -38,8 +38,8 @@ namespace RitsukageBot.Modules.Bilibili
         /// </summary>
         /// <param name="active"></param>
         [RequireUserPermission(GuildPermission.Administrator
-                               | GuildPermission.ManageGuild
-                               | GuildPermission.ManageChannels)]
+            | GuildPermission.ManageGuild
+            | GuildPermission.ManageChannels)]
         [RequireUserPermission(ChannelPermission.ManageChannels)]
         [SlashCommand("auto-resolve", "Automatically resolve Bilibili links.")]
         public async Task AutoResolveBilibiliLinkAsync(bool active = true)
@@ -54,7 +54,7 @@ namespace RitsukageBot.Modules.Bilibili
             }
 
             config.AutomaticallyResolveBilibiliLinks = active;
-            await DatabaseProviderService.UpdateAsync(config).ConfigureAwait(false);
+            await DatabaseProviderService.InsertOrUpdateAsync(config).ConfigureAwait(false);
             if (active)
                 await FollowupAsync("Automatically resolve Bilibili links has been enabled.").ConfigureAwait(false);
             else
@@ -63,17 +63,9 @@ namespace RitsukageBot.Modules.Bilibili
 
         private async Task<DiscordChannelConfiguration> GetConfigAsync(ulong channelId)
         {
-            DiscordChannelConfiguration config;
-            try
-            {
-                config = await DatabaseProviderService.GetAsync<DiscordChannelConfiguration>(channelId)
-                    .ConfigureAwait(false);
-            }
-            catch
-            {
-                config = new() { Id = channelId };
-                await DatabaseProviderService.InsertAsync(config).ConfigureAwait(false);
-            }
+            var (success, config) = await DatabaseProviderService.GetOrCreateAsync<DiscordChannelConfiguration>(channelId)
+                .ConfigureAwait(false);
+            if (!success) config.Id = channelId;
 
             return config;
         }

@@ -38,6 +38,7 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Resolvers
         public void SaveCookies(IDictionary<string, string> cookies)
         {
             _cacheCookies = cookies;
+
             // ReSharper disable once AsyncApostle.AsyncWait
             SaveCookiesToDatabaseAsync(cookies).Wait();
         }
@@ -46,6 +47,7 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Resolvers
         public void RemoveCookies()
         {
             _cacheCookies = null;
+
             // ReSharper disable once AsyncApostle.AsyncWait
             RemoveCookiesFromDatabaseAsync().Wait();
         }
@@ -64,6 +66,7 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Resolvers
         public void RemoveToken()
         {
             _cacheToken = null;
+
             // ReSharper disable once AsyncApostle.AsyncWait
             RemoveTokenFromDatabaseAsync().Wait();
         }
@@ -72,6 +75,7 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Resolvers
         public void SaveToken(BiliToken token)
         {
             _cacheToken = token;
+
             // ReSharper disable once AsyncApostle.AsyncWait
             SaveTokenToDatabaseAsync(token).Wait();
         }
@@ -79,22 +83,9 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Resolvers
         private async Task SaveTokenToDatabaseAsync(BiliToken token)
         {
             var data = JsonSerializer.Serialize(token, TokenSerializeContext.Default.BiliToken);
-            BilibiliAccountConfiguration account;
-            try
-            {
-                account = await database.GetAsync<BilibiliAccountConfiguration>(0).ConfigureAwait(false);
-                account.Token = data;
-                await database.UpdateAsync(account).ConfigureAwait(false);
-            }
-            catch (Exception)
-            {
-                account = new()
-                {
-                    Id = 0,
-                    Token = data,
-                };
-                await database.InsertAsync(account).ConfigureAwait(false);
-            }
+            var (_, account) = await database.GetOrCreateAsync<BilibiliAccountConfiguration>(0).ConfigureAwait(false);
+            account.Token = data;
+            await database.InsertOrUpdateAsync(account).ConfigureAwait(false);
         }
 
         private async Task<BiliToken?> GetTokenFromDatabaseAsync()
@@ -106,7 +97,7 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Resolvers
                     ? null
                     : JsonSerializer.Deserialize<BiliToken>(account.Token, TokenSerializeContext.Default.BiliToken);
             }
-            catch (Exception)
+            catch
             {
                 return null;
             }
@@ -114,37 +105,17 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Resolvers
 
         private async Task RemoveTokenFromDatabaseAsync()
         {
-            try
-            {
-                var account = await database.GetAsync<BilibiliAccountConfiguration>(0).ConfigureAwait(false);
-                account.Token = null;
-                await database.UpdateAsync(account).ConfigureAwait(false);
-            }
-            catch (Exception)
-            {
-                // ignored
-            }
+            var (_, account) = await database.GetOrCreateAsync<BilibiliAccountConfiguration>(0).ConfigureAwait(false);
+            account.Token = null;
+            await database.InsertOrUpdateAsync(account).ConfigureAwait(false);
         }
 
         private async Task SaveCookiesToDatabaseAsync(IDictionary<string, string> cookies)
         {
             var data = JsonSerializer.Serialize(cookies, CookieSerializeContext.Default.DictionaryStringString);
-            BilibiliAccountConfiguration account;
-            try
-            {
-                account = await database.GetAsync<BilibiliAccountConfiguration>(0).ConfigureAwait(false);
-                account.Cookies = data;
-                await database.UpdateAsync(account).ConfigureAwait(false);
-            }
-            catch (Exception)
-            {
-                account = new()
-                {
-                    Id = 0,
-                    Cookies = data,
-                };
-                await database.InsertAsync(account).ConfigureAwait(false);
-            }
+            var (_, account) = await database.GetOrCreateAsync<BilibiliAccountConfiguration>(0).ConfigureAwait(false);
+            account.Cookies = data;
+            await database.InsertOrUpdateAsync(account).ConfigureAwait(false);
         }
 
         private async Task<IDictionary<string, string>?> GetCookiesFromDatabaseAsync()
@@ -157,7 +128,7 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Resolvers
                     : JsonSerializer.Deserialize<Dictionary<string, string>>(account.Cookies,
                         CookieSerializeContext.Default.DictionaryStringString);
             }
-            catch (Exception)
+            catch
             {
                 return null;
             }
@@ -165,16 +136,9 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Resolvers
 
         private async Task RemoveCookiesFromDatabaseAsync()
         {
-            try
-            {
-                var account = await database.GetAsync<BilibiliAccountConfiguration>(0).ConfigureAwait(false);
-                account.Cookies = null;
-                await database.UpdateAsync(account).ConfigureAwait(false);
-            }
-            catch (Exception)
-            {
-                // ignored
-            }
+            var (_, account) = await database.GetOrCreateAsync<BilibiliAccountConfiguration>(0).ConfigureAwait(false);
+            account.Cookies = null;
+            await database.InsertOrUpdateAsync(account).ConfigureAwait(false);
         }
     }
 

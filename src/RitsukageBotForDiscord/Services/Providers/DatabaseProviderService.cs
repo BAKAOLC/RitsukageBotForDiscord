@@ -24,6 +24,7 @@ namespace RitsukageBot.Services.Providers
             if (string.IsNullOrEmpty(databasePath)) throw new("Database path is not set.");
 
             _connection = new(databasePath);
+
             // ReSharper disable once AsyncApostle.AsyncWait
             InitializeAsync().Wait();
         }
@@ -41,6 +42,43 @@ namespace RitsukageBot.Services.Providers
         {
             Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        ///     Get or create an object in the database.
+        /// </summary>
+        /// <param name="pk"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public async Task<(bool, T)> GetOrCreateAsync<T>(object pk) where T : new()
+        {
+            try
+            {
+                var result = await GetAsync<T>(pk).ConfigureAwait(false);
+                return (true, result);
+            }
+            catch
+            {
+                // ignored
+                return (false, new());
+            }
+        }
+
+        /// <summary>
+        ///     Insert or update an object in the database.
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        /// <exception cref="NotSupportedException"></exception>
+        public async Task<int> InsertOrUpdateAsync<T>(T obj) where T : new()
+        {
+            if (obj == null) return 0;
+            var mapping = await _connection.GetMappingAsync(Orm.GetType(obj));
+            var pk = mapping.PK ?? throw new NotSupportedException("Cannot update " + mapping.TableName + ": it has no PK");
+            if (await FindAsync<T>(pk.GetValue(obj)).ConfigureAwait(false) != null)
+                return await UpdateAsync(obj).ConfigureAwait(false);
+            return await InsertAsync(obj).ConfigureAwait(false);
         }
 
         /// <inheritdoc cref="SQLiteAsyncConnection.CreateTableAsync{T}" />
