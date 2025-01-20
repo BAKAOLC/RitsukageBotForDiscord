@@ -12,13 +12,13 @@ namespace RitsukageBot.Library.Data
         ///     Id.
         /// </summary>
         [PrimaryKey]
-        [Column("Id")]
+        [Column("id")]
         public ulong Id { get; set; }
 
         /// <summary>
         ///     Access token.
         /// </summary>
-        [Column("AccessToken")]
+        [Column("access_token")]
         // ReSharper disable once PropertyCanBeMadeInitOnly.Global
         public string AccessToken { get; set; } = string.Empty;
     }

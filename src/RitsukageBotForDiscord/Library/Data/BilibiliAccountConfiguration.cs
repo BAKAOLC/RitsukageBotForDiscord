@@ -12,19 +12,19 @@ namespace RitsukageBot.Library.Data
         ///     Id.
         /// </summary>
         [PrimaryKey]
-        [Column("Id")]
+        [Column("id")]
         public int Id { get; set; }
 
         /// <summary>
         ///     Token.
         /// </summary>
-        [Column("Token")]
+        [Column("token")]
         public string? Token { get; set; }
 
         /// <summary>
         ///     Cookies.
         /// </summary>
-        [Column("Cookies")]
+        [Column("cookies")]
         public string? Cookies { get; set; }
     }
 }
