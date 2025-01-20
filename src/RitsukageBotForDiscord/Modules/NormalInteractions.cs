@@ -27,10 +27,8 @@ namespace RitsukageBot.Modules
 
         private async Task<(long, long)> GiveBotACandy(ulong userId)
         {
-            var (success, botRecord) = await DatabaseProvider.GetOrCreateAsync<BotRecordInformation>(0).ConfigureAwait(false);
-            if (!success) botRecord.Id = 0;
-            (success, var userConfig) = await DatabaseProvider.GetOrCreateAsync<DiscordUserConfiguration>(userId).ConfigureAwait(false);
-            if (!success) userConfig.Id = userId;
+            var (_, botRecord) = await DatabaseProvider.GetOrCreateAsync<BotRecordInformation>(0).ConfigureAwait(false);
+            var (_, userConfig) = await DatabaseProvider.GetOrCreateAsync<DiscordUserConfiguration>(userId).ConfigureAwait(false);
 
             botRecord.TotalCandyCount++;
             userConfig.CandyCount++;

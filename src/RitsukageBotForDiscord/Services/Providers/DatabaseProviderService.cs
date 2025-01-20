@@ -59,8 +59,11 @@ namespace RitsukageBot.Services.Providers
             }
             catch
             {
-                // ignored
-                return (false, new());
+                T result = new();
+                var mapping = await _connection.GetMappingAsync(Orm.GetType(result));
+                var mappingPk = mapping.PK ?? throw new NotSupportedException("Cannot update " + mapping.TableName + ": it has no PK");
+                mappingPk.SetValue(result, pk);
+                return (false, result);
             }
         }
 

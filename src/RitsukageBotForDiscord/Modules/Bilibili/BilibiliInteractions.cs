@@ -63,10 +63,8 @@ namespace RitsukageBot.Modules.Bilibili
 
         private async Task<DiscordChannelConfiguration> GetConfigAsync(ulong channelId)
         {
-            var (success, config) = await DatabaseProviderService.GetOrCreateAsync<DiscordChannelConfiguration>(channelId)
+            var (_, config) = await DatabaseProviderService.GetOrCreateAsync<DiscordChannelConfiguration>(channelId)
                 .ConfigureAwait(false);
-            if (!success) config.Id = channelId;
-
             return config;
         }
     }
