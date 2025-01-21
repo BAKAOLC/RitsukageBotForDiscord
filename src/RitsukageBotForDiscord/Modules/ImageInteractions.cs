@@ -54,42 +54,11 @@ namespace RitsukageBot.Modules
         /// </summary>
         /// <param name="url"></param>
         [SlashCommand("modify", "Begin image interaction")]
-        public async Task ImageAsync(string url)
+        public async Task ModifyAsync(string url)
         {
             await DeferAsync(true).ConfigureAwait(false);
-            Image<Rgba32>? image = null;
-            var message = string.Empty;
-            var success = false;
-            try
-            {
-                image = await ImageCacheProviderService.GetImageAsync(url).ConfigureAwait(false);
-                success = true;
-            }
-            catch (HttpRequestException ex)
-            {
-                Logger.LogError(ex, "Failed to download image");
-                message = ex.Message;
-            }
-            catch (NotSupportedException ex)
-            {
-                Logger.LogError(ex, "Failed to download image");
-                message = ex.Message;
-            }
-            catch (InvalidImageContentException)
-            {
-                Logger.LogError("Invalid image content");
-                message = "Invalid image content";
-            }
-            catch (UnknownImageFormatException)
-            {
-                Logger.LogError("Unknown image format");
-                message = "Unknown image format";
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Failed to download image");
-                message = ex.Message;
-            }
+
+            var (success, image, message) = await GetImageAsync(url).ConfigureAwait(false);
 
             if (!success || image is null)
             {
@@ -154,7 +123,85 @@ namespace RitsukageBot.Modules
             await FollowupWithFileAsync(imageStream, "bad_news.png", components: component.Build()).ConfigureAwait(false);
         }
 
+        /// <summary>
+        ///     Generate Group Cyan image
+        /// </summary>
+        /// <param name="url"></param>
+        [SlashCommand("group-cyan", "Generate Group Cyan image")]
+        public async Task GroupCyanAsync(string url)
+        {
+            await DeferAsync(true).ConfigureAwait(false);
+
+            var (success, image, message) = await GetImageAsync(url).ConfigureAwait(false);
+
+            if (!success || image is null)
+            {
+                await FollowupAsync(string.IsNullOrEmpty(message) ? "Failed to download image" : message)
+                    .ConfigureAwait(false);
+                return;
+            }
+
+            var resultImage = GroupCyanImageConvertor.Convert(image);
+            image.Dispose();
+            var imageStream = new MemoryStream();
+            string fileName;
+            if (resultImage.Frames.Count > 1)
+            {
+                await resultImage.SaveAsGifAsync(imageStream).ConfigureAwait(false);
+                fileName = "image.gif";
+            }
+            else
+            {
+                await resultImage.SaveAsPngAsync(imageStream).ConfigureAwait(false);
+                fileName = "image.png";
+            }
+            resultImage.Dispose();
+            imageStream.Seek(0, SeekOrigin.Begin);
+
+            var component = new ComponentBuilder()
+                .WithButton("Publish", $"{CustomId}:cancel_and_publish", ButtonStyle.Success);
+            await FollowupWithFileAsync(imageStream, fileName, components: component.Build()).ConfigureAwait(false);
+        }
+
         #region Helper methods
+
+        private async Task<(bool, Image<Rgba32>?, string?)> GetImageAsync(string url)
+        {
+            Image<Rgba32>? image = null;
+            string? message = null;
+            var success = false;
+            try
+            {
+                image = await ImageCacheProviderService.GetImageAsync(url).ConfigureAwait(false);
+                success = true;
+            }
+            catch (HttpRequestException ex)
+            {
+                Logger.LogError(ex, "Failed to download image");
+                message = ex.Message;
+            }
+            catch (NotSupportedException ex)
+            {
+                Logger.LogError(ex, "Failed to download image");
+                message = ex.Message;
+            }
+            catch (InvalidImageContentException)
+            {
+                Logger.LogError("Invalid image content");
+                message = "Invalid image content";
+            }
+            catch (UnknownImageFormatException)
+            {
+                Logger.LogError("Unknown image format");
+                message = "Unknown image format";
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Failed to download image");
+                message = ex.Message;
+            }
+            return (success, image, message);
+        }
 
         /// <summary>
         ///     Get operation menus
