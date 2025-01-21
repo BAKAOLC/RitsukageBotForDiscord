@@ -120,4 +120,13 @@
 		<ProjectReference Include="..\bili-kernel\src\Services\Services.User\Services.User.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <None Remove="static\bad_news.jpg" />
+	  <EmbeddedResource Include="static\bad_news.jpg" />
+	  <None Remove="static\good_news.jpg" />
+	  <EmbeddedResource Include="static\good_news.jpg" />
+	  <None Remove="static\msyh.ttc" />
+	  <None Remove="static\SourceHanSansSC-Normal.otf" />
+	</ItemGroup>
+
 </Project>

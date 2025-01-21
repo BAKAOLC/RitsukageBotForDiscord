@@ -3,6 +3,7 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
 using RitsukageBot.Library.Graphic;
+using RitsukageBot.Library.Graphic.Generators;
 using RitsukageBot.Library.Graphic.Processing;
 using RitsukageBot.Services.Providers;
 using SixLabors.ImageSharp;
@@ -115,6 +116,42 @@ namespace RitsukageBot.Modules
 
             await FollowupWithFileAsync(imageStream, fileName, components: GetOperationMenus().Build())
                 .ConfigureAwait(false);
+        }
+
+        /// <summary>
+        ///     Generate Good News image
+        /// </summary>
+        /// <param name="text"></param>
+        [SlashCommand("good-news", "Generate Good News image")]
+        public async Task GoodNewsAsync(string text)
+        {
+            await DeferAsync(true).ConfigureAwait(false);
+            var image = GoodBadNewsGenerators.GenerateGoodNewsImage(text);
+            var imageStream = new MemoryStream();
+            await image.SaveAsPngAsync(imageStream).ConfigureAwait(false);
+            imageStream.Seek(0, SeekOrigin.Begin);
+            image.Dispose();
+            var component = new ComponentBuilder()
+                .WithButton("Publish", $"{CustomId}:cancel_and_publish", ButtonStyle.Success);
+            await FollowupWithFileAsync(imageStream, "good_news.png", components: component.Build()).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        ///     Generate Bad News image
+        /// </summary>
+        /// <param name="text"></param>
+        [SlashCommand("bad-news", "Generate Bad News image")]
+        public async Task BadNewsAsync(string text)
+        {
+            await DeferAsync(true).ConfigureAwait(false);
+            var image = GoodBadNewsGenerators.GenerateBadNewsImage(text);
+            var imageStream = new MemoryStream();
+            await image.SaveAsPngAsync(imageStream).ConfigureAwait(false);
+            imageStream.Seek(0, SeekOrigin.Begin);
+            image.Dispose();
+            var component = new ComponentBuilder()
+                .WithButton("Publish", $"{CustomId}:cancel_and_publish", ButtonStyle.Success);
+            await FollowupWithFileAsync(imageStream, "bad_news.png", components: component.Build()).ConfigureAwait(false);
         }
 
         #region Helper methods
