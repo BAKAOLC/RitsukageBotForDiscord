@@ -20,6 +20,7 @@ namespace RitsukageBot.Library.Graphic.Generators
         public static Image<Rgba32> Convert(Image<Rgba32> source)
         {
             var image = source.Clone();
+            image.RemoveGifGlobalColorTable();
             image.Mutate(ipc =>
             {
                 var font1 = FontUtility.GetDefaultFont(80, FontStyle.Bold);

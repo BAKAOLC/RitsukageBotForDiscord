@@ -67,6 +67,7 @@ namespace RitsukageBot.Library.Graphic
             foreach (var step in _steps) await step.ProcessAsync(ref _images).ConfigureAwait(false);
 
             var image = _images.First().Clone();
+            image.RemoveGifGlobalColorTable();
             for (var i = 1; i < _images.Length; i++) image.Frames.AddFrame(_images[i].Frames.RootFrame);
             return image;
         }

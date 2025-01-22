@@ -1,5 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-
 namespace RitsukageBot.Library.Modules.Schedules
 {
     /// <inheritdoc />
@@ -61,10 +59,10 @@ namespace RitsukageBot.Library.Modules.Schedules
             Configuration.ExecutedTimes++;
             Configuration.LastExecutedTime = triggerTime;
             if (Configuration is OneTimeScheduleConfiguration ||
-                (Configuration is CountdownScheduleConfiguration countdownConfiguration &&
-                 countdownConfiguration.TargetTimes == Configuration.ExecutedTimes) ||
-                (Configuration is UntilTimeScheduleConfiguration untilTimeConfiguration &&
-                 untilTimeConfiguration.TargetTime <= Configuration.LastExecutedTime)
+                Configuration is CountdownScheduleConfiguration countdownConfiguration &&
+                countdownConfiguration.TargetTimes == Configuration.ExecutedTimes ||
+                Configuration is UntilTimeScheduleConfiguration untilTimeConfiguration &&
+                untilTimeConfiguration.TargetTime <= Configuration.LastExecutedTime
                ) IsFinished = true;
             return ExecuteAsync(cancellationToken);
         }

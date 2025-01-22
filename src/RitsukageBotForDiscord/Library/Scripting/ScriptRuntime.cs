@@ -36,7 +36,8 @@ namespace RitsukageBot.Library.Scripting
 
         private ScriptRuntime(byte[] bytes, ScriptOptions options)
         {
-            Script = CSharpScript.Create(new MemoryStream(bytes), options);
+            using var stream = new MemoryStream(bytes);
+            Script = CSharpScript.Create(stream, options);
         }
 
         private ScriptRuntime(string script)
@@ -51,7 +52,8 @@ namespace RitsukageBot.Library.Scripting
 
         private ScriptRuntime(byte[] bytes)
         {
-            Script = CSharpScript.Create(new MemoryStream(bytes), DefaultOptions);
+            using var stream = new MemoryStream(bytes);
+            Script = CSharpScript.Create(stream, DefaultOptions);
         }
 
         public string Code => Script.Code;
@@ -69,7 +71,7 @@ namespace RitsukageBot.Library.Scripting
 
         public (AssemblyInfo, ImmutableArray<Diagnostic>) CompileToAssembly(string name)
         {
-            var ms = new MemoryStream();
+            using var ms = new MemoryStream();
             var il = Compilation.Emit(ms);
             if (!il.Success)
                 throw new CompilationErrorException("Compilation failed", il.Diagnostics);

@@ -1,4 +1,5 @@
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Gif;
 using SixLabors.ImageSharp.PixelFormats;
 
 namespace RitsukageBot.Library.Graphic
@@ -18,6 +19,18 @@ namespace RitsukageBot.Library.Graphic
         {
             var metadata = image.Metadata.GetGifMetadata();
             metadata.RepeatCount = 0;
+            return image;
+        }
+
+        /// <summary>
+        ///     Remove GIF global color table
+        /// </summary>
+        /// <param name="image"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public static Image<T> RemoveGifGlobalColorTable<T>(this Image<T> image) where T : unmanaged, IPixel<T>
+        {
+            image.Metadata.GetGifMetadata().GlobalColorTable = null;
             return image;
         }
     }

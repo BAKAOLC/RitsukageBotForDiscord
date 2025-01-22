@@ -81,16 +81,18 @@ namespace RitsukageBot.Modules.Bilibili
                     Logger.LogDebug("Generating QR code.");
                     var qrCode = service.GetQrCode() ?? throw new InvalidOperationException("The QR code is null.");
                     var qrCodeImage = service.GetQrCodeImage() ??
-                                      throw new InvalidOperationException("The QR code image is null.");
+                        throw new InvalidOperationException("The QR code image is null.");
                     var embed = new EmbedBuilder();
                     embed.WithColor(Color.Orange);
                     embed.WithTitle("Bilibili Login");
                     embed.WithDescription("Please scan the QR code to login.");
                     embed.WithImageUrl("attachment://qr_code.png");
                     embed.WithBilibiliLogoIconFooter();
+                    using var qrCodeStream = new MemoryStream(qrCodeImage);
+                    await using var logoStream = BilibiliIconData.GetLogoIconStream();
                     await FollowupWithFilesAsync([
-                            new(new MemoryStream(qrCodeImage), "qr_code.png"),
-                            new(BilibiliIconData.GetLogoIconStream(), BilibiliIconData.LogoIconFileName),
+                            new(qrCodeStream, "qr_code.png"),
+                            new(logoStream, BilibiliIconData.LogoIconFileName),
                         ],
                         embed: embed.Build()).ConfigureAwait(false);
                     Logger.LogDebug("Waiting for Bilibili login.");

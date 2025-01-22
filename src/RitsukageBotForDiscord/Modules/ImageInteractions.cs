@@ -67,7 +67,7 @@ namespace RitsukageBot.Modules
                 return;
             }
 
-            var imageStream = new MemoryStream();
+            using var imageStream = new MemoryStream();
             string fileName;
             if (image.Frames.Count > 1)
             {
@@ -95,11 +95,10 @@ namespace RitsukageBot.Modules
         public async Task GoodNewsAsync(string text)
         {
             await DeferAsync(true).ConfigureAwait(false);
-            var image = GoodBadNewsGenerators.GenerateGoodNewsImage(text);
-            var imageStream = new MemoryStream();
+            using var image = GoodBadNewsGenerators.GenerateGoodNewsImage(text);
+            using var imageStream = new MemoryStream();
             await image.SaveAsPngAsync(imageStream).ConfigureAwait(false);
             imageStream.Seek(0, SeekOrigin.Begin);
-            image.Dispose();
             var component = new ComponentBuilder()
                 .WithButton("Publish", $"{CustomId}:cancel_and_publish", ButtonStyle.Success);
             await FollowupWithFileAsync(imageStream, "good_news.png", components: component.Build()).ConfigureAwait(false);
@@ -113,11 +112,10 @@ namespace RitsukageBot.Modules
         public async Task BadNewsAsync(string text)
         {
             await DeferAsync(true).ConfigureAwait(false);
-            var image = GoodBadNewsGenerators.GenerateBadNewsImage(text);
-            var imageStream = new MemoryStream();
+            using var image = GoodBadNewsGenerators.GenerateBadNewsImage(text);
+            using var imageStream = new MemoryStream();
             await image.SaveAsPngAsync(imageStream).ConfigureAwait(false);
             imageStream.Seek(0, SeekOrigin.Begin);
-            image.Dispose();
             var component = new ComponentBuilder()
                 .WithButton("Publish", $"{CustomId}:cancel_and_publish", ButtonStyle.Success);
             await FollowupWithFileAsync(imageStream, "bad_news.png", components: component.Build()).ConfigureAwait(false);
@@ -141,9 +139,9 @@ namespace RitsukageBot.Modules
                 return;
             }
 
-            var resultImage = GroupCyanImageConvertor.Convert(image);
+            using var resultImage = GroupCyanImageConvertor.Convert(image);
             image.Dispose();
-            var imageStream = new MemoryStream();
+            using var imageStream = new MemoryStream();
             string fileName;
             if (resultImage.Frames.Count > 1)
             {
@@ -155,7 +153,47 @@ namespace RitsukageBot.Modules
                 await resultImage.SaveAsPngAsync(imageStream).ConfigureAwait(false);
                 fileName = "image.png";
             }
-            resultImage.Dispose();
+            imageStream.Seek(0, SeekOrigin.Begin);
+
+            var component = new ComponentBuilder()
+                .WithButton("Publish", $"{CustomId}:cancel_and_publish", ButtonStyle.Success);
+            await FollowupWithFileAsync(imageStream, fileName, components: component.Build()).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        ///     Generate Colorful Char image
+        /// </summary>
+        /// <param name="url"></param>
+        /// <param name="fontSize"></param>
+        /// <param name="pixelSize"></param>
+        [SlashCommand("colorful-chars", "Generate Colorful Chars image")]
+        public async Task ColorfulCharImageAsync(string url, int fontSize = 12, int pixelSize = 4)
+        {
+            await DeferAsync(true).ConfigureAwait(false);
+
+            var (success, image, message) = await GetImageAsync(url).ConfigureAwait(false);
+
+            if (!success || image is null)
+            {
+                await FollowupAsync(string.IsNullOrEmpty(message) ? "Failed to download image" : message)
+                    .ConfigureAwait(false);
+                return;
+            }
+
+            using var resultImage = ColorfulCharsImageConvertor.Convert(image, fontSize, pixelSize, out _);
+            image.Dispose();
+            using var imageStream = new MemoryStream();
+            string fileName;
+            if (resultImage.Frames.Count > 1)
+            {
+                await resultImage.SaveAsGifAsync(imageStream).ConfigureAwait(false);
+                fileName = "image.gif";
+            }
+            else
+            {
+                await resultImage.SaveAsPngAsync(imageStream).ConfigureAwait(false);
+                fileName = "image.png";
+            }
             imageStream.Seek(0, SeekOrigin.Begin);
 
             var component = new ComponentBuilder()
@@ -508,10 +546,10 @@ namespace RitsukageBot.Modules
 
             imageStream.Seek(0, SeekOrigin.Begin);
             image.Dispose();
-
             await Context.Interaction
                 .UpdateAsync(x => x.Attachments = new List<FileAttachment> { new(imageStream, fileName) })
                 .ConfigureAwait(false);
+            await imageStream.DisposeAsync();
         }
 
         private Task TriggerProcessAsync<T>() where T : IProcessStep<Rgba32>, new()
@@ -521,7 +559,7 @@ namespace RitsukageBot.Modules
 
         private async Task TriggerProcessAsync<T>(T processStep) where T : IProcessStep<Rgba32>
         {
-            var image = await GetImageAsync().ConfigureAwait(false);
+            using var image = await GetImageAsync().ConfigureAwait(false);
             if (image is null) return;
 
             var processor = new ImageProcessor<Rgba32>(image);

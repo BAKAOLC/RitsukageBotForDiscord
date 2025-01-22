@@ -51,7 +51,7 @@ namespace RitsukageBot.Modules
 
             if (serverInfo.IconData.Length > 0)
             {
-                var ms = new MemoryStream(serverInfo.IconData);
+                using var ms = new MemoryStream(serverInfo.IconData);
                 embed.WithThumbnailUrl("attachment://server-icon.png");
                 await FollowupWithFileAsync(ms, "server-icon.png", embed: embed.Build()).ConfigureAwait(false);
             }
