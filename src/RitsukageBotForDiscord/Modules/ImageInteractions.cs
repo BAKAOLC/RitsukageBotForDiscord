@@ -201,6 +201,37 @@ namespace RitsukageBot.Modules
             await FollowupWithFileAsync(imageStream, fileName, components: component.Build()).ConfigureAwait(false);
         }
 
+        /// <summary>
+        ///     Generate Char image
+        /// </summary>
+        /// <param name="url"></param>
+        /// <param name="pixelSize"></param>
+        [SlashCommand("char-image", "Generate Char image")]
+        public async Task CharImageAsync(string url, int pixelSize = 4)
+        {
+            await DeferAsync(true).ConfigureAwait(false);
+
+            var (success, image, message) = await GetImageAsync(url).ConfigureAwait(false);
+
+            if (!success || image is null)
+            {
+                await FollowupAsync(string.IsNullOrEmpty(message) ? "Failed to download image" : message)
+                    .ConfigureAwait(false);
+                return;
+            }
+
+            var resultImageStr = ColorfulCharsImageConvertor.ConvertToString(image, pixelSize);
+            image.Dispose();
+
+            if (resultImageStr.Length > 1992)
+            {
+                await FollowupAsync("Result image is too large to send").ConfigureAwait(false);
+                return;
+            }
+
+            await FollowupAsync($"```\n{resultImageStr}\n```").ConfigureAwait(false);
+        }
+
         #region Helper methods
 
         private async Task<(bool, Image<Rgba32>?, string?)> GetImageAsync(string url)

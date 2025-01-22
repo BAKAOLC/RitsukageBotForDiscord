@@ -41,12 +41,10 @@ namespace RitsukageBot.Library.Graphic.Generators
 
             var outputImage = new Image<Rgba32>(widthCharCount * (int)font.Size, colorChars.Length / widthCharCount * (int)font.Size);
             var charImageBuilder = new StringBuilder();
-            var first = true;
             for (var y = 0; y < colorChars.Length / widthCharCount; y++)
             {
-                if (!first)
+                if (y != 0)
                     charImageBuilder.AppendLine();
-                first = false;
                 for (var x = 0; x < widthCharCount; x++)
                 {
                     var colorChar = colorChars[y * widthCharCount + x];
@@ -98,6 +96,31 @@ namespace RitsukageBot.Library.Graphic.Generators
             resultImage.Frames.RemoveFrame(0);
             resultImage.Metadata.GetGifMetadata().RepeatCount = image.Metadata.GetGifMetadata().RepeatCount;
             return resultImage;
+        }
+
+        /// <summary>
+        ///     Converts an image to a new image with color characters.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <param name="pixelSize"></param>
+        /// <returns></returns>
+        public static string ConvertToString(Image<Rgba32> image, int pixelSize)
+        {
+            using var sampleImage = image.Frames.CloneFrame(0);
+            sampleImage.Mutate(x => x.Resize(image.Width / pixelSize, image.Height / pixelSize));
+            var chars = InnerConvertSingleFrame(sampleImage);
+            var charImageStr = new StringBuilder();
+            for (var y = 0; y < sampleImage.Height; y++)
+            {
+                if (y != 0)
+                    charImageStr.AppendLine();
+                for (var x = 0; x < sampleImage.Width; x++)
+                {
+                    var colorChar = chars[y * sampleImage.Width + x];
+                    charImageStr.Append(colorChar.Char);
+                }
+            }
+            return charImageStr.ToString();
         }
 
         /// <summary>
