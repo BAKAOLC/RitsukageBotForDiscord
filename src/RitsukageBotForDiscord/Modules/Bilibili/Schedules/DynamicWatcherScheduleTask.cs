@@ -83,28 +83,13 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
 
                 if (lastMoment == null)
                 {
-                    var moment = moments[0];
-                    config.LastInformation = moment.Id;
-                    var embeds = InformationEmbedBuilder.BuildMomentInfo(moment);
-                    embeds[^1].WithBilibiliLogoIconFooter();
-                    var text = $"User {moment.User?.Name} has a new moment!";
-                    await messageChannel.SendFileAsync(BilibiliIconData.GetLogoIconStream(),
-                        BilibiliIconData.LogoIconFileName,
-                        text, embeds: embeds.Select(x => x.Build()).ToArray()).ConfigureAwait(false);
+                    config.LastInformation = moments[0].Id;
+                    await SendMomentAsync(messageChannel, moments[0]).ConfigureAwait(false);
                     continue;
                 }
 
                 config.LastInformation = moments.First().Id;
-                for (var i = index - 1; i >= 0; i--)
-                {
-                    var moment = moments[i];
-                    var embeds = InformationEmbedBuilder.BuildMomentInfo(moment);
-                    embeds[^1].WithBilibiliLogoIconFooter();
-                    var text = $"User {moment.User?.Name} has a new moment!";
-                    await messageChannel.SendFileAsync(BilibiliIconData.GetLogoIconStream(),
-                        BilibiliIconData.LogoIconFileName,
-                        text, embeds: embeds.Select(x => x.Build()).ToArray()).ConfigureAwait(false);
-                }
+                for (var i = index - 1; i >= 0; i--) await SendMomentAsync(messageChannel, moments[i]).ConfigureAwait(false);
             }
 
             _logger.LogDebug("Updating database.");
@@ -114,6 +99,16 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
             _logger.LogDebug("Database updated.");
 
             _logger.LogDebug("DynamicWatcherScheduleTask is completed.");
+        }
+
+        private static async Task SendMomentAsync(IMessageChannel channel, MomentInformation moment)
+        {
+            var embeds = InformationEmbedBuilder.BuildMomentInfo(moment);
+            embeds[^1].WithBilibiliLogoIconFooter();
+            var text = $"User {moment.User?.Name} has a new moment!";
+            var component = new ComponentBuilder().WithButton("Watch moment", url: $"https://www.bilibili.com/opus/{moment.Id}", style: ButtonStyle.Link);
+            await channel.SendFileAsync(BilibiliIconData.GetLogoIconStream(), BilibiliIconData.LogoIconFileName, text,
+                embeds: embeds.Select(x => x.Build()).ToArray(), components: component.Build()).ConfigureAwait(false);
         }
 
         private async Task UpdateMomentsAsync(params IEnumerable<UserMomentsRequest> requests)

@@ -88,7 +88,7 @@ namespace RitsukageBot.Modules.Bilibili.Events
                 }
 
                 if (embeds.Length == 0) continue;
-                foreach (var embed in embeds) embed.WithBilibiliLogoIconFooter();
+                embeds[^1].WithBilibiliLogoIconFooter();
                 await message.Channel
                     .SendFileAsync(BilibiliIconData.GetLogoIconStream(), BilibiliIconData.LogoIconFileName,
                         embeds: embeds.Select(x => x.Build()).ToArray())

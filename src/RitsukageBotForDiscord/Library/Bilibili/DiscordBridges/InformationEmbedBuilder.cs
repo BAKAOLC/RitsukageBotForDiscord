@@ -252,6 +252,86 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
         }
 
         /// <summary>
+        ///     Build article info.
+        /// </summary>
+        /// <param name="detail"></param>
+        /// <param name="momentInformation"></param>
+        /// <returns></returns>
+        public static EmbedBuilder BuildArticleInfo(ArticleInformation detail, MomentInformation? momentInformation = null)
+        {
+            var embed = new EmbedBuilder();
+            embed.WithTitle(detail.Identifier.Title);
+
+            // cover
+            if (detail.Identifier.Cover is not null)
+                embed.WithImageUrl(detail.Identifier.Cover.SourceUri.ToString());
+
+            // author
+            {
+                if (detail.Publisher is not null)
+                {
+                    var authorBuilder = new EmbedAuthorBuilder();
+                    authorBuilder.WithName(detail.Publisher.Name);
+                    authorBuilder.WithUrl($"https://space.bilibili.com/{detail.Publisher.Id}");
+                    if (detail.Publisher.Avatar is not null)
+                        authorBuilder.WithIconUrl(detail.Publisher.Avatar.SourceUri.ToString());
+                    embed.WithAuthor(authorBuilder);
+                }
+                else if (momentInformation?.User is not null)
+                {
+                    var authorBuilder = new EmbedAuthorBuilder();
+                    authorBuilder.WithName(momentInformation.User.Name);
+                    authorBuilder.WithUrl($"https://space.bilibili.com/{momentInformation.User.Id}");
+                    if (momentInformation.User.Avatar is not null)
+                        authorBuilder.WithIconUrl(momentInformation.User.Avatar.SourceUri.ToString());
+                    embed.WithAuthor(authorBuilder);
+                }
+            }
+
+            // statistics
+            if (detail.CommunityInformation is not null)
+            {
+                if (detail.CommunityInformation.ViewCount.HasValue)
+                    embed.AddField("View", detail.CommunityInformation.ViewCount, true);
+                if (detail.CommunityInformation.CommentCount.HasValue)
+                    embed.AddField("Reply", detail.CommunityInformation.CommentCount, true);
+                if (detail.CommunityInformation.FavoriteCount.HasValue)
+                    embed.AddField("Favorite", detail.CommunityInformation.FavoriteCount, true);
+                if (detail.CommunityInformation.CoinCount.HasValue)
+                    embed.AddField("Coin", detail.CommunityInformation.CoinCount, true);
+                if (detail.CommunityInformation.ShareCount.HasValue)
+                    embed.AddField("Share", detail.CommunityInformation.ShareCount, true);
+                if (detail.CommunityInformation.LikeCount.HasValue)
+                    embed.AddField("Like", detail.CommunityInformation.LikeCount, true);
+            }
+
+            var subtitle = detail.GetExtensionIfNotNull<string>(ArticleExtensionDataId.Subtitle);
+            if (!string.IsNullOrWhiteSpace(subtitle)) embed.AddField("Subtitle", subtitle);
+
+            var wordCount = detail.GetExtensionIfNotNull<int>(ArticleExtensionDataId.WordCount);
+            if (wordCount > 0) embed.AddField("Word Count", wordCount.ToString(), true);
+
+
+            var partition = detail.GetExtensionIfNotNull<string>(ArticleExtensionDataId.Partition);
+            if (!string.IsNullOrWhiteSpace(partition)) embed.AddField("Partition", partition, true);
+
+            var relatedPartitions = detail.GetExtensionIfNotNull<string[]>(ArticleExtensionDataId.RelatedPartitions);
+            if (relatedPartitions is not null && relatedPartitions.Length > 0)
+                embed.AddField("Related Partitions", string.Join(", ", relatedPartitions), true);
+
+            // description
+            if (detail.Identifier.Summary is not null)
+                embed.WithDescription(detail.Identifier.Summary);
+
+            // publish time
+            if (detail.PublishDateTime is not null)
+                embed.WithTimestamp(detail.PublishDateTime.Value);
+
+            embed.WithUrl($"https://www.bilibili.com/read/cv{detail.Identifier.Id}/");
+            return embed;
+        }
+
+        /// <summary>
         ///     Build user info.
         /// </summary>
         /// <param name="detail"></param>
@@ -311,10 +391,27 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
             if (detail.User.Avatar is not null)
                 authorBuilder.WithIconUrl(detail.User.Avatar.SourceUri.ToString());
             embed.WithAuthor(authorBuilder);
-            embed.WithUrl($"https://www.bilibili.com/opus/{detail.Id}");
 
             if (detail.Description is not null && !string.IsNullOrWhiteSpace(detail.Description.Text))
-                embed.WithDescription(detail.Description.Text);
+            {
+                var sb = new StringBuilder(detail.Description.Text);
+                sb.AppendLine();
+                sb.Append($"https://www.bilibili.com/opus/{detail.Id}");
+                embed.WithDescription(sb.ToString());
+            }
+            else
+            {
+                embed.WithDescription($"https://www.bilibili.com/opus/{detail.Id}");
+                embed.WithUrl($"https://www.bilibili.com/opus/{detail.Id}");
+            }
+
+            if (detail.CommunityInformation is not null)
+            {
+                if (detail.CommunityInformation.LikeCount.HasValue)
+                    embed.AddField("Like", detail.CommunityInformation.LikeCount, true);
+                if (detail.CommunityInformation.CommentCount.HasValue)
+                    embed.AddField("Reply", detail.CommunityInformation.CommentCount, true);
+            }
 
             switch (detail.MomentType)
             {
@@ -344,7 +441,7 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
                 }
                 case MomentItemType.Article:
                 {
-                    if (detail.Data is not ArticleInformation)
+                    if (detail.Data is not ArticleInformation articleInformation)
                     {
                         var errorEmbed = new EmbedBuilder();
                         errorEmbed.WithTitle("Moment Type Error");
@@ -354,11 +451,7 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
                         break;
                     }
 
-                    // extraEmbed = BuildArticleInfo(articleInformation);
-                    var extraEmbed = new EmbedBuilder();
-                    extraEmbed.WithTitle("Moment Type Error");
-                    extraEmbed.WithColor(Color.Red);
-                    extraEmbed.WithDescription("Moment type is not supported.");
+                    var extraEmbed = BuildArticleInfo(articleInformation, detail);
                     embeds.Add(extraEmbed);
                     break;
                 }
@@ -374,9 +467,12 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
                         break;
                     }
 
-                    var extraEmbed = new EmbedBuilder();
-                    extraEmbed.WithDescription(string.Join('\n', images.Select(image => image.SourceUri.ToString())));
-                    embeds.Add(extraEmbed);
+                    foreach (var image in images)
+                    {
+                        var extraEmbed = new EmbedBuilder();
+                        extraEmbed.WithImageUrl(image.SourceUri.ToString());
+                        embeds.Add(extraEmbed);
+                    }
                     break;
                 }
                 case MomentItemType.Forward:
