@@ -89,7 +89,8 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
                 }
 
                 config.LastInformation = moments.First().Id;
-                for (var i = index - 1; i >= 0; i--) await SendMomentAsync(messageChannel, moments[i]).ConfigureAwait(false);
+                for (var i = index - 1; i >= 0; i--)
+                    await SendMomentAsync(messageChannel, moments[i]).ConfigureAwait(false);
             }
 
             _logger.LogDebug("Updating database.");
@@ -106,7 +107,8 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
             var embeds = InformationEmbedBuilder.BuildMomentInfo(moment);
             embeds[^1].WithBilibiliLogoIconFooter();
             var text = $"User {moment.User?.Name} has a new moment!";
-            var component = new ComponentBuilder().WithButton("Watch moment", url: $"https://www.bilibili.com/opus/{moment.Id}", style: ButtonStyle.Link);
+            var component = new ComponentBuilder().WithButton("Watch moment",
+                url: $"https://www.bilibili.com/opus/{moment.Id}", style: ButtonStyle.Link);
             await channel.SendFileAsync(BilibiliIconData.GetLogoIconStream(), BilibiliIconData.LogoIconFileName, text,
                 embeds: embeds.Select(x => x.Build()).ToArray(), components: component.Build()).ConfigureAwait(false);
         }

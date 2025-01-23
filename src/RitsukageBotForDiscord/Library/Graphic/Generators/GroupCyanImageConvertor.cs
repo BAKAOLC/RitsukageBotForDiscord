@@ -38,6 +38,7 @@ namespace RitsukageBot.Library.Graphic.Generators
                     var height = image.Width;
                     rect = new(0, (image.Height - height) / 2, image.Width, height);
                 }
+
                 ipc.ProcessPixelRowsAsVector4(row =>
                 {
                     for (var x = 0; x < row.Length; x++)

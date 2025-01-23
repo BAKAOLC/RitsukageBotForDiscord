@@ -13,10 +13,12 @@ namespace RitsukageBot.Modules
     public class BotInformationInteractions : InteractionModuleBase<SocketInteractionContext<SocketSlashCommand>>
     {
         private static readonly string AssemblyName = Assembly.GetExecutingAssembly().GetName().Name ?? string.Empty;
+
         private static readonly string AssemblyAuthor = Assembly.GetExecutingAssembly()
             .GetCustomAttributes(false)
             .OfType<AssemblyCompanyAttribute>()
             .FirstOrDefault()?.Company ?? "Unknown";
+
         private static readonly string AssemblyRepositoryUrl = Assembly.GetExecutingAssembly()
             .GetCustomAttributes(false)
             .OfType<AssemblyMetadataAttribute>()

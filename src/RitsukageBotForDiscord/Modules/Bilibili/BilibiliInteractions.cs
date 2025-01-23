@@ -38,8 +38,8 @@ namespace RitsukageBot.Modules.Bilibili
         /// </summary>
         /// <param name="active"></param>
         [RequireUserPermission(GuildPermission.Administrator
-            | GuildPermission.ManageGuild
-            | GuildPermission.ManageChannels)]
+                               | GuildPermission.ManageGuild
+                               | GuildPermission.ManageChannels)]
         [RequireUserPermission(ChannelPermission.ManageChannels)]
         [SlashCommand("auto-resolve", "Automatically resolve Bilibili links.")]
         public async Task AutoResolveBilibiliLinkAsync(bool active = true)

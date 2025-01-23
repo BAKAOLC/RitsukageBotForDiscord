@@ -106,7 +106,8 @@ namespace RitsukageBot.Modules
             imageStream.Seek(0, SeekOrigin.Begin);
             var component = new ComponentBuilder()
                 .WithButton("Publish", $"{CustomId}:cancel_and_publish", ButtonStyle.Success);
-            await FollowupWithFileAsync(imageStream, "good_news.png", components: component.Build()).ConfigureAwait(false);
+            await FollowupWithFileAsync(imageStream, "good_news.png", components: component.Build())
+                .ConfigureAwait(false);
         }
 
         /// <summary>
@@ -123,7 +124,8 @@ namespace RitsukageBot.Modules
             imageStream.Seek(0, SeekOrigin.Begin);
             var component = new ComponentBuilder()
                 .WithButton("Publish", $"{CustomId}:cancel_and_publish", ButtonStyle.Success);
-            await FollowupWithFileAsync(imageStream, "bad_news.png", components: component.Build()).ConfigureAwait(false);
+            await FollowupWithFileAsync(imageStream, "bad_news.png", components: component.Build())
+                .ConfigureAwait(false);
         }
 
         /// <summary>
@@ -162,6 +164,7 @@ namespace RitsukageBot.Modules
                 await resultImage.SaveAsPngAsync(imageStream).ConfigureAwait(false);
                 fileName = "image.png";
             }
+
             imageStream.Seek(0, SeekOrigin.Begin);
 
             var component = new ComponentBuilder()
@@ -207,6 +210,7 @@ namespace RitsukageBot.Modules
                 await resultImage.SaveAsPngAsync(imageStream).ConfigureAwait(false);
                 fileName = "image.png";
             }
+
             imageStream.Seek(0, SeekOrigin.Begin);
 
             var component = new ComponentBuilder()
@@ -291,6 +295,7 @@ namespace RitsukageBot.Modules
                 Logger.LogError(ex, "Failed to download image");
                 message = ex.Message;
             }
+
             return (success, image, message);
         }
 
@@ -604,7 +609,7 @@ namespace RitsukageBot.Modules
             await Context.Interaction
                 .UpdateAsync(x => x.Attachments = new List<FileAttachment> { new(imageStream, fileName) })
                 .ConfigureAwait(false);
-            await imageStream.DisposeAsync();
+            await imageStream.DisposeAsync().ConfigureAwait(false);
         }
 
         private Task TriggerProcessAsync<T>() where T : IProcessStep<Rgba32>, new()
@@ -643,7 +648,8 @@ namespace RitsukageBot.Modules
         [ComponentInteraction($"{ImageInteractions.CustomId}:cancel_and_publish")]
         public async Task CancelAndPublishAsync()
         {
-            Logger.LogInformation("Image interaction canceled and published for {MessageId}", Context.Interaction.Message.Id);
+            Logger.LogInformation("Image interaction canceled and published for {MessageId}",
+                Context.Interaction.Message.Id);
             var attachment = Context.Interaction.Message.Attachments.FirstOrDefault();
             if (attachment is not null)
             {
@@ -655,6 +661,7 @@ namespace RitsukageBot.Modules
                     .Build();
                 await Context.Channel.SendMessageAsync(embed: embed).ConfigureAwait(false);
             }
+
             await Context.Interaction.UpdateAsync(x => x.Components = null).ConfigureAwait(false);
         }
 
@@ -673,7 +680,8 @@ namespace RitsukageBot.Modules
                 {
                     var index = Array.IndexOf(ImageInteractions.AllowedInteractions, componentInteraction);
                     var page = index / 8 - 1;
-                    await Context.Interaction.UpdateAsync(x => x.Components = ImageInteractions.GetOperationMenus(page).Build())
+                    await Context.Interaction
+                        .UpdateAsync(x => x.Components = ImageInteractions.GetOperationMenus(page).Build())
                         .ConfigureAwait(false);
                 }
             }
@@ -694,7 +702,8 @@ namespace RitsukageBot.Modules
                 {
                     var index = Array.IndexOf(ImageInteractions.AllowedInteractions, componentInteraction);
                     var page = index / 8 + 1;
-                    await Context.Interaction.UpdateAsync(x => x.Components = ImageInteractions.GetOperationMenus(page).Build())
+                    await Context.Interaction
+                        .UpdateAsync(x => x.Components = ImageInteractions.GetOperationMenus(page).Build())
                         .ConfigureAwait(false);
                 }
             }

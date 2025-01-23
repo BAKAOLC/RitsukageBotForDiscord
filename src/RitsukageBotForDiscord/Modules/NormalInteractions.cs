@@ -22,13 +22,15 @@ namespace RitsukageBot.Modules
         public async Task CandyAsync()
         {
             var (userCandy, totalCandy) = await GiveBotACandy(Context.User.Id).ConfigureAwait(false);
-            await RespondAsync($":candy: You've given me {userCandy} candy! | I've received {totalCandy} candy total!").ConfigureAwait(false);
+            await RespondAsync($":candy: You've given me {userCandy} candy! | I've received {totalCandy} candy total!")
+                .ConfigureAwait(false);
         }
 
         private async Task<(long, long)> GiveBotACandy(ulong userId)
         {
             var (_, botRecord) = await DatabaseProvider.GetOrCreateAsync<BotRecordInformation>(0).ConfigureAwait(false);
-            var (_, userConfig) = await DatabaseProvider.GetOrCreateAsync<DiscordUserConfiguration>(userId).ConfigureAwait(false);
+            var (_, userConfig) = await DatabaseProvider.GetOrCreateAsync<DiscordUserConfiguration>(userId)
+                .ConfigureAwait(false);
 
             botRecord.TotalCandyCount++;
             userConfig.CandyCount++;

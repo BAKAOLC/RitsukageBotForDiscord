@@ -257,7 +257,8 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
         /// <param name="detail"></param>
         /// <param name="momentInformation"></param>
         /// <returns></returns>
-        public static EmbedBuilder BuildArticleInfo(ArticleInformation detail, MomentInformation? momentInformation = null)
+        public static EmbedBuilder BuildArticleInfo(ArticleInformation detail,
+            MomentInformation? momentInformation = null)
         {
             var embed = new EmbedBuilder();
             embed.WithTitle(detail.Identifier.Title);
@@ -473,6 +474,7 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
                         extraEmbed.WithImageUrl(image.SourceUri.ToString());
                         embeds.Add(extraEmbed);
                     }
+
                     break;
                 }
                 case MomentItemType.Forward:

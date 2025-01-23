@@ -31,15 +31,18 @@ namespace RitsukageBot.Library.Graphic.Generators
                 var color = image[x, y];
                 chars[y * image.Width + x] = GetColorChar(color);
             }
+
             return chars;
         }
 
-        private static Image<Rgba32> InnerBuildImage(ColorChar[] colorChars, Font font, int widthCharCount, out string charImage)
+        private static Image<Rgba32> InnerBuildImage(ColorChar[] colorChars, Font font, int widthCharCount,
+            out string charImage)
         {
             if (colorChars.Length % widthCharCount != 0)
                 throw new ArgumentException("The widthCharCount is invalid.", nameof(widthCharCount));
 
-            var outputImage = new Image<Rgba32>(widthCharCount * (int)font.Size, colorChars.Length / widthCharCount * (int)font.Size);
+            var outputImage = new Image<Rgba32>(widthCharCount * (int)font.Size,
+                colorChars.Length / widthCharCount * (int)font.Size);
             var charImageBuilder = new StringBuilder();
             for (var y = 0; y < colorChars.Length / widthCharCount; y++)
             {
@@ -63,6 +66,7 @@ namespace RitsukageBot.Library.Graphic.Generators
                     });
                 }
             }
+
             charImage = charImageBuilder.ToString();
             return outputImage;
         }
@@ -93,6 +97,7 @@ namespace RitsukageBot.Library.Graphic.Generators
                 resultImage.Frames.AddFrame(charImage.Frames.RootFrame);
                 charImages[i] = charImageStr;
             }
+
             resultImage.Frames.RemoveFrame(0);
             resultImage.Metadata.GetGifMetadata().RepeatCount = image.Metadata.GetGifMetadata().RepeatCount;
             return resultImage;
@@ -120,6 +125,7 @@ namespace RitsukageBot.Library.Graphic.Generators
                     charImageStr.Append(colorChar.Char);
                 }
             }
+
             return charImageStr.ToString();
         }
 

@@ -16,9 +16,10 @@ namespace RitsukageBot.Library.Utils
         public static Font GetDefaultFont(float size = 24, FontStyle style = FontStyle.Regular)
         {
             var font = (GetFont("Microsoft YaHei", size, style)
-                    ?? GetFont("SimHei", size, style)
-                    ?? GetFont("Arial", size, style))
-                ?? throw new FontFamilyNotFoundException("No default font found, please install Microsoft YaHei, SimHei or Arial.");
+                        ?? GetFont("SimHei", size, style)
+                        ?? GetFont("Arial", size, style))
+                       ?? throw new FontFamilyNotFoundException(
+                           "No default font found, please install Microsoft YaHei, SimHei or Arial.");
             return font;
         }
 

@@ -60,8 +60,10 @@ namespace RitsukageBot.Services.Providers
             catch
             {
                 T result = new();
-                var mapping = await _connection.GetMappingAsync(Orm.GetType(result));
-                var mappingPk = mapping.PK ?? throw new NotSupportedException("Cannot update " + mapping.TableName + ": it has no PK");
+                var mapping = await _connection.GetMappingAsync(Orm.GetType(result)).ConfigureAwait(false);
+                var mappingPk = mapping.PK ??
+                                throw new NotSupportedException("Cannot update " + mapping.TableName +
+                                                                ": it has no PK");
                 mappingPk.SetValue(result, pk);
                 return (false, result);
             }
@@ -77,8 +79,9 @@ namespace RitsukageBot.Services.Providers
         public async Task<int> InsertOrUpdateAsync<T>(T obj) where T : new()
         {
             if (obj == null) return 0;
-            var mapping = await _connection.GetMappingAsync(Orm.GetType(obj));
-            var pk = mapping.PK ?? throw new NotSupportedException("Cannot update " + mapping.TableName + ": it has no PK");
+            var mapping = await _connection.GetMappingAsync(Orm.GetType(obj)).ConfigureAwait(false);
+            var pk = mapping.PK ??
+                     throw new NotSupportedException("Cannot update " + mapping.TableName + ": it has no PK");
             if (await FindAsync<T>(pk.GetValue(obj)).ConfigureAwait(false) != null)
                 return await UpdateAsync(obj).ConfigureAwait(false);
             return await InsertAsync(obj).ConfigureAwait(false);

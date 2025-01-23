@@ -69,7 +69,8 @@ namespace RitsukageBot.Modules
             imageStream.Seek(0, SeekOrigin.Begin);
             image.Dispose();
 
-            await Context.Channel.SendFileAsync(imageStream, fileName, content, components: ImageInteractions.GetOperationMenus(isEphemeral: false).Build(),
+            await Context.Channel.SendFileAsync(imageStream, fileName, content,
+                components: ImageInteractions.GetOperationMenus(isEphemeral: false).Build(),
                 allowedMentions: new()
                 {
                     UserIds = [Context.User.Id],
@@ -124,7 +125,8 @@ namespace RitsukageBot.Modules
 
             var component = new ComponentBuilder()
                 .WithButton("Cancel", $"{ImageInteractions.CustomId}:cancel", ButtonStyle.Danger)
-                .WithButton("Cancel and Publish", $"{ImageInteractions.CustomId}:cancel_and_publish", ButtonStyle.Success);
+                .WithButton("Cancel and Publish", $"{ImageInteractions.CustomId}:cancel_and_publish",
+                    ButtonStyle.Success);
             await Context.Channel.SendFileAsync(imageStream, fileName, content, components: component.Build(),
                 allowedMentions: new()
                 {
@@ -183,7 +185,8 @@ namespace RitsukageBot.Modules
 
             var component = new ComponentBuilder()
                 .WithButton("Cancel", $"{ImageInteractions.CustomId}:cancel", ButtonStyle.Danger)
-                .WithButton("Cancel and Publish", $"{ImageInteractions.CustomId}:cancel_and_publish", ButtonStyle.Success);
+                .WithButton("Cancel and Publish", $"{ImageInteractions.CustomId}:cancel_and_publish",
+                    ButtonStyle.Success);
             await Context.Channel.SendFileAsync(imageStream, fileName, content, components: component.Build(),
                 allowedMentions: new()
                 {
@@ -200,14 +203,17 @@ namespace RitsukageBot.Modules
 
             if (string.IsNullOrWhiteSpace(url))
             {
-                IAttachment? attachment = Context.Message.Attachments.FirstOrDefault(x => x.ContentType.StartsWith("image/"));
+                IAttachment? attachment =
+                    Context.Message.Attachments.FirstOrDefault(x => x.ContentType.StartsWith("image/"));
                 if (attachment is not null)
                 {
                     url = attachment.Url;
                 }
                 else if (Context.Message.ReferencedMessage is not null)
                 {
-                    attachment = Context.Message.ReferencedMessage.Attachments.FirstOrDefault(x => x.ContentType.StartsWith("image/"));
+                    attachment =
+                        Context.Message.ReferencedMessage.Attachments.FirstOrDefault(x =>
+                            x.ContentType.StartsWith("image/"));
                     if (attachment is not null)
                         url = attachment.Url;
                 }
@@ -249,6 +255,7 @@ namespace RitsukageBot.Modules
                 Logger.LogError(ex, "Failed to download image");
                 message = ex.Message;
             }
+
             return (success, image, message);
         }
     }

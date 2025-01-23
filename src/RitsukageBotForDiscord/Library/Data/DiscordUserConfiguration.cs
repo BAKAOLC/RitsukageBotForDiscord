@@ -14,7 +14,7 @@ namespace RitsukageBot.Library.Data
         [PrimaryKey]
         [Column("id")]
         public ulong Id { get; set; }
-        
+
         /// <summary>
         ///     Candy count.
         /// </summary>

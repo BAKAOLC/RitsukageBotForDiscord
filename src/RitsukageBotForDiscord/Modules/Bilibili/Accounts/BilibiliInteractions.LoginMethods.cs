@@ -81,7 +81,7 @@ namespace RitsukageBot.Modules.Bilibili
                     Logger.LogDebug("Generating QR code.");
                     var qrCode = service.GetQrCode() ?? throw new InvalidOperationException("The QR code is null.");
                     var qrCodeImage = service.GetQrCodeImage() ??
-                        throw new InvalidOperationException("The QR code image is null.");
+                                      throw new InvalidOperationException("The QR code image is null.");
                     var embed = new EmbedBuilder();
                     embed.WithColor(Color.Orange);
                     embed.WithTitle("Bilibili Login");
