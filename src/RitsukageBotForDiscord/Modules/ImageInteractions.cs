@@ -8,6 +8,7 @@ using RitsukageBot.Library.Graphic.Processing;
 using RitsukageBot.Services.Providers;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using Color = Discord.Color;
 
 namespace RitsukageBot.Modules
 {
@@ -62,8 +63,12 @@ namespace RitsukageBot.Modules
 
             if (!success || image is null)
             {
-                await FollowupAsync(string.IsNullOrEmpty(message) ? "Failed to download image" : message)
-                    .ConfigureAwait(false);
+                var errorEmbed = new EmbedBuilder()
+                    .WithTitle("Error")
+                    .WithDescription(message ?? "Failed to download image")
+                    .WithColor(Color.Red)
+                    .Build();
+                await FollowupAsync(embed: errorEmbed).ConfigureAwait(false);
                 return;
             }
 
@@ -134,8 +139,12 @@ namespace RitsukageBot.Modules
 
             if (!success || image is null)
             {
-                await FollowupAsync(string.IsNullOrEmpty(message) ? "Failed to download image" : message)
-                    .ConfigureAwait(false);
+                var errorEmbed = new EmbedBuilder()
+                    .WithTitle("Error")
+                    .WithDescription(message ?? "Failed to download image")
+                    .WithColor(Color.Red)
+                    .Build();
+                await FollowupAsync(embed: errorEmbed).ConfigureAwait(false);
                 return;
             }
 
@@ -175,8 +184,12 @@ namespace RitsukageBot.Modules
 
             if (!success || image is null)
             {
-                await FollowupAsync(string.IsNullOrEmpty(message) ? "Failed to download image" : message)
-                    .ConfigureAwait(false);
+                var errorEmbed = new EmbedBuilder()
+                    .WithTitle("Error")
+                    .WithDescription(message ?? "Failed to download image")
+                    .WithColor(Color.Red)
+                    .Build();
+                await FollowupAsync(embed: errorEmbed).ConfigureAwait(false);
                 return;
             }
 
@@ -215,8 +228,12 @@ namespace RitsukageBot.Modules
 
             if (!success || image is null)
             {
-                await FollowupAsync(string.IsNullOrEmpty(message) ? "Failed to download image" : message)
-                    .ConfigureAwait(false);
+                var errorEmbed = new EmbedBuilder()
+                    .WithTitle("Error")
+                    .WithDescription(message ?? "Failed to download image")
+                    .WithColor(Color.Red)
+                    .Build();
+                await FollowupAsync(embed: errorEmbed).ConfigureAwait(false);
                 return;
             }
 
@@ -225,7 +242,12 @@ namespace RitsukageBot.Modules
 
             if (resultImageStr.Length > 1992)
             {
-                await FollowupAsync("Result image is too large to send").ConfigureAwait(false);
+                var errorEmbed = new EmbedBuilder()
+                    .WithTitle("Error")
+                    .WithDescription("Result image is too large to send")
+                    .WithColor(Color.Red)
+                    .Build();
+                await FollowupAsync(embed: errorEmbed).ConfigureAwait(false);
                 return;
             }
 
@@ -610,7 +632,7 @@ namespace RitsukageBot.Modules
         public Task CancelAsync()
         {
             Logger.LogInformation("Image interaction canceled for {MessageId}", Context.Interaction.Message.Id);
-            return Context.Interaction.UpdateAsync(x => x.Components = null);
+            return (Context.Interaction.Message.Flags & MessageFlags.Ephemeral) == MessageFlags.Ephemeral ? Context.Interaction.UpdateAsync(x => x.Components = null) : DeleteOriginalResponseAsync();
         }
 
         /// <summary>
@@ -621,7 +643,10 @@ namespace RitsukageBot.Modules
         {
             Logger.LogInformation("Image interaction canceled and published for {MessageId}", Context.Interaction.Message.Id);
             var attachment = Context.Interaction.Message.Attachments.FirstOrDefault();
-            await Context.Interaction.UpdateAsync(x => x.Components = null).ConfigureAwait(false);
+            if ((Context.Interaction.Message.Flags & MessageFlags.Ephemeral) == MessageFlags.Ephemeral)
+                await Context.Interaction.UpdateAsync(x => x.Components = null).ConfigureAwait(false);
+            else
+                await DeleteOriginalResponseAsync().ConfigureAwait(false);
             if (attachment is not null)
             {
                 var embed = new EmbedBuilder()
@@ -649,7 +674,7 @@ namespace RitsukageBot.Modules
                 {
                     var index = Array.IndexOf(ImageInteractions.AllowedInteractions, componentInteraction);
                     var page = index / 8 - 1;
-                    await FollowupAsync(components: ImageInteractions.GetOperationMenus(page).Build())
+                    await Context.Interaction.UpdateAsync(x => x.Components = ImageInteractions.GetOperationMenus(page).Build())
                         .ConfigureAwait(false);
                 }
             }
@@ -670,7 +695,7 @@ namespace RitsukageBot.Modules
                 {
                     var index = Array.IndexOf(ImageInteractions.AllowedInteractions, componentInteraction);
                     var page = index / 8 + 1;
-                    await FollowupAsync(components: ImageInteractions.GetOperationMenus(page).Build())
+                    await Context.Interaction.UpdateAsync(x => x.Components = ImageInteractions.GetOperationMenus(page).Build())
                         .ConfigureAwait(false);
                 }
             }
