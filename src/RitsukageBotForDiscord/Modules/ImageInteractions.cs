@@ -298,8 +298,9 @@ namespace RitsukageBot.Modules
         ///     Get operation menus
         /// </summary>
         /// <param name="page"></param>
+        /// <param name="isEphemeral"></param>
         /// <returns></returns>
-        public static ComponentBuilder GetOperationMenus(int page = 0)
+        public static ComponentBuilder GetOperationMenus(int page = 0, bool isEphemeral = true)
         {
             var builder = new ComponentBuilder();
             var interactions = AllowedInteractions.Skip(page * 8).Take(8).ToArray();
@@ -335,7 +336,8 @@ namespace RitsukageBot.Modules
             if (hasNextPage) operationRow.WithButton(NextPageInteraction.AsButtonBuilder());
 
             operationRow.WithButton(CancelInteraction.AsButtonBuilder());
-            operationRow.WithButton(CancelAndPublishInteraction.AsButtonBuilder());
+            if (isEphemeral) operationRow.WithButton(CancelAndPublishInteraction.AsButtonBuilder());
+
             builder.AddRow(operationRow);
 
             return builder;
@@ -632,7 +634,7 @@ namespace RitsukageBot.Modules
         public Task CancelAsync()
         {
             Logger.LogInformation("Image interaction canceled for {MessageId}", Context.Interaction.Message.Id);
-            return (Context.Interaction.Message.Flags & MessageFlags.Ephemeral) == MessageFlags.Ephemeral ? Context.Interaction.UpdateAsync(x => x.Components = null) : DeleteOriginalResponseAsync();
+            return Context.Interaction.UpdateAsync(x => x.Components = null);
         }
 
         /// <summary>
@@ -643,10 +645,6 @@ namespace RitsukageBot.Modules
         {
             Logger.LogInformation("Image interaction canceled and published for {MessageId}", Context.Interaction.Message.Id);
             var attachment = Context.Interaction.Message.Attachments.FirstOrDefault();
-            if ((Context.Interaction.Message.Flags & MessageFlags.Ephemeral) == MessageFlags.Ephemeral)
-                await Context.Interaction.UpdateAsync(x => x.Components = null).ConfigureAwait(false);
-            else
-                await DeleteOriginalResponseAsync().ConfigureAwait(false);
             if (attachment is not null)
             {
                 var embed = new EmbedBuilder()
@@ -657,6 +655,7 @@ namespace RitsukageBot.Modules
                     .Build();
                 await Context.Channel.SendMessageAsync(embed: embed).ConfigureAwait(false);
             }
+            await Context.Interaction.UpdateAsync(x => x.Components = null).ConfigureAwait(false);
         }
 
         /// <summary>

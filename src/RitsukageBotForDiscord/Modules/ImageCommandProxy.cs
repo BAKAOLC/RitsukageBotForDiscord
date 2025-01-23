@@ -49,6 +49,7 @@ namespace RitsukageBot.Modules
                 {
                     UserIds = [Context.User.Id],
                 }).ConfigureAwait(false);
+                await Context.Message.DeleteAsync().ConfigureAwait(false);
                 return;
             }
 
@@ -68,12 +69,12 @@ namespace RitsukageBot.Modules
             imageStream.Seek(0, SeekOrigin.Begin);
             image.Dispose();
 
-            await Context.Message.DeleteAsync().ConfigureAwait(false);
-            await Context.Channel.SendFileAsync(imageStream, fileName, content, components: ImageInteractions.GetOperationMenus().Build(),
+            await Context.Channel.SendFileAsync(imageStream, fileName, content, components: ImageInteractions.GetOperationMenus(isEphemeral: false).Build(),
                 allowedMentions: new()
                 {
                     UserIds = [Context.User.Id],
                 }).ConfigureAwait(false);
+            await Context.Message.DeleteAsync().ConfigureAwait(false);
         }
 
         /// <summary>
@@ -99,6 +100,7 @@ namespace RitsukageBot.Modules
                 {
                     UserIds = [Context.User.Id],
                 }).ConfigureAwait(false);
+                await Context.Message.DeleteAsync().ConfigureAwait(false);
                 return;
             }
 
@@ -120,7 +122,6 @@ namespace RitsukageBot.Modules
             imageStream.Seek(0, SeekOrigin.Begin);
             image.Dispose();
 
-            await Context.Message.DeleteAsync().ConfigureAwait(false);
             var component = new ComponentBuilder()
                 .WithButton("Cancel", $"{ImageInteractions.CustomId}:cancel", ButtonStyle.Danger)
                 .WithButton("Cancel and Publish", $"{ImageInteractions.CustomId}:cancel_and_publish", ButtonStyle.Success);
@@ -129,6 +130,7 @@ namespace RitsukageBot.Modules
                 {
                     UserIds = [Context.User.Id],
                 }).ConfigureAwait(false);
+            await Context.Message.DeleteAsync().ConfigureAwait(false);
         }
 
         /// <summary>
@@ -157,6 +159,7 @@ namespace RitsukageBot.Modules
                 {
                     UserIds = [Context.User.Id],
                 }).ConfigureAwait(false);
+                await Context.Message.DeleteAsync().ConfigureAwait(false);
                 return;
             }
 
@@ -178,7 +181,6 @@ namespace RitsukageBot.Modules
             imageStream.Seek(0, SeekOrigin.Begin);
             image.Dispose();
 
-            await Context.Message.DeleteAsync().ConfigureAwait(false);
             var component = new ComponentBuilder()
                 .WithButton("Cancel", $"{ImageInteractions.CustomId}:cancel", ButtonStyle.Danger)
                 .WithButton("Cancel and Publish", $"{ImageInteractions.CustomId}:cancel_and_publish", ButtonStyle.Success);
@@ -187,6 +189,7 @@ namespace RitsukageBot.Modules
                 {
                     UserIds = [Context.User.Id],
                 }).ConfigureAwait(false);
+            await Context.Message.DeleteAsync().ConfigureAwait(false);
         }
 
         private async Task<(bool, Image<Rgba32>?, string?)> GetImageAsync(string? url)
