@@ -1,7 +1,7 @@
-using CacheTower;
 using Microsoft.Extensions.Logging;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using ZiggyCreatures.Caching.Fusion;
 
 namespace RitsukageBot.Services.Providers
 {
@@ -13,7 +13,7 @@ namespace RitsukageBot.Services.Providers
     /// <param name="httpClientFactory"></param>
     public class ImageCacheProviderService(
         ILogger<ImageCacheProviderService> logger,
-        ICacheStack cacheProvider,
+        IFusionCache cacheProvider,
         IHttpClientFactory httpClientFactory)
     {
         /// <summary>
@@ -31,23 +31,17 @@ namespace RitsukageBot.Services.Providers
         public async Task<Image<Rgba32>> GetImageAsync(string url, string tag = "default", TimeSpan cacheTime = default)
         {
             var cacheKey = $"{CacheKey}:{tag}:{url}";
-            var imageCache = await cacheProvider.GetAsync<byte[]>(cacheKey).ConfigureAwait(false);
-            if (imageCache?.Value is { Length: > 0 })
+            var imageBytes = await cacheProvider.GetOrSetAsync(cacheKey, async cancellationToken =>
             {
-                logger.LogDebug("Found image cache for {url}", url);
-                using var memoryStream = new MemoryStream(imageCache.Value);
-                return await Image.LoadAsync<Rgba32>(memoryStream).ConfigureAwait(false);
-            }
+                logger.LogDebug("Downloading image from {url}", url);
+                var httpClient = httpClientFactory.CreateClient();
+                await using var stream = await httpClient.GetStreamAsync(url, cancellationToken).ConfigureAwait(false);
+                using var cacheStream = new MemoryStream();
+                await stream.CopyToAsync(cacheStream, cancellationToken).ConfigureAwait(false);
+                return cacheStream.ToArray();
+            }, cacheTime == TimeSpan.Zero ? TimeSpan.FromDays(1) : cacheTime).ConfigureAwait(false);
 
-            logger.LogDebug("Downloading image from {url}", url);
-            var httpClient = httpClientFactory.CreateClient();
-            await using var stream = await httpClient.GetStreamAsync(url).ConfigureAwait(false);
-            using var cacheStream = new MemoryStream();
-            await stream.CopyToAsync(cacheStream).ConfigureAwait(false);
-            await cacheProvider.SetAsync(cacheKey, cacheStream.ToArray(),
-                cacheTime == TimeSpan.Zero ? TimeSpan.FromDays(1) : cacheTime).ConfigureAwait(false);
-            logger.LogDebug("Saved image cache for {url}", url);
-            cacheStream.Seek(0, SeekOrigin.Begin);
+            var cacheStream = new MemoryStream(imageBytes);
             return await Image.LoadAsync<Rgba32>(cacheStream).ConfigureAwait(false);
         }
     }

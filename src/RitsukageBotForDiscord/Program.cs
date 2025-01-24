@@ -1,5 +1,4 @@
 ﻿using System.Reflection;
-using CacheTower.Serializers.NewtonsoftJson;
 using Discord;
 using Discord.Commands;
 using Discord.Interactions;
@@ -11,9 +10,10 @@ using Microsoft.Extensions.Logging;
 using NLog.Extensions.Logging;
 using RitsukageBot.Library.Networking;
 using RitsukageBot.Library.Utils;
-using RitsukageBot.Options;
 using RitsukageBot.Services.HostedServices;
 using RitsukageBot.Services.Providers;
+using ZiggyCreatures.Caching.Fusion;
+using ZiggyCreatures.Caching.Fusion.Serialization.NewtonsoftJson;
 using RunMode = Discord.Commands.RunMode;
 
 Console.Title = "Ritsukage Bot";
@@ -35,28 +35,32 @@ using var host = Host.CreateDefaultBuilder()
         services.AddOptions();
         services.AddHttpClient().ConfigureHttpClientDefaults(x =>
             x.ConfigureHttpClient(y => y.DefaultRequestHeaders.Add("User-Agent", UserAgent.Default)));
-        services.AddCacheStack(builder =>
-        {
-            var provider = context.Configuration.GetSection("Cache").Get<CacheOption>();
-            if (provider is null || provider.CacheProvider.Length == 0)
-                throw new InvalidOperationException("Cache provider is not set.");
-
-            foreach (var cacheLayerOption in provider.CacheProvider)
-                switch (cacheLayerOption.Type.ToLower())
-                {
-                    case "memory":
-                        builder.AddMemoryCacheLayer();
-                        break;
-                    case "file":
-                        builder.AddFileCacheLayer(new(cacheLayerOption.Path, new NewtonsoftJsonCacheSerializer(new()),
-                            TimeSpan.FromMilliseconds(cacheLayerOption.SaveInterval)));
-                        break;
-                    default:
-                        throw new InvalidOperationException($"Unknown cache provider: {cacheLayerOption.Type}");
-                }
-
-            builder.WithCleanupFrequency(TimeSpan.FromMilliseconds(provider.CleanUpFrequency));
-        });
+        services.AddFusionCache()
+            .WithOptions(options =>
+            {
+                options.DistributedCacheCircuitBreakerDuration = TimeSpan.FromSeconds(5);
+                options.FailSafeActivationLogLevel = LogLevel.Debug;
+                options.SerializationErrorsLogLevel = LogLevel.Warning;
+                options.DistributedCacheSyntheticTimeoutsLogLevel = LogLevel.Debug;
+                options.DistributedCacheErrorsLogLevel = LogLevel.Error;
+                options.FactorySyntheticTimeoutsLogLevel = LogLevel.Debug;
+                options.FactoryErrorsLogLevel = LogLevel.Error;
+                
+            })
+            .WithDefaultEntryOptions(new FusionCacheEntryOptions
+            {
+                Duration = TimeSpan.FromMinutes(5),
+                IsFailSafeEnabled = true,
+                FailSafeMaxDuration = TimeSpan.FromHours(2),
+                FailSafeThrottleDuration = TimeSpan.FromSeconds(30),
+                FactorySoftTimeout = TimeSpan.FromMilliseconds(100),
+                FactoryHardTimeout = TimeSpan.FromMilliseconds(1500),
+                DistributedCacheSoftTimeout = TimeSpan.FromSeconds(1),
+                DistributedCacheHardTimeout = TimeSpan.FromSeconds(5),
+                AllowBackgroundDistributedCacheOperations = true,
+                JitterMaxDuration = TimeSpan.FromSeconds(5),
+            })
+            .WithSerializer(new FusionCacheNewtonsoftJsonSerializer());
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(Assembly.GetExecutingAssembly()));
         services.AddSingleton<DatabaseProviderService>();
         services.AddSingleton<GitHubClientProviderService>();
