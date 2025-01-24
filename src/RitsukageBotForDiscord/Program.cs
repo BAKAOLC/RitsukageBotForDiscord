@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using NeoSmart.Caching.Sqlite;
 using NLog.Extensions.Logging;
 using RitsukageBot.Library.Networking;
 using RitsukageBot.Library.Utils;
@@ -35,8 +36,9 @@ using var host = Host.CreateDefaultBuilder()
         services.AddOptions();
         services.AddHttpClient().ConfigureHttpClientDefaults(x =>
             x.ConfigureHttpClient(y => y.DefaultRequestHeaders.Add("User-Agent", UserAgent.Default)));
-        services.AddFusionCache()
-            .WithOptions(options =>
+        {
+            var fusionCache = services.AddFusionCache();
+            fusionCache.WithOptions(options =>
             {
                 options.DistributedCacheCircuitBreakerDuration = TimeSpan.FromSeconds(5);
                 options.FailSafeActivationLogLevel = LogLevel.Debug;
@@ -45,9 +47,8 @@ using var host = Host.CreateDefaultBuilder()
                 options.DistributedCacheErrorsLogLevel = LogLevel.Error;
                 options.FactorySyntheticTimeoutsLogLevel = LogLevel.Debug;
                 options.FactoryErrorsLogLevel = LogLevel.Error;
-                
-            })
-            .WithDefaultEntryOptions(new FusionCacheEntryOptions
+            });
+            fusionCache.WithDefaultEntryOptions(new FusionCacheEntryOptions
             {
                 Duration = TimeSpan.FromMinutes(5),
                 IsFailSafeEnabled = true,
@@ -59,8 +60,12 @@ using var host = Host.CreateDefaultBuilder()
                 DistributedCacheHardTimeout = TimeSpan.FromSeconds(5),
                 AllowBackgroundDistributedCacheOperations = true,
                 JitterMaxDuration = TimeSpan.FromSeconds(5),
-            })
-            .WithSerializer(new FusionCacheNewtonsoftJsonSerializer());
+            });
+            fusionCache.WithSerializer(new FusionCacheNewtonsoftJsonSerializer());
+            var cachePath = context.Configuration.GetValue<string>("Cache");
+            if (!string.IsNullOrWhiteSpace(cachePath))
+                fusionCache.WithDistributedCache(new SqliteCache(new() { CachePath = cachePath }));
+        }
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(Assembly.GetExecutingAssembly()));
         services.AddSingleton<DatabaseProviderService>();
         services.AddSingleton<GitHubClientProviderService>();

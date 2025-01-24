@@ -85,6 +85,7 @@
 		<PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Options" Version="9.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="9.0.1" />
+		<PackageReference Include="NeoSmart.Caching.Sqlite" Version="9.0.0" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 		<PackageReference Include="NLog" Version="5.3.4" />
 		<PackageReference Include="NLog.Extensions.Logging" Version="5.3.15" />
