@@ -31,15 +31,20 @@ namespace RitsukageBot.Services.Providers
         public async Task<Image<Rgba32>> GetImageAsync(string url, string tag = "default", TimeSpan cacheTime = default)
         {
             var cacheKey = $"{CacheKey}:{tag}:{url}";
-            var imageBytes = await cacheProvider.GetOrSetAsync(cacheKey, async cancellationToken =>
+            var imageBytes = await cacheProvider.GetOrSetAsync<byte[]>(cacheKey, async cancellationToken =>
             {
-                logger.LogDebug("Downloading image from {url}", url);
+                logger.LogDebug("Downloading image from {Url}", url);
                 var httpClient = httpClientFactory.CreateClient();
                 await using var stream = await httpClient.GetStreamAsync(url, cancellationToken).ConfigureAwait(false);
                 using var cacheStream = new MemoryStream();
                 await stream.CopyToAsync(cacheStream, cancellationToken).ConfigureAwait(false);
                 return cacheStream.ToArray();
-            }, cacheTime == TimeSpan.Zero ? TimeSpan.FromDays(1) : cacheTime).ConfigureAwait(false);
+            }, options =>
+            {
+                options.FactorySoftTimeout = TimeSpan.FromSeconds(5);
+                options.FactorySoftTimeout = TimeSpan.FromSeconds(20);
+                options.Duration = cacheTime == TimeSpan.Zero ? TimeSpan.FromDays(1) : cacheTime;
+            }).ConfigureAwait(false);
 
             var cacheStream = new MemoryStream(imageBytes);
             return await Image.LoadAsync<Rgba32>(cacheStream).ConfigureAwait(false);

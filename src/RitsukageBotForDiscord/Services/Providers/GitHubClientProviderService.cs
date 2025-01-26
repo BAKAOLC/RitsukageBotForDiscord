@@ -197,7 +197,7 @@ namespace RitsukageBot.Services.Providers
         ///     Set credentials.
         /// </summary>
         /// <param name="token"></param>
-        public async Task SetCredentials(string token)
+        public async Task SetCredentialsAsync(string token)
         {
             Credentials = new(token);
             var account = new GitHubAccountConfiguration

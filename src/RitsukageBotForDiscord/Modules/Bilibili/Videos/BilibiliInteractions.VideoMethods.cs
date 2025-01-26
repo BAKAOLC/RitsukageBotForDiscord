@@ -78,7 +78,7 @@ namespace RitsukageBot.Modules.Bilibili
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError(ex, "Failed to get video information.");
+                    Logger.LogError(ex, "Failed to get video information");
                     await FollowupAsync(embed: new EmbedBuilder().WithColor(Color.Red).WithTitle("Error")
                             .WithDescription("Failed to get video information: " + ex.Message).Build())
                         .ConfigureAwait(false);

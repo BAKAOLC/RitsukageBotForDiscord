@@ -21,12 +21,12 @@ namespace RitsukageBot.Modules
         [SlashCommand("candy", "Give bot a candy")]
         public async Task CandyAsync()
         {
-            var (userCandy, totalCandy) = await GiveBotACandy(Context.User.Id).ConfigureAwait(false);
+            var (userCandy, totalCandy) = await GiveBotACandyAsync(Context.User.Id).ConfigureAwait(false);
             await RespondAsync($":candy: You've given me {userCandy} candy! | I've received {totalCandy} candy total!")
                 .ConfigureAwait(false);
         }
 
-        private async Task<(long, long)> GiveBotACandy(ulong userId)
+        private async Task<(long, long)> GiveBotACandyAsync(ulong userId)
         {
             var (_, botRecord) = await DatabaseProvider.GetOrCreateAsync<BotRecordInformation>(0).ConfigureAwait(false);
             var (_, userConfig) = await DatabaseProvider.GetOrCreateAsync<DiscordUserConfiguration>(userId)

@@ -60,7 +60,7 @@ namespace RitsukageBot.Modules.Bilibili
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError(ex, "Failed to get live information.");
+                    Logger.LogError(ex, "Failed to get live information");
                     var errorEmbed = new EmbedBuilder()
                         .WithColor(Color.Red)
                         .WithTitle("Error")
@@ -173,7 +173,7 @@ namespace RitsukageBot.Modules.Bilibili
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError(ex, "Failed to get live information.");
+                    Logger.LogError(ex, "Failed to get live information");
                     var errorEmbed = new EmbedBuilder()
                         .WithColor(Color.Red)
                         .WithTitle("Error")
@@ -253,7 +253,7 @@ namespace RitsukageBot.Modules.Bilibili
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError(ex, "Failed to get live information.");
+                    Logger.LogError(ex, "Failed to get live information");
                     var errorEmbed = new EmbedBuilder()
                         .WithColor(Color.Red)
                         .WithTitle("Error")

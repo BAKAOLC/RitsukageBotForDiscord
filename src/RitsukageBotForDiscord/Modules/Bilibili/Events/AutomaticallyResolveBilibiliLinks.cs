@@ -38,7 +38,7 @@ namespace RitsukageBot.Modules.Bilibili.Events
             var config = await GetConfigAsync(databaseProviderService, channelId).ConfigureAwait(false);
             if (config is null) return;
 
-            var keyIds = await ResolveKeyId(message.Content).ConfigureAwait(false);
+            var keyIds = await ResolveKeyIdAsync(message.Content).ConfigureAwait(false);
             if (keyIds.Length == 0) return;
 
             var footerBuilder = new EmbedFooterBuilder();
@@ -111,7 +111,7 @@ namespace RitsukageBot.Modules.Bilibili.Events
             return null;
         }
 
-        private static async Task<KeyId[]> ResolveKeyId(string content)
+        private static async Task<KeyId[]> ResolveKeyIdAsync(string content)
         {
             HashSet<KeyId> keyIds = [];
             var firstMatch = MatchKeyId(content);

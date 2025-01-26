@@ -8,20 +8,20 @@ namespace RitsukageBot.Services.HostedServices
         public Task StartAsync(CancellationToken cancellationToken)
         {
             AppDomain.CurrentDomain.UnhandledException += LogUnhandledException;
-            logger.LogInformation("Unhandled exception handler started.");
+            logger.LogInformation("Unhandled exception handler started");
             return Task.CompletedTask;
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
             AppDomain.CurrentDomain.UnhandledException -= LogUnhandledException;
-            logger.LogInformation("Unhandled exception handler stopped.");
+            logger.LogInformation("Unhandled exception handler stopped");
             return Task.CompletedTask;
         }
 
         private void LogUnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            logger.LogError((Exception)e.ExceptionObject, "Unhandled exception occurred.");
+            logger.LogError((Exception)e.ExceptionObject, "Unhandled exception occurred");
         }
     }
 }

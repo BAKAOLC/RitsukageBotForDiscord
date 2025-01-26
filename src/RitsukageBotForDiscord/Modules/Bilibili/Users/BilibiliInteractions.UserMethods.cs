@@ -55,7 +55,7 @@ namespace RitsukageBot.Modules.Bilibili
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError(ex, "Failed to get user information.");
+                    Logger.LogError(ex, "Failed to get user information");
                     var errorEmbed = new EmbedBuilder()
                         .WithColor(Color.Red)
                         .WithTitle("Error")

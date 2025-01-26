@@ -14,17 +14,17 @@ namespace RitsukageBot.Library.Modules
 
         public Task InitAsync()
         {
-            _client.AuditLogCreated += ClientOnAuditLogCreated;
-            _client.GuildJoinRequestDeleted += ClientOnGuildJoinRequestDeleted;
-            _client.JoinedGuild += ClientOnJoinedGuild;
-            _client.MessageReceived += ClientOnMessageReceived;
-            _client.MessageDeleted += ClientOnMessageDeleted;
-            _client.MessageUpdated += ClientOnMessageUpdated;
-            _client.MessagesBulkDeleted += ClientOnMessagesBulkDeleted;
-            _client.UserBanned += ClientOnUserBanned;
-            _client.UserJoined += ClientOnUserJoined;
-            _client.UserLeft += ClientOnUserLeft;
-            _client.UserUnbanned += ClientOnUserUnbanned;
+            _client.AuditLogCreated += ClientOnAuditLogCreatedAsync;
+            _client.GuildJoinRequestDeleted += ClientOnGuildJoinRequestDeletedAsync;
+            _client.JoinedGuild += ClientOnJoinedGuildAsync;
+            _client.MessageReceived += ClientOnMessageReceivedAsync;
+            _client.MessageDeleted += ClientOnMessageDeletedAsync;
+            _client.MessageUpdated += ClientOnMessageUpdatedAsync;
+            _client.MessagesBulkDeleted += ClientOnMessagesBulkDeletedAsync;
+            _client.UserBanned += ClientOnUserBannedAsync;
+            _client.UserJoined += ClientOnUserJoinedAsync;
+            _client.UserLeft += ClientOnUserLeftAsync;
+            _client.UserUnbanned += ClientOnUserUnbannedAsync;
             return Task.CompletedTask;
         }
 
@@ -47,7 +47,7 @@ namespace RitsukageBot.Library.Modules
             GC.SuppressFinalize(this);
         }
 
-        private Task ClientOnAuditLogCreated(SocketAuditLogEntry arg1, SocketGuild arg2)
+        private Task ClientOnAuditLogCreatedAsync(SocketAuditLogEntry arg1, SocketGuild arg2)
         {
             _logger.LogInformation(
                 "Guild {Guild}({GuildId}) created an audit log. (User: {User}({UserId}), Action: {Action}, Reason: {Reason})",
@@ -55,7 +55,7 @@ namespace RitsukageBot.Library.Modules
             return Task.CompletedTask;
         }
 
-        private Task ClientOnGuildJoinRequestDeleted(Cacheable<SocketGuildUser, ulong> arg1, SocketGuild arg2)
+        private Task ClientOnGuildJoinRequestDeletedAsync(Cacheable<SocketGuildUser, ulong> arg1, SocketGuild arg2)
         {
             if (arg1.HasValue)
                 _logger.LogInformation("Guild {Guild}({GuildId} deleted a join request. (User: {User}({UserId})", arg2,
@@ -66,13 +66,13 @@ namespace RitsukageBot.Library.Modules
             return Task.CompletedTask;
         }
 
-        private Task ClientOnJoinedGuild(SocketGuild arg)
+        private Task ClientOnJoinedGuildAsync(SocketGuild arg)
         {
-            _logger.LogInformation("Joined guild {Guild}({GuildId}).", arg, arg.Id);
+            _logger.LogInformation("Joined guild {Guild}({GuildId})", arg, arg.Id);
             return Task.CompletedTask;
         }
 
-        private Task ClientOnMessageReceived(SocketMessage arg)
+        private Task ClientOnMessageReceivedAsync(SocketMessage arg)
         {
             var headTag = arg.Author.Id == _client.CurrentUser.Id ? "Message-Sent" : "Message-Received";
             if (arg.Channel is SocketGuildChannel guildChannel)
@@ -86,7 +86,7 @@ namespace RitsukageBot.Library.Modules
             return Task.CompletedTask;
         }
 
-        private Task ClientOnMessageUpdated(Cacheable<IMessage, ulong> arg1, SocketMessage arg2,
+        private Task ClientOnMessageUpdatedAsync(Cacheable<IMessage, ulong> arg1, SocketMessage arg2,
             ISocketMessageChannel arg3)
         {
             if (arg3 is SocketGuildChannel guildChannel)
@@ -117,7 +117,7 @@ namespace RitsukageBot.Library.Modules
             return Task.CompletedTask;
         }
 
-        private Task ClientOnMessageDeleted(Cacheable<IMessage, ulong> arg1, Cacheable<IMessageChannel, ulong> arg2)
+        private Task ClientOnMessageDeletedAsync(Cacheable<IMessage, ulong> arg1, Cacheable<IMessageChannel, ulong> arg2)
         {
             if (arg2.Value is SocketGuildChannel guildChannel)
             {
@@ -143,37 +143,37 @@ namespace RitsukageBot.Library.Modules
             return Task.CompletedTask;
         }
 
-        private async Task ClientOnMessagesBulkDeleted(IReadOnlyCollection<Cacheable<IMessage, ulong>> arg1,
+        private async Task ClientOnMessagesBulkDeletedAsync(IReadOnlyCollection<Cacheable<IMessage, ulong>> arg1,
             Cacheable<IMessageChannel, ulong> arg2)
         {
             foreach (var message in arg1)
-                await ClientOnMessageDeleted(message, arg2).ConfigureAwait(false);
+                await ClientOnMessageDeletedAsync(message, arg2).ConfigureAwait(false);
         }
 
-        private Task ClientOnUserBanned(SocketUser arg1, SocketGuild arg2)
+        private Task ClientOnUserBannedAsync(SocketUser arg1, SocketGuild arg2)
         {
-            _logger.LogInformation("User {User}({UserId}) banned from guild {Guild}({GuildId}).", arg1, arg1.Id, arg2,
+            _logger.LogInformation("User {User}({UserId}) banned from guild {Guild}({GuildId})", arg1, arg1.Id, arg2,
                 arg2.Id);
             return Task.CompletedTask;
         }
 
-        private Task ClientOnUserJoined(SocketGuildUser arg)
+        private Task ClientOnUserJoinedAsync(SocketGuildUser arg)
         {
-            _logger.LogInformation("User {User}({UserId}) joined guild {Guild}({GuildId}).", arg, arg.Id, arg.Guild,
+            _logger.LogInformation("User {User}({UserId}) joined guild {Guild}({GuildId})", arg, arg.Id, arg.Guild,
                 arg.Guild.Id);
             return Task.CompletedTask;
         }
 
-        private Task ClientOnUserLeft(SocketGuild arg1, SocketUser arg2)
+        private Task ClientOnUserLeftAsync(SocketGuild arg1, SocketUser arg2)
         {
-            _logger.LogInformation("User {User}({UserId}) left guild {Guild}({GuildId}).", arg2, arg2.Id, arg1,
+            _logger.LogInformation("User {User}({UserId}) left guild {Guild}({GuildId})", arg2, arg2.Id, arg1,
                 arg1.Id);
             return Task.CompletedTask;
         }
 
-        private Task ClientOnUserUnbanned(SocketUser arg1, SocketGuild arg2)
+        private Task ClientOnUserUnbannedAsync(SocketUser arg1, SocketGuild arg2)
         {
-            _logger.LogInformation("User {User}({UserId}) unbanned from guild {Guild}({GuildId}).", arg1, arg1.Id, arg2,
+            _logger.LogInformation("User {User}({UserId}) unbanned from guild {Guild}({GuildId})", arg1, arg1.Id, arg2,
                 arg2.Id);
             return Task.CompletedTask;
         }
@@ -186,32 +186,32 @@ namespace RitsukageBot.Library.Modules
         private void Dispose(bool disposing)
         {
             if (!disposing) return;
-            _client.AuditLogCreated -= ClientOnAuditLogCreated;
-            _client.GuildJoinRequestDeleted -= ClientOnGuildJoinRequestDeleted;
-            _client.JoinedGuild -= ClientOnJoinedGuild;
-            _client.MessageReceived -= ClientOnMessageReceived;
-            _client.MessageDeleted -= ClientOnMessageDeleted;
-            _client.MessageUpdated -= ClientOnMessageUpdated;
-            _client.MessagesBulkDeleted -= ClientOnMessagesBulkDeleted;
-            _client.UserBanned -= ClientOnUserBanned;
-            _client.UserJoined -= ClientOnUserJoined;
-            _client.UserLeft -= ClientOnUserLeft;
-            _client.UserUnbanned -= ClientOnUserUnbanned;
+            _client.AuditLogCreated -= ClientOnAuditLogCreatedAsync;
+            _client.GuildJoinRequestDeleted -= ClientOnGuildJoinRequestDeletedAsync;
+            _client.JoinedGuild -= ClientOnJoinedGuildAsync;
+            _client.MessageReceived -= ClientOnMessageReceivedAsync;
+            _client.MessageDeleted -= ClientOnMessageDeletedAsync;
+            _client.MessageUpdated -= ClientOnMessageUpdatedAsync;
+            _client.MessagesBulkDeleted -= ClientOnMessagesBulkDeletedAsync;
+            _client.UserBanned -= ClientOnUserBannedAsync;
+            _client.UserJoined -= ClientOnUserJoinedAsync;
+            _client.UserLeft -= ClientOnUserLeftAsync;
+            _client.UserUnbanned -= ClientOnUserUnbannedAsync;
         }
 
         private ValueTask DisposeAsyncCore()
         {
-            _client.AuditLogCreated -= ClientOnAuditLogCreated;
-            _client.GuildJoinRequestDeleted -= ClientOnGuildJoinRequestDeleted;
-            _client.JoinedGuild -= ClientOnJoinedGuild;
-            _client.MessageReceived -= ClientOnMessageReceived;
-            _client.MessageDeleted -= ClientOnMessageDeleted;
-            _client.MessageUpdated -= ClientOnMessageUpdated;
-            _client.MessagesBulkDeleted -= ClientOnMessagesBulkDeleted;
-            _client.UserBanned -= ClientOnUserBanned;
-            _client.UserJoined -= ClientOnUserJoined;
-            _client.UserLeft -= ClientOnUserLeft;
-            _client.UserUnbanned -= ClientOnUserUnbanned;
+            _client.AuditLogCreated -= ClientOnAuditLogCreatedAsync;
+            _client.GuildJoinRequestDeleted -= ClientOnGuildJoinRequestDeletedAsync;
+            _client.JoinedGuild -= ClientOnJoinedGuildAsync;
+            _client.MessageReceived -= ClientOnMessageReceivedAsync;
+            _client.MessageDeleted -= ClientOnMessageDeletedAsync;
+            _client.MessageUpdated -= ClientOnMessageUpdatedAsync;
+            _client.MessagesBulkDeleted -= ClientOnMessagesBulkDeletedAsync;
+            _client.UserBanned -= ClientOnUserBannedAsync;
+            _client.UserJoined -= ClientOnUserJoinedAsync;
+            _client.UserLeft -= ClientOnUserLeftAsync;
+            _client.UserUnbanned -= ClientOnUserUnbannedAsync;
             return ValueTask.CompletedTask;
         }
     }

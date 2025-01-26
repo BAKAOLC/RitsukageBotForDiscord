@@ -1,6 +1,7 @@
 using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -67,115 +68,68 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
         {
             if (!Directory.Exists(ScriptModulePath))
             {
-                _logger.LogWarning("Script module path not found: {path}", ScriptModulePath);
-                _logger.LogWarning("Skip loading scripts.");
+                _logger.LogWarning("Script module path not found: {Path}", ScriptModulePath);
+                _logger.LogWarning("Skip loading scripts");
                 return;
             }
 
-            foreach (var directory in Directory.GetDirectories(Path.Combine(ScriptModulePath, CommandModulePath)))
+            await LoadModulesAsync(CommandModulePath, _commandModuleSupportBaseType, _command, _commandModules).ConfigureAwait(false);
+            await LoadModulesAsync(InteractionModulePath, _interactionModuleSupportBaseType, _interaction, _interactionModules).ConfigureAwait(false);
+        }
+
+        private async Task LoadModulesAsync(string modulePath, IEnumerable<Type> baseTypes, dynamic service, Dictionary<ScriptRuntime.AssemblyInfo, List<Type>> modules)
+        {
+            foreach (var directory in Directory.GetDirectories(Path.Combine(ScriptModulePath, modulePath)))
             {
                 var directoryName = Path.GetFileName(directory);
                 var scriptFile = Path.Combine(directory, $"{directoryName}.cs");
                 if (!File.Exists(scriptFile)) continue;
+
                 try
                 {
                     var script = await File.ReadAllTextAsync(scriptFile).ConfigureAwait(false);
                     var scriptRuntime = ScriptRuntime.Create(script);
                     var (assemblyInfo, diagnostics) = scriptRuntime.CompileToAssembly(directoryName);
+
                     if (diagnostics.Any())
                     {
-                        foreach (var diagnostic in diagnostics)
-                            _logger.LogError("[{tag}][{source}] {diagnostic}", CommandModulePath, directoryName,
-                                diagnostic);
-
+                        LogDiagnostics(diagnostics, modulePath, directoryName);
                         continue;
                     }
 
-                    var commandModuleBaseType = assemblyInfo.Assembly.GetTypes().Where(x =>
-                        x.BaseType != null && _commandModuleSupportBaseType.Contains(x.BaseType)).ToArray();
-                    if (commandModuleBaseType.Length == 0)
+                    var moduleBaseTypes = assemblyInfo.Assembly.GetTypes().Where(x => x.BaseType != null && baseTypes.Contains(x.BaseType)).ToArray();
+                    if (moduleBaseTypes.Length == 0)
                     {
-                        _logger.LogError("Failed to find command module base type: {directory}", directoryName);
+                        _logger.LogError("Failed to find module base type: {Directory}", directoryName);
                         continue;
                     }
 
                     var loadedTypes = new List<Type>();
-                    foreach (var type in commandModuleBaseType)
+                    foreach (var type in moduleBaseTypes)
                     {
-                        await _command.AddModuleAsync(type, services).ConfigureAwait(false);
+                        await service.AddModuleAsync(type, services).ConfigureAwait(false);
                         loadedTypes.Add(type);
-                        _logger.LogDebug("Loaded command module type: {type}", type);
+                        _logger.LogDebug("Loaded module type: {Type}", type);
                     }
 
-                    _commandModules.Add(assemblyInfo, loadedTypes);
-                    _logger.LogDebug("Loaded command module: {directory}", directoryName);
+                    modules.Add(assemblyInfo, loadedTypes);
+                    _logger.LogDebug("Loaded module: {Directory}", directoryName);
                 }
                 catch (CompilationErrorException ex)
                 {
-                    foreach (var diagnostic in ex.Diagnostics)
-                        _logger.LogError("[{tag}][{source}] {diagnostic}", CommandModulePath, directoryName,
-                            diagnostic);
-
-                    _logger.LogError(ex, "Failed to load command module: {directory}", directoryName);
+                    LogDiagnostics(ex.Diagnostics, modulePath, directoryName);
+                    _logger.LogError(ex, "Failed to load module: {Directory}", directoryName);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Failed to load command module: {directory}", directoryName);
+                    _logger.LogError(ex, "Failed to load module: {Directory}", directoryName);
                 }
             }
+        }
 
-            foreach (var directory in Directory.GetDirectories(Path.Combine(ScriptModulePath,
-                         InteractionModulePath)))
-            {
-                var directoryName = Path.GetFileName(directory);
-                var scriptFile = Path.Combine(directory, $"{directoryName}.cs");
-                if (!File.Exists(scriptFile)) continue;
-                try
-                {
-                    var script = await File.ReadAllTextAsync(scriptFile).ConfigureAwait(false);
-                    var scriptRuntime = ScriptRuntime.Create(script);
-                    var (assemblyInfo, diagnostics) = scriptRuntime.CompileToAssembly(directoryName);
-                    if (diagnostics.Any())
-                    {
-                        foreach (var diagnostic in diagnostics)
-                            _logger.LogError("[{tag}][{source}] {diagnostic}", InteractionModulePath, directoryName,
-                                diagnostic);
-
-                        continue;
-                    }
-
-                    var interactionModuleBaseType = assemblyInfo.Assembly.GetTypes().Where(x =>
-                        x.BaseType != null && _interactionModuleSupportBaseType.Contains(x.BaseType)).ToArray();
-                    if (interactionModuleBaseType.Length == 0)
-                    {
-                        _logger.LogError("Failed to find interaction module base type: {directory}", directoryName);
-                        continue;
-                    }
-
-                    var loadedTypes = new List<Type>();
-                    foreach (var type in interactionModuleBaseType)
-                    {
-                        await _interaction.AddModuleAsync(type, services).ConfigureAwait(false);
-                        loadedTypes.Add(type);
-                        _logger.LogDebug("Loaded interaction module type: {type}", type);
-                    }
-
-                    _interactionModules.Add(assemblyInfo, loadedTypes);
-                    _logger.LogDebug("Loaded interaction module: {directory}", directoryName);
-                }
-                catch (CompilationErrorException ex)
-                {
-                    foreach (var diagnostic in ex.Diagnostics)
-                        _logger.LogError("[{tag}][{source}] {diagnostic}", CommandModulePath, directoryName,
-                            diagnostic);
-
-                    _logger.LogError(ex, "Failed to load command module: {directory}", directoryName);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Failed to load interaction module: {directory}", directoryName);
-                }
-            }
+        private void LogDiagnostics(IEnumerable<Diagnostic> diagnostics, string modulePath, string directoryName)
+        {
+            foreach (var diagnostic in diagnostics) _logger.LogError("[{Tag}][{Source}] {Diagnostic}", modulePath, directoryName, diagnostic);
         }
 
         public void UnloadScripts()
@@ -185,11 +139,11 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
                 foreach (var type in types)
                 {
                     _command.RemoveModuleAsync(type);
-                    _logger.LogDebug("Unloaded command module type: {type}", type);
+                    _logger.LogDebug("Unloaded command module type: {Type}", type);
                 }
 
                 _commandModules.Remove(assemblyInfo);
-                _logger.LogDebug("Unloaded command module: {assembly}", assemblyInfo.Name);
+                _logger.LogDebug("Unloaded command module: {Assembly}", assemblyInfo.Name);
             }
 
             foreach (var (assemblyInfo, types) in _interactionModules)
@@ -197,11 +151,11 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
                 foreach (var type in types)
                 {
                     _interaction.RemoveModuleAsync(type);
-                    _logger.LogDebug("Unloaded interaction module type: {type}", type);
+                    _logger.LogDebug("Unloaded interaction module type: {Type}", type);
                 }
 
                 _interactionModules.Remove(assemblyInfo);
-                _logger.LogDebug("Unloaded interaction module: {assembly}", assemblyInfo.Name);
+                _logger.LogDebug("Unloaded interaction module: {Assembly}", assemblyInfo.Name);
             }
         }
 
@@ -212,11 +166,11 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
                 foreach (var type in types)
                 {
                     await _command.RemoveModuleAsync(type).ConfigureAwait(false);
-                    _logger.LogDebug("Unloaded command module type: {type}", type);
+                    _logger.LogDebug("Unloaded command module type: {Type}", type);
                 }
 
                 _commandModules.Remove(assemblyInfo);
-                _logger.LogDebug("Unloaded command module: {assembly}", assemblyInfo.Name);
+                _logger.LogDebug("Unloaded command module: {Assembly}", assemblyInfo.Name);
             }
 
             foreach (var (assemblyInfo, types) in _interactionModules)
@@ -224,11 +178,11 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
                 foreach (var type in types)
                 {
                     await _interaction.RemoveModuleAsync(type).ConfigureAwait(false);
-                    _logger.LogDebug("Unloaded interaction module type: {type}", type);
+                    _logger.LogDebug("Unloaded interaction module type: {Type}", type);
                 }
 
                 _interactionModules.Remove(assemblyInfo);
-                _logger.LogDebug("Unloaded interaction module: {assembly}", assemblyInfo.Name);
+                _logger.LogDebug("Unloaded interaction module: {Assembly}", assemblyInfo.Name);
             }
         }
 

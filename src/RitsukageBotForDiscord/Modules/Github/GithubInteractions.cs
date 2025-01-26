@@ -40,7 +40,7 @@ namespace RitsukageBot.Modules.Github
 
             try
             {
-                Logger.LogDebug("Requesting GitHub login.");
+                Logger.LogDebug("Requesting GitHub login");
                 var deviceFlowResponse = await GitHubClientProvider.GetDeviceFlowResponseAsync().ConfigureAwait(false);
                 var embedBuilder = new EmbedBuilder()
                     .WithTitle("GitHub Login")
@@ -52,11 +52,11 @@ namespace RitsukageBot.Modules.Github
                     .AddField("Expires In", TimeSpan.FromSeconds(deviceFlowResponse.ExpiresIn).ToString(@"hh\:mm\:ss"),
                         true);
                 await FollowupAsync(embed: embedBuilder.Build()).ConfigureAwait(false);
-                Logger.LogDebug("Waiting for GitHub login token.");
+                Logger.LogDebug("Waiting for GitHub login token");
                 var token = await GitHubClientProvider.WaitForTokenAsync(deviceFlowResponse).ConfigureAwait(false);
-                await GitHubClientProvider.SetCredentials(token.AccessToken).ConfigureAwait(false);
+                await GitHubClientProvider.SetCredentialsAsync(token.AccessToken).ConfigureAwait(false);
                 var account = await GitHubClientProvider.User.Current().ConfigureAwait(false);
-                Logger.LogDebug("Successfully logged in to GitHub as {Account}.", account.Login);
+                Logger.LogDebug("Successfully logged in to GitHub as {Account}", account.Login);
                 await ModifyOriginalResponseAsync(x =>
                     {
                         x.Embed = BuildUserInfoEmbed(account)
@@ -67,7 +67,7 @@ namespace RitsukageBot.Modules.Github
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Failed to login to GitHub.");
+                Logger.LogError(ex, "Failed to login to GitHub");
                 await ModifyOriginalResponseAsync(x =>
                 {
                     x.Embed = new EmbedBuilder()
@@ -92,16 +92,16 @@ namespace RitsukageBot.Modules.Github
             User? account;
             try
             {
-                Logger.LogDebug("Searching for user {Username}.", username);
+                Logger.LogDebug("Searching for user {Username}", username);
                 var result = await GitHubClientProvider.Search.SearchUsers(new(username)).ConfigureAwait(false);
                 if (result.Items.Count == 0)
                 {
-                    Logger.LogDebug("User {Username} not found.", username);
+                    Logger.LogDebug("User {Username} not found", username);
                     account = null;
                 }
                 else
                 {
-                    Logger.LogDebug("Search result: {Result}.", result.Items.Count);
+                    Logger.LogDebug("Search result: {Result}", result.Items.Count);
                     foreach (var item in result.Items)
                         Logger.LogDebug("User: {Login}, Followers: {Followers}, Following: {Following}",
                             item.Login, item.Name, item.Followers);
@@ -110,7 +110,7 @@ namespace RitsukageBot.Modules.Github
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Failed to search user.");
+                Logger.LogError(ex, "Failed to search user");
                 var embed = new EmbedBuilder()
                     .WithTitle("GitHub User")
                     .WithColor(Color.Red)
@@ -132,7 +132,7 @@ namespace RitsukageBot.Modules.Github
 
             try
             {
-                Logger.LogDebug("Getting user information for {Login}.", account.Login);
+                Logger.LogDebug("Getting user information for {Login}", account.Login);
                 account = await GitHubClientProvider.User.Get(account.Login).ConfigureAwait(false);
                 Logger.LogDebug(
                     "User: {Login}, Name: {Name}, Followers: {Followers}, Following: {Following}, Email: {Email}, Created At: {CreatedAt}, URL: {Url}, Avatar URL: {AvatarUrl}",
@@ -143,7 +143,7 @@ namespace RitsukageBot.Modules.Github
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Failed to get user information.");
+                Logger.LogError(ex, "Failed to get user information");
                 var embed = new EmbedBuilder()
                     .WithTitle("GitHub User")
                     .WithColor(Color.Red)

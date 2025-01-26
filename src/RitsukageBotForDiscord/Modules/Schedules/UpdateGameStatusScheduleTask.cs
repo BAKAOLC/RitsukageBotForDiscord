@@ -27,18 +27,18 @@ namespace RitsukageBot.Modules.Schedules
             var statusList = _configuration.GetSection("CustomValues:GameStatus").Get<StatusConfig[]>();
             if (statusList == null || statusList.Length == 0)
             {
-                _logger.LogWarning("No game status available.");
+                _logger.LogWarning("No game status available");
                 return;
             }
 
             var newStatus = Random.Shared.GetItems(statusList, 1).FirstOrDefault();
             if (newStatus is null)
             {
-                _logger.LogWarning("Got empty game status.");
+                _logger.LogWarning("Got empty game status");
                 return;
             }
 
-            _logger.LogDebug("Setting game status to {Status}.", newStatus);
+            _logger.LogDebug("Setting game status to {Status}", newStatus);
             var type = newStatus.Type switch
             {
                 "Playing" => ActivityType.Playing,

@@ -40,7 +40,7 @@ namespace RitsukageBot.Services.HostedServices
             var token = _services.GetRequiredService<IConfiguration>().GetValue<string>("Discord:Token");
             if (string.IsNullOrWhiteSpace(token))
             {
-                _logger.LogError("Discord bot token is not configured.");
+                _logger.LogError("Discord bot token is not configured");
                 return;
             }
 
@@ -50,7 +50,7 @@ namespace RitsukageBot.Services.HostedServices
             await _scheduleModuleSupport.InitAsync().ConfigureAwait(false);
             await _client.LoginAsync(TokenType.Bot, token).ConfigureAwait(false);
             await _client.StartAsync().ConfigureAwait(false);
-            _logger.LogInformation("Discord bot service started.");
+            _logger.LogInformation("Discord bot service started");
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)
@@ -61,7 +61,7 @@ namespace RitsukageBot.Services.HostedServices
             await _scriptingModuleSupport.DisposeAsync().ConfigureAwait(false);
             await _discordEventLoggerModule.DisposeAsync().ConfigureAwait(false);
             await _client.DisposeAsync().ConfigureAwait(false);
-            _logger.LogInformation("Discord bot service stopped.");
+            _logger.LogInformation("Discord bot service stopped");
         }
 
         public Task LogAsync(LogMessage message)
@@ -70,19 +70,19 @@ namespace RitsukageBot.Services.HostedServices
             {
                 case LogSeverity.Verbose:
                 case LogSeverity.Debug:
-                    _logger.LogDebug("{source}: {message}", message.Source, message.Message);
+                    _logger.LogDebug("{Source}: {Message}", message.Source, message.Message);
                     break;
                 case LogSeverity.Info:
-                    _logger.LogInformation("{source}: {message}", message.Source, message.Message);
+                    _logger.LogInformation("{Source}: {Message}", message.Source, message.Message);
                     break;
                 case LogSeverity.Warning:
-                    _logger.LogWarning(message.Exception, "{source}: {message}", message.Source, message.Message);
+                    _logger.LogWarning(message.Exception, "{Source}: {Message}", message.Source, message.Message);
                     break;
                 case LogSeverity.Error:
-                    _logger.LogError(message.Exception, "{source}: {message}", message.Source, message.Message);
+                    _logger.LogError(message.Exception, "{Source}: {Message}", message.Source, message.Message);
                     break;
                 case LogSeverity.Critical:
-                    _logger.LogCritical(message.Exception, "{source}: {message}", message.Source, message.Message);
+                    _logger.LogCritical(message.Exception, "{Source}: {Message}", message.Source, message.Message);
                     break;
             }
 

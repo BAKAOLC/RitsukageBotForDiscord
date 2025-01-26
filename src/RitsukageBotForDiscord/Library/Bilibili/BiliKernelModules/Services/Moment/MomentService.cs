@@ -23,6 +23,7 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Services.Moment
         #region IMomentService
 
         /// <inheritdoc />
+        // ReSharper disable once AsyncApostle.AsyncMethodNamingHighlighting
         public async Task<MomentInformation> GetMomentInformation(string momentId,
             CancellationToken cancellationToken = default)
         {

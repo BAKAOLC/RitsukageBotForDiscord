@@ -14,6 +14,7 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Abstractions.Moment
         /// <param name="momentId"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
+        // ReSharper disable once AsyncApostle.AsyncMethodNamingHighlighting
         Task<MomentInformation> GetMomentInformation(string momentId, CancellationToken cancellationToken = default);
     }
 }

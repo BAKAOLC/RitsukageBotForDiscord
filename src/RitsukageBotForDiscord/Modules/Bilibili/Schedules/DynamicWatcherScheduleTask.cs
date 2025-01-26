@@ -40,7 +40,7 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
 
         public override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            _logger.LogDebug("DynamicWatcherScheduleTask is triggered.");
+            _logger.LogDebug("DynamicWatcherScheduleTask is triggered");
             var table = _databaseProviderService.Table<BilibiliWatcherConfiguration>();
             var configs = await table.Where(x => x.Type == WatcherType.Dynamic).ToArrayAsync().ConfigureAwait(false);
             List<BilibiliWatcherConfiguration> needRemoved = [];
@@ -70,14 +70,14 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
                 var index = Array.IndexOf(moments, lastMoment);
                 if (index == -1)
                 {
-                    _logger.LogWarning("Moment {MomentId} is not found.", config.LastInformation);
+                    _logger.LogWarning("Moment {MomentId} is not found", config.LastInformation);
                     lastMoment = null;
                 }
 
                 var channel = await _discordClient.GetChannelAsync(config.ChannelId).ConfigureAwait(false);
                 if (channel is not IMessageChannel messageChannel)
                 {
-                    _logger.LogWarning("Channel {ChannelId} is not found.", config.ChannelId);
+                    _logger.LogWarning("Channel {ChannelId} is not found", config.ChannelId);
                     continue;
                 }
 
@@ -93,13 +93,13 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
                     await SendMomentAsync(messageChannel, moments[i]).ConfigureAwait(false);
             }
 
-            _logger.LogDebug("Updating database.");
+            _logger.LogDebug("Updating database");
             await _databaseProviderService.UpdateAllAsync(configs).ConfigureAwait(false);
             foreach (var config in needRemoved)
                 await _databaseProviderService.DeleteAsync(config).ConfigureAwait(false);
-            _logger.LogDebug("Database updated.");
+            _logger.LogDebug("Database updated");
 
-            _logger.LogDebug("DynamicWatcherScheduleTask is completed.");
+            _logger.LogDebug("DynamicWatcherScheduleTask is completed");
         }
 
         private static async Task SendMomentAsync(IMessageChannel channel, MomentInformation moment)
@@ -115,7 +115,7 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
 
         private async Task UpdateMomentsAsync(params IEnumerable<UserMomentsRequest> requests)
         {
-            _logger.LogDebug("Updating follows moments.");
+            _logger.LogDebug("Updating follows moments");
             _follows.Clear();
             foreach (var request in requests)
             {
@@ -134,7 +134,7 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
                 _follows[request.UserId] = moments;
             }
 
-            _logger.LogDebug("Moments updated.");
+            _logger.LogDebug("Moments updated");
         }
 
         private static IEnumerable<UserMomentsRequest> GetMomentsRequests(

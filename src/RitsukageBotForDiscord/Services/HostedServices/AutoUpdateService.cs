@@ -60,7 +60,7 @@ namespace RitsukageBot.Services.HostedServices
             if (!_option.Enabled) return Task.CompletedTask;
             _timer = new(async void (_) => await CheckUpdateAsync().ConfigureAwait(false), null, TimeSpan.Zero,
                 TimeSpan.FromMilliseconds(_option.CheckInterval));
-            logger.LogInformation("Auto update service started.");
+            logger.LogInformation("Auto update service started");
             return Task.CompletedTask;
         }
 
@@ -72,7 +72,7 @@ namespace RitsukageBot.Services.HostedServices
         {
             if (!_option.Enabled) return;
             if (_timer != null) await _timer.DisposeAsync().ConfigureAwait(false);
-            logger.LogInformation("Auto update service stopped.");
+            logger.LogInformation("Auto update service stopped");
         }
 
         private async Task CheckUpdateAsync()
@@ -105,7 +105,7 @@ namespace RitsukageBot.Services.HostedServices
 
             if (!CheckVersion(targetArtifact.Name))
             {
-                logger.LogDebug("Not a newer version, skipping.");
+                logger.LogDebug("Not a newer version, skipping");
                 return;
             }
 
@@ -114,7 +114,7 @@ namespace RitsukageBot.Services.HostedServices
                 .DownloadArtifact(RepositoryOwner, RepositoryName, targetArtifact.Id, "zip").ConfigureAwait(false);
             if (artifactStream is null)
             {
-                logger.LogError("Failed to download artifact.");
+                logger.LogError("Failed to download artifact");
                 return;
             }
 
@@ -124,7 +124,7 @@ namespace RitsukageBot.Services.HostedServices
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Failed to update.");
+                logger.LogError(ex, "Failed to update");
             }
         }
 
@@ -163,7 +163,7 @@ namespace RitsukageBot.Services.HostedServices
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "Failed to move appsettings.json.");
+                    logger.LogError(ex, "Failed to move appsettings.json");
                 }
 
             logger.LogDebug("Generating update script...");
