@@ -8,10 +8,10 @@ using Richasy.BiliKernel.Models.Moment;
 using Richasy.BiliKernel.Models.User;
 using RitsukageBot.Library.Utils;
 
-namespace RitsukageBot.Library.Bilibili.DiscordBridges
+namespace RitsukageBot.Library.Bilibili.Convertors
 {
     /// <summary>
-    ///     Media information embed builder.
+    ///     Convert bilibili information to <see cref="EmbedBuilder" />
     /// </summary>
     public static class InformationEmbedBuilder
     {
@@ -24,6 +24,41 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
         public static EmbedBuilder BuildMyInfo(UserDetailProfile myInfo, UserCommunityInformation myCommunityInfo)
         {
             return BuildUserInfo(new(myInfo, myCommunityInfo));
+        }
+
+        /// <summary>
+        ///     Build user info.
+        /// </summary>
+        /// <param name="detail"></param>
+        /// <returns></returns>
+        public static EmbedBuilder BuildUserInfo(UserCard detail)
+        {
+            if (detail.Profile is null) return new EmbedBuilder().WithTitle("User Not Found");
+            var embed = new EmbedBuilder();
+            embed.WithTitle(detail.Profile.User.Name);
+
+            if (detail.Profile.User.Avatar is not null)
+                embed.WithThumbnailUrl(detail.Profile.User.Avatar.SourceUri.ToString());
+
+            embed.AddField("UID", detail.Profile.User.Id, true);
+            if (detail.Profile.Level.HasValue) embed.AddField("Level", detail.Profile.Level, true);
+
+            embed.AddField("Is Hardcore", detail.Profile.IsHardcore ?? false, true);
+
+            if (!string.IsNullOrWhiteSpace(detail.Profile.Introduce))
+                embed.WithDescription(detail.Profile.Introduce);
+
+            if (detail.Community?.FollowCount is not null)
+                embed.AddField("Follows", detail.Community.FollowCount, true);
+
+            if (detail.Community?.FansCount is not null)
+                embed.AddField("Fans", detail.Community.FansCount, true);
+
+            embed.AddField("Is Vip", detail.Profile.IsVip ?? false, true);
+
+            embed.WithUrl($"https://space.bilibili.com/{detail.Profile.User.Id}");
+
+            return embed;
         }
 
         /// <summary>
@@ -329,41 +364,6 @@ namespace RitsukageBot.Library.Bilibili.DiscordBridges
                 embed.WithTimestamp(detail.PublishDateTime.Value);
 
             embed.WithUrl($"https://www.bilibili.com/read/cv{detail.Identifier.Id}/");
-            return embed;
-        }
-
-        /// <summary>
-        ///     Build user info.
-        /// </summary>
-        /// <param name="detail"></param>
-        /// <returns></returns>
-        public static EmbedBuilder BuildUserInfo(UserCard detail)
-        {
-            if (detail.Profile is null) return new EmbedBuilder().WithTitle("User Not Found");
-            var embed = new EmbedBuilder();
-            embed.WithTitle(detail.Profile.User.Name);
-
-            if (detail.Profile.User.Avatar is not null)
-                embed.WithThumbnailUrl(detail.Profile.User.Avatar.SourceUri.ToString());
-
-            embed.AddField("UID", detail.Profile.User.Id, true);
-            if (detail.Profile.Level.HasValue) embed.AddField("Level", detail.Profile.Level, true);
-
-            embed.AddField("Is Hardcore", detail.Profile.IsHardcore ?? false, true);
-
-            if (!string.IsNullOrWhiteSpace(detail.Profile.Introduce))
-                embed.WithDescription(detail.Profile.Introduce);
-
-            if (detail.Community?.FollowCount is not null)
-                embed.AddField("Follows", detail.Community.FollowCount, true);
-
-            if (detail.Community?.FansCount is not null)
-                embed.AddField("Fans", detail.Community.FansCount, true);
-
-            embed.AddField("Is Vip", detail.Profile.IsVip ?? false, true);
-
-            embed.WithUrl($"https://space.bilibili.com/{detail.Profile.User.Id}");
-
             return embed;
         }
 

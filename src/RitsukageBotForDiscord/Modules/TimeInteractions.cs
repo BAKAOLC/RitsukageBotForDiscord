@@ -19,7 +19,7 @@ namespace RitsukageBot.Modules
         /// <summary>
         ///     Logger
         /// </summary>
-        public required ILogger<ImageInteractions> Logger { get; set; }
+        public required ILogger<TimeInteractions> Logger { get; set; }
 
         /// <summary>
         ///     Get current time

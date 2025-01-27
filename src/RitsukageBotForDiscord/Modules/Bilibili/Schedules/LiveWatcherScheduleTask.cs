@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Richasy.BiliKernel.Bili.Media;
 using Richasy.BiliKernel.Models.Media;
-using RitsukageBot.Library.Bilibili.DiscordBridges;
+using RitsukageBot.Library.Bilibili.Convertors;
 using RitsukageBot.Library.Bilibili.Utils;
 using RitsukageBot.Library.Data;
 using RitsukageBot.Library.Enums.Bilibili;

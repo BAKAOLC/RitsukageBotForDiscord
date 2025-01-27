@@ -3,6 +3,7 @@ using Discord;
 using Discord.Commands;
 using Discord.Interactions;
 using Discord.WebSocket;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -37,6 +38,11 @@ using var host = Host.CreateDefaultBuilder()
         services.AddHttpClient().ConfigureHttpClientDefaults(x =>
             x.ConfigureHttpClient(y => y.DefaultRequestHeaders.Add("User-Agent", UserAgent.Default)));
         {
+            var cachePath = context.Configuration.GetValue<string>("Cache");
+            if (!string.IsNullOrWhiteSpace(cachePath))
+                services.AddSingleton<IDistributedCache, SqliteCache>(_ => new(new() { CachePath = cachePath }));
+            else
+                services.AddDistributedMemoryCache();
             var fusionCache = services.AddFusionCache();
             fusionCache.WithOptions(options =>
             {
@@ -62,9 +68,7 @@ using var host = Host.CreateDefaultBuilder()
                 JitterMaxDuration = TimeSpan.FromSeconds(5),
             });
             fusionCache.WithSerializer(new FusionCacheNewtonsoftJsonSerializer());
-            var cachePath = context.Configuration.GetValue<string>("Cache");
-            if (!string.IsNullOrWhiteSpace(cachePath))
-                fusionCache.WithDistributedCache(new SqliteCache(new() { CachePath = cachePath }));
+            fusionCache.WithDistributedCache(x => x.GetRequiredService<IDistributedCache>());
         }
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(Assembly.GetExecutingAssembly()));
         services.AddSingleton<DatabaseProviderService>();
@@ -97,6 +101,7 @@ using var host = Host.CreateDefaultBuilder()
         services.AddSingleton<InteractionService>(x => new(x.GetRequiredService<DiscordSocketClient>(),
             x.GetRequiredService<InteractionServiceConfig>()));
         services.AddHostedService<DiscordBotService>();
+        services.AddSingleton<ChatClientProviderService>();
 #if !DEBUG // Auto update service is not needed in debug mode.
         services.AddHostedService<AutoUpdateService>();
 #endif

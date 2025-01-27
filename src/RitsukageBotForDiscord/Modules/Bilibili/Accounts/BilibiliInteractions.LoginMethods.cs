@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using Richasy.BiliKernel.Bili.Authorization;
 using Richasy.BiliKernel.Bili.User;
 using RitsukageBot.Library.Bilibili.BiliKernelModules.Authorizers;
-using RitsukageBot.Library.Bilibili.DiscordBridges;
+using RitsukageBot.Library.Bilibili.Convertors;
 using RitsukageBot.Library.Bilibili.Utils;
 
 namespace RitsukageBot.Modules.Bilibili

@@ -2,7 +2,7 @@ using System.Text.RegularExpressions;
 using Discord;
 using Discord.Interactions;
 using Microsoft.Extensions.Logging;
-using RitsukageBot.Library.Bilibili.DiscordBridges;
+using RitsukageBot.Library.Bilibili.Convertors;
 using RitsukageBot.Library.Bilibili.Utils;
 
 namespace RitsukageBot.Modules.Bilibili
