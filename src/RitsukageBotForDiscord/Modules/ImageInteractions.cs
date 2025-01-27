@@ -73,16 +73,17 @@ namespace RitsukageBot.Modules
             }
 
             using var imageStream = new MemoryStream();
+            var guid = await ImageCacheProviderService.CacheImageAsync(image).ConfigureAwait(false);
             string fileName;
             if (image.Frames.Count > 1)
             {
                 await image.SaveAsGifAsync(imageStream).ConfigureAwait(false);
-                fileName = "image.gif";
+                fileName = $"{guid}.gif";
             }
             else
             {
                 await image.SaveAsPngAsync(imageStream).ConfigureAwait(false);
-                fileName = "image.png";
+                fileName = $"{guid}.png";
             }
 
             imageStream.Seek(0, SeekOrigin.Begin);
@@ -101,12 +102,14 @@ namespace RitsukageBot.Modules
         {
             await DeferAsync(true).ConfigureAwait(false);
             using var image = GoodBadNewsGenerators.GenerateGoodNewsImage(text);
+            var guid = await ImageCacheProviderService.CacheImageAsync(image).ConfigureAwait(false);
+            var fileName = $"{guid}.png";
             using var imageStream = new MemoryStream();
             await image.SaveAsPngAsync(imageStream).ConfigureAwait(false);
             imageStream.Seek(0, SeekOrigin.Begin);
             var component = new ComponentBuilder()
                 .WithButton("Publish", $"{CustomId}:cancel_and_publish", ButtonStyle.Success);
-            await FollowupWithFileAsync(imageStream, "good_news.png", components: component.Build())
+            await FollowupWithFileAsync(imageStream, fileName, components: component.Build())
                 .ConfigureAwait(false);
         }
 
@@ -119,12 +122,14 @@ namespace RitsukageBot.Modules
         {
             await DeferAsync(true).ConfigureAwait(false);
             using var image = GoodBadNewsGenerators.GenerateBadNewsImage(text);
+            var guid = await ImageCacheProviderService.CacheImageAsync(image).ConfigureAwait(false);
+            var fileName = $"{guid}.png";
             using var imageStream = new MemoryStream();
             await image.SaveAsPngAsync(imageStream).ConfigureAwait(false);
             imageStream.Seek(0, SeekOrigin.Begin);
             var component = new ComponentBuilder()
                 .WithButton("Publish", $"{CustomId}:cancel_and_publish", ButtonStyle.Success);
-            await FollowupWithFileAsync(imageStream, "bad_news.png", components: component.Build())
+            await FollowupWithFileAsync(imageStream, fileName, components: component.Build())
                 .ConfigureAwait(false);
         }
 
@@ -152,17 +157,18 @@ namespace RitsukageBot.Modules
 
             using var resultImage = GroupCyanImageConvertor.Convert(image);
             image.Dispose();
+            var guid = await ImageCacheProviderService.CacheImageAsync(resultImage).ConfigureAwait(false);
             using var imageStream = new MemoryStream();
             string fileName;
             if (resultImage.Frames.Count > 1)
             {
                 await resultImage.SaveAsGifAsync(imageStream).ConfigureAwait(false);
-                fileName = "image.gif";
+                fileName = $"{guid}.gif";
             }
             else
             {
                 await resultImage.SaveAsPngAsync(imageStream).ConfigureAwait(false);
-                fileName = "image.png";
+                fileName = $"{guid}.png";
             }
 
             imageStream.Seek(0, SeekOrigin.Begin);
@@ -198,17 +204,18 @@ namespace RitsukageBot.Modules
 
             using var resultImage = ColorfulCharsImageConvertor.Convert(image, fontSize, pixelSize, out _);
             image.Dispose();
+            var guid = await ImageCacheProviderService.CacheImageAsync(resultImage).ConfigureAwait(false);
             using var imageStream = new MemoryStream();
             string fileName;
             if (resultImage.Frames.Count > 1)
             {
                 await resultImage.SaveAsGifAsync(imageStream).ConfigureAwait(false);
-                fileName = "image.gif";
+                fileName = $"{guid}.gif";
             }
             else
             {
                 await resultImage.SaveAsPngAsync(imageStream).ConfigureAwait(false);
-                fileName = "image.png";
+                fileName = $"{guid}.png";
             }
 
             imageStream.Seek(0, SeekOrigin.Begin);
@@ -563,7 +570,11 @@ namespace RitsukageBot.Modules
             Image<Rgba32>? image = null;
             try
             {
-                image = await ImageCacheProviderService.GetImageAsync(attachment.Url).ConfigureAwait(false);
+                var fileName = Path.GetFileNameWithoutExtension(attachment.Filename);
+                if (Guid.TryParse(fileName, out var guid))
+                    image = await ImageCacheProviderService.GetImageFromGuid(fileName).ConfigureAwait(false);
+
+                image ??= await ImageCacheProviderService.GetImageAsync(attachment.Url).ConfigureAwait(false);
             }
             catch (HttpRequestException ex)
             {
@@ -591,17 +602,18 @@ namespace RitsukageBot.Modules
 
         private async Task SetImageAsync(Image<Rgba32> image)
         {
+            var guid = await ImageCacheProviderService.CacheImageAsync(image).ConfigureAwait(false);
             var imageStream = new MemoryStream();
             string fileName;
             if (image.Frames.Count > 1)
             {
                 await image.SaveAsGifAsync(imageStream).ConfigureAwait(false);
-                fileName = "image.gif";
+                fileName = $"{guid}.gif";
             }
             else
             {
                 await image.SaveAsPngAsync(imageStream).ConfigureAwait(false);
-                fileName = "image.png";
+                fileName = $"{guid}.png";
             }
 
             imageStream.Seek(0, SeekOrigin.Begin);
