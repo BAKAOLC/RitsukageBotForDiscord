@@ -178,6 +178,7 @@ namespace RitsukageBot.Services.HostedServices
                 });
             else
                 Process.Start("sh", scriptPath);
+            HostCancellationToken.Cancel();
         }
 
         private static async Task<string> GenerateUpdateScriptAsync()

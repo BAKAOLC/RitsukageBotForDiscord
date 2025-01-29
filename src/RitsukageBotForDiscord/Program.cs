@@ -114,4 +114,4 @@ logger.LogInformation("Network default User-Agent: {UserAgent}", UserAgent.Defau
 
 NetworkUtility.SetHttpClientFactory(host.Services.GetRequiredService<IHttpClientFactory>());
 
-await host.RunAsync().ConfigureAwait(false);
+await host.RunAsync(HostCancellationToken.Token).ConfigureAwait(false);
