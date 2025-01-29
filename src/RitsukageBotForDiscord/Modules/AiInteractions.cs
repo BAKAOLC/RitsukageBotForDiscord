@@ -131,8 +131,7 @@ namespace RitsukageBot.Modules
                         Description = sb.ToString(),
                         Color = Color.Red,
                     };
-                    await Context.Channel.SendMessageAsync(embed: embed.Build(), flags: MessageFlags.Ephemeral)
-                        .ConfigureAwait(false);
+                    await Context.Channel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
                 }
                 else
                 {
@@ -149,8 +148,7 @@ namespace RitsukageBot.Modules
                     Description = "No content was received from the AI",
                     Color = Color.Red,
                 };
-                await Context.Channel.SendMessageAsync(embed: embed.Build(), flags: MessageFlags.Ephemeral)
-                    .ConfigureAwait(false);
+                await Context.Channel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
             }
         }
     }
