@@ -571,7 +571,7 @@ namespace RitsukageBot.Modules
             try
             {
                 var fileName = Path.GetFileNameWithoutExtension(attachment.Filename);
-                if (Guid.TryParse(fileName, out var guid))
+                if (Guid.TryParse(fileName, out _))
                     image = await ImageCacheProviderService.GetImageFromGuid(fileName).ConfigureAwait(false);
 
                 image ??= await ImageCacheProviderService.GetImageAsync(attachment.Url).ConfigureAwait(false);

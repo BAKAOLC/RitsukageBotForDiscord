@@ -1,6 +1,7 @@
 using System.Text;
 using Discord.Interactions;
 using Discord.WebSocket;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using RitsukageBot.Services.Providers;
 
@@ -35,48 +36,15 @@ namespace RitsukageBot.Modules
         public async Task ChatAsync(string message)
         {
             await DeferAsync(true).ConfigureAwait(false);
-            var sb = new StringBuilder();
-            var isCompleted = false;
-            var isUpdated = false;
-            var lockObject = new Lock();
-            _ = Task.Run(async () =>
-            {
-                await foreach (var response in ChatClientProviderService.CompleteStreamingAsync(message))
-                    lock (lockObject)
-                    {
-                        sb.Append(response);
-                        isUpdated = true;
-                    }
+            if (string.IsNullOrWhiteSpace(message))
+                await ModifyOriginalResponseAsync(x => x.Content = "Please provide a message to chat with the AI")
+                    .ConfigureAwait(false);
 
-                isCompleted = true;
-            }).ContinueWith(x =>
+            var messageList = new List<ChatMessage>
             {
-                if (!x.IsFaulted) return;
-                isCompleted = true;
-                isUpdated = true;
-                sb = new();
-                sb.Append("An error occurred while processing the chat with AI tools");
-                Logger.LogError(x.Exception, "Error while processing the chat with AI tools");
-            });
-            while (!isCompleted)
-            {
-                string? content = null;
-                lock (lockObject)
-                {
-                    if (isUpdated)
-                    {
-                        content = sb.ToString();
-                        isUpdated = false;
-                    }
-                }
-
-                if (!string.IsNullOrWhiteSpace(content))
-                    await ModifyOriginalResponseAsync(x => x.Content = content).ConfigureAwait(false);
-                await Task.Delay(1000).ConfigureAwait(false);
-            }
-
-            if (isUpdated)
-                await ModifyOriginalResponseAsync(x => x.Content = sb.ToString()).ConfigureAwait(false);
+                new(ChatRole.User, message),
+            };
+            await BeginChatAsync(messageList).ConfigureAwait(false);
         }
 
         /*
@@ -88,13 +56,27 @@ namespace RitsukageBot.Modules
         public async Task ChatWithAiToolsAsync(string message)
         {
             await DeferAsync(true).ConfigureAwait(false);
+            if (string.IsNullOrWhiteSpace(message))
+                await ModifyOriginalResponseAsync(x => x.Content = "Please provide a message to chat with the AI")
+                    .ConfigureAwait(false);
+
+            var messageList = new List<ChatMessage>
+            {
+                new(ChatRole.User, message),
+            };
+            await BeginChatAsync(messageList, true).ConfigureAwait(false);
+        }
+        */
+
+        private async Task BeginChatAsync(IList<ChatMessage> messageList, bool useTools = false)
+        {
             var sb = new StringBuilder();
             var isCompleted = false;
             var isUpdated = false;
             var lockObject = new Lock();
             _ = Task.Run(async () =>
             {
-                await foreach (var response in ChatClientProviderService.CompleteStreamingAsync(message, true))
+                await foreach (var response in ChatClientProviderService.CompleteStreamingAsync(messageList, useTools))
                     lock (lockObject)
                     {
                         sb.Append(response);
@@ -131,6 +113,5 @@ namespace RitsukageBot.Modules
             if (isUpdated)
                 await ModifyOriginalResponseAsync(x => x.Content = sb.ToString()).ConfigureAwait(false);
         }
-        */
     }
 }
