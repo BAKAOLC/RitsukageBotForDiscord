@@ -37,7 +37,6 @@ namespace RitsukageBot.Modules
         /// <summary>
         ///     Chat with the AI
         /// </summary>
-        [RequireOwner]
         [SlashCommand("chat", "Chat with the AI")]
         public async Task ChatAsync(string message)
         {
