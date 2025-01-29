@@ -120,14 +120,14 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
         {
             var sb = new StringBuilder();
             sb.Append(data.Name);
-            foreach (var option in data.Options)
-            {
-                sb.Append(' ');
-                sb.Append(option.Name);
 
-                if (option.Value is null) continue;
-                sb.Append(": ");
-                sb.Append(option.Value);
+            var child = data.Options?.ElementAtOrDefault(0);
+            
+            while (child?.Type is ApplicationCommandOptionType.SubCommandGroup or ApplicationCommandOptionType.SubCommand)
+            {
+                sb.Append(' ').Append(child.Name);
+                if (child.Value is not null) sb.Append(": ").Append(child.Value);
+                child = child.Options?.ElementAtOrDefault(0);
             }
 
             return sb.ToString();
