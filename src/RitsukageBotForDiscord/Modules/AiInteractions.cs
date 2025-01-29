@@ -1,4 +1,5 @@
 using System.Text;
+using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.Extensions.AI;
@@ -78,6 +79,7 @@ namespace RitsukageBot.Modules
             var sb = new StringBuilder();
             var isCompleted = false;
             var isUpdated = false;
+            var isErrored = false;
             var haveContent = false;
             var lockObject = new Lock();
             _ = Task.Run(async () =>
@@ -96,6 +98,7 @@ namespace RitsukageBot.Modules
                 if (!x.IsFaulted) return;
                 isCompleted = true;
                 isUpdated = true;
+                isErrored = true;
                 sb = new();
                 sb.Append("An error occurred while processing the chat with AI tools");
                 Logger.LogError(x.Exception, "Error while processing the chat with AI tools");
@@ -118,10 +121,37 @@ namespace RitsukageBot.Modules
             }
 
             if (isUpdated)
-                await ModifyOriginalResponseAsync(x => x.Content = sb.ToString()).ConfigureAwait(false);
+            {
+                if (isErrored)
+                {
+                    await DeleteOriginalResponseAsync().ConfigureAwait(false);
+                    var embed = new EmbedBuilder
+                    {
+                        Title = "Error",
+                        Description = sb.ToString(),
+                        Color = Color.Red,
+                    };
+                    await Context.Channel.SendMessageAsync(embed: embed.Build(), flags: MessageFlags.Ephemeral)
+                        .ConfigureAwait(false);
+                }
+                else
+                {
+                    await ModifyOriginalResponseAsync(x => x.Content = sb.ToString()).ConfigureAwait(false);
+                }
+            }
 
             if (!haveContent)
-                await ModifyOriginalResponseAsync(x => x.Content = "No response from the AI").ConfigureAwait(false);
+            {
+                await DeleteOriginalResponseAsync().ConfigureAwait(false);
+                var embed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "No content was received from the AI",
+                    Color = Color.Red,
+                };
+                await Context.Channel.SendMessageAsync(embed: embed.Build(), flags: MessageFlags.Ephemeral)
+                    .ConfigureAwait(false);
+            }
         }
     }
 }
