@@ -60,6 +60,8 @@ namespace RitsukageBot.Modules
             var roleData = Configuration.GetSection("AI:RoleData").Get<string>();
             if (string.IsNullOrWhiteSpace(roleData))
                 return null;
+            if (File.Exists(roleData))
+                roleData = File.ReadAllText(roleData);
             return new(ChatRole.System, roleData);
         }
 
