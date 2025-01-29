@@ -87,6 +87,8 @@ namespace RitsukageBot.Modules
                 await foreach (var response in ChatClientProviderService.CompleteStreamingAsync(messageList, useTools))
                     lock (lockObject)
                     {
+                        if (string.IsNullOrWhiteSpace(response.ToString()))
+                            continue;
                         sb.Append(response);
                         isUpdated = true;
                         haveContent = true;
@@ -110,7 +112,7 @@ namespace RitsukageBot.Modules
                 {
                     if (isUpdated)
                     {
-                        content = sb.ToString();
+                        content = FormatResponse(sb.ToString());
                         isUpdated = false;
                     }
                 }
@@ -135,7 +137,10 @@ namespace RitsukageBot.Modules
                 }
                 else
                 {
-                    await ModifyOriginalResponseAsync(x => x.Content = sb.ToString()).ConfigureAwait(false);
+                    var content = FormatResponse(sb.ToString());
+                    if (!string.IsNullOrWhiteSpace(content))
+                        await ModifyOriginalResponseAsync(x => x.Content = content)
+                            .ConfigureAwait(false);
                 }
             }
 
@@ -150,6 +155,40 @@ namespace RitsukageBot.Modules
                 };
                 await Context.Channel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
             }
+        }
+
+        private static string FormatResponse(string response)
+        {
+            response = response.Trim();
+
+            if (!response.StartsWith("<think>"))
+                return response;
+
+            string thinkContent;
+            var content = string.Empty;
+
+            var thinkEndIndex = response.IndexOf("</think>", StringComparison.Ordinal);
+            if (thinkEndIndex != -1)
+            {
+                thinkContent = response[7..thinkEndIndex];
+                content = response[(thinkEndIndex + 8)..];
+            }
+            else
+            {
+                thinkContent = response[7..];
+            }
+
+            var lines = thinkContent.Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries);
+            var sb = new StringBuilder();
+            foreach (var line in lines)
+            {
+                sb.Append("> ");
+                sb.AppendLine(line);
+            }
+
+            if (string.IsNullOrWhiteSpace(content)) return sb.ToString();
+            sb.Append(content);
+            return sb.ToString();
         }
     }
 }
