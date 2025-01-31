@@ -117,7 +117,8 @@ namespace RitsukageBot.Library.Modules
             return Task.CompletedTask;
         }
 
-        private Task ClientOnMessageDeletedAsync(Cacheable<IMessage, ulong> arg1, Cacheable<IMessageChannel, ulong> arg2)
+        private Task ClientOnMessageDeletedAsync(Cacheable<IMessage, ulong> arg1,
+            Cacheable<IMessageChannel, ulong> arg2)
         {
             if (arg2.Value is SocketGuildChannel guildChannel)
             {

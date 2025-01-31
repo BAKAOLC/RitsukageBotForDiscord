@@ -73,11 +73,14 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
                 return;
             }
 
-            await LoadModulesAsync(CommandModulePath, _commandModuleSupportBaseType, _command, _commandModules).ConfigureAwait(false);
-            await LoadModulesAsync(InteractionModulePath, _interactionModuleSupportBaseType, _interaction, _interactionModules).ConfigureAwait(false);
+            await LoadModulesAsync(CommandModulePath, _commandModuleSupportBaseType, _command, _commandModules)
+                .ConfigureAwait(false);
+            await LoadModulesAsync(InteractionModulePath, _interactionModuleSupportBaseType, _interaction,
+                _interactionModules).ConfigureAwait(false);
         }
 
-        private async Task LoadModulesAsync(string modulePath, IEnumerable<Type> baseTypes, dynamic service, Dictionary<ScriptRuntime.AssemblyInfo, List<Type>> modules)
+        private async Task LoadModulesAsync(string modulePath, IEnumerable<Type> baseTypes, dynamic service,
+            Dictionary<ScriptRuntime.AssemblyInfo, List<Type>> modules)
         {
             foreach (var directory in Directory.GetDirectories(Path.Combine(ScriptModulePath, modulePath)))
             {
@@ -97,7 +100,8 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
                         continue;
                     }
 
-                    var moduleBaseTypes = assemblyInfo.Assembly.GetTypes().Where(x => x.BaseType != null && baseTypes.Contains(x.BaseType)).ToArray();
+                    var moduleBaseTypes = assemblyInfo.Assembly.GetTypes()
+                        .Where(x => x.BaseType != null && baseTypes.Contains(x.BaseType)).ToArray();
                     if (moduleBaseTypes.Length == 0)
                     {
                         _logger.LogError("Failed to find module base type: {Directory}", directoryName);
@@ -129,7 +133,8 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
 
         private void LogDiagnostics(IEnumerable<Diagnostic> diagnostics, string modulePath, string directoryName)
         {
-            foreach (var diagnostic in diagnostics) _logger.LogError("[{Tag}][{Source}] {Diagnostic}", modulePath, directoryName, diagnostic);
+            foreach (var diagnostic in diagnostics)
+                _logger.LogError("[{Tag}][{Source}] {Diagnostic}", modulePath, directoryName, diagnostic);
         }
 
         public void UnloadScripts()

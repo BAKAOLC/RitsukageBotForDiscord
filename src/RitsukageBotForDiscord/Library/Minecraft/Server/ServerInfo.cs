@@ -97,7 +97,8 @@ namespace RitsukageBot.Library.Minecraft.Server
                 }
                 catch (Exception ex)
                 {
-                    logger?.LogDebug(ex, "Failed to get server info from {ServerAddress}:{ServerPort}", ServerAddress, ServerPort);
+                    logger?.LogDebug(ex, "Failed to get server info from {ServerAddress}:{ServerPort}", ServerAddress,
+                        ServerPort);
                     State = ConnectionState.BadResponse;
                     Ping = -1;
                 }
@@ -113,7 +114,8 @@ namespace RitsukageBot.Library.Minecraft.Server
             {
                 logger?.LogDebug("Trying to resolve SRV record for {ServerAddress}", ServerAddress);
                 var client = new LookupClient();
-                var queryResponse = await client.QueryAsync("_minecraft._tcp." + ServerAddress, QueryType.SRV).ConfigureAwait(false);
+                var queryResponse = await client.QueryAsync("_minecraft._tcp." + ServerAddress, QueryType.SRV)
+                    .ConfigureAwait(false);
                 var result = queryResponse.Answers.OfType<SrvRecord>().FirstOrDefault();
                 if (result == null)
                 {
@@ -127,6 +129,7 @@ namespace RitsukageBot.Library.Minecraft.Server
                     ServerAddress = target;
                     ServerPort = result.Port;
                 }
+
                 return true;
             }
             catch (DnsResponseException)
@@ -134,6 +137,7 @@ namespace RitsukageBot.Library.Minecraft.Server
                 logger?.LogDebug("Failed to resolve SRV record for {ServerAddress}", ServerAddress);
                 State = ConnectionState.BadConnect;
             }
+
             return false;
         }
 
@@ -154,6 +158,7 @@ namespace RitsukageBot.Library.Minecraft.Server
                 logger?.LogDebug("Failed to connect to {ServerAddress}:{ServerPort}", ServerAddress, ServerPort);
                 State = ConnectionState.BadConnect;
             }
+
             return false;
         }
 
@@ -190,7 +195,8 @@ namespace RitsukageBot.Library.Minecraft.Server
                 throw new("Received empty packet from {ServerAddress}:{ServerPort}");
 
             var packetData = new List<byte>(handler.ReadDataRaw(packetLength));
-            if (ProtocolHandler.ReadNextVarInt(packetData) != 0x00) throw new("Received unexpected packet ID from {ServerAddress}:{ServerPort}");
+            if (ProtocolHandler.ReadNextVarInt(packetData) != 0x00)
+                throw new("Received unexpected packet ID from {ServerAddress}:{ServerPort}");
 
             logger?.LogDebug("Reading response from {ServerAddress}:{ServerPort}", ServerAddress, ServerPort);
             return ProtocolHandler.ReadNextString(packetData);
@@ -248,14 +254,16 @@ namespace RitsukageBot.Library.Minecraft.Server
         {
             if (!jsonData.TryGetValue("players", out var playersDataToken)) return;
             var playersData = (JObject)playersDataToken;
-            if (playersData.TryGetValue("max", out var maxDataToken) && int.TryParse(maxDataToken.ToString(), out var max))
+            if (playersData.TryGetValue("max", out var maxDataToken) &&
+                int.TryParse(maxDataToken.ToString(), out var max))
                 MaxPlayerCount = max;
 
             if (playersData.TryGetValue("online", out var onlineDataToken) &&
                 int.TryParse(onlineDataToken.ToString(), out var online))
                 CurrentPlayerCount = online;
 
-            if (!playersData.TryGetValue("sample", out var sampleDataToken) || sampleDataToken.Type is not JTokenType.Array)
+            if (!playersData.TryGetValue("sample", out var sampleDataToken) ||
+                sampleDataToken.Type is not JTokenType.Array)
                 return;
             var result = new List<string>();
             foreach (var nameDataToken in sampleDataToken)

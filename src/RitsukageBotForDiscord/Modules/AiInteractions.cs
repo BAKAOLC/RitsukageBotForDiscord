@@ -181,29 +181,29 @@ namespace RitsukageBot.Modules
             var haveContent = false;
             var isCompleted = false;
             var isUpdated = false;
-            var isErrored = false;
+            var isError = false;
             var isTimeout = false;
             var lockObject = new Lock();
             {
-                var cancellationTokenSource = new CancellationTokenSource();
-                var timeoutTask = Task.Delay(TimeSpan.FromMilliseconds(timeout), cancellationTokenSource.Token)
+                var cancellationTokenSource1 = new CancellationTokenSource();
+                var cancellationTokenSource2 = new CancellationTokenSource();
+                _ = Task.Delay(TimeSpan.FromMilliseconds(timeout), cancellationTokenSource1.Token)
                     .ContinueWith(x =>
                     {
                         if (x.IsFaulted) return;
                         lock (lockObject)
                         {
-                            // ReSharper disable once AccessToModifiedClosure
                             if (haveContent) return;
-                            cancellationTokenSource.Cancel();
+                            cancellationTokenSource2.Cancel();
                             isTimeout = true;
-                            Logger.LogWarning("The chat with AI tools took too long to respond");
+                            Logger.LogWarning("The chat with AI took too long to respond");
                         }
-                    }, cancellationTokenSource.Token);
+                    }, cancellationTokenSource1.Token);
                 _ = Task.Run(async () =>
                     {
                         await foreach (var response in ChatClientProviderService.CompleteStreamingAsync(messageList,
                                            useTools,
-                                           cancellationTokenSource.Token))
+                                           cancellationTokenSource2.Token))
                             lock (lockObject)
                             {
                                 if (string.IsNullOrWhiteSpace(response.ToString()))
@@ -214,18 +214,19 @@ namespace RitsukageBot.Modules
                             }
 
                         isCompleted = true;
-                        await cancellationTokenSource.CancelAsync().ConfigureAwait(false);
-                    }, cancellationTokenSource.Token)
+                        await cancellationTokenSource1.CancelAsync().ConfigureAwait(false);
+                    }, cancellationTokenSource2.Token)
                     .ContinueWith(x =>
                     {
                         if (!x.IsFaulted) return;
                         if (isTimeout) return;
-                        isErrored = true;
+                        isError = true;
+                        cancellationTokenSource1.Cancel();
                         Logger.LogError(x.Exception, "Error while processing the chat with AI tools");
-                    }, cancellationTokenSource.Token);
+                    }, cancellationTokenSource2.Token);
             }
 
-            while (!isCompleted)
+            while (!isCompleted && !isError && !isTimeout)
             {
                 string? updatingContent = null;
                 lock (lockObject)
@@ -242,7 +243,7 @@ namespace RitsukageBot.Modules
                 await Task.Delay(1000).ConfigureAwait(false);
             }
 
-            if (isErrored) return (false, "An error occurred while processing the chat with AI tools");
+            if (isError) return (false, "An error occurred while processing the chat with AI tools");
             if (isTimeout) return (false, "The chat with AI tools took too long to respond");
 
             var (hasJsonHeader, content, jsonHeader) = FormatResponse(sb.ToString());
@@ -302,7 +303,7 @@ namespace RitsukageBot.Modules
 
         private static (bool, string, string?) CheckJsonHeader(string response)
         {
-            if (!response.StartsWith('{')) return (false, response, null);
+            if (response is not ['{', ..]) return (false, response, null);
             var firstLineEndIndex = response.IndexOf('\n');
             if (firstLineEndIndex == -1)
                 firstLineEndIndex = response.IndexOf('\r');

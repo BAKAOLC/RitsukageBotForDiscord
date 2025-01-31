@@ -122,8 +122,9 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
             sb.Append(data.Name);
 
             var child = data.Options?.ElementAtOrDefault(0);
-            
-            while (child?.Type is ApplicationCommandOptionType.SubCommandGroup or ApplicationCommandOptionType.SubCommand)
+
+            while (child?.Type is ApplicationCommandOptionType.SubCommandGroup
+                   or ApplicationCommandOptionType.SubCommand)
             {
                 sb.Append(' ').Append(child.Name);
                 if (child.Value is not null) sb.Append(": ").Append(child.Value);
