@@ -194,19 +194,24 @@ namespace RitsukageBot.Modules
             {
                 var (hasJsonHeader, content, jsonHeader) = FormatResponse(sb.ToString());
                 if (hasJsonHeader)
-                {
-                    var jObject = JObject.Parse(jsonHeader!);
-                    var current = jObject.TryGetValue("good", out var good) ? good.Value<int>() : 0;
-                    var change = jObject.TryGetValue("change", out var changeValue) ? changeValue.Value<int>() : 0;
-                    var (_, userInfo) = await DatabaseProviderService
-                        .GetOrCreateAsync<ChatUserInformation>(Context.User.Id)
-                        .ConfigureAwait(false);
-                    Logger.LogInformation(
-                        "User {UserId} has changed their good value from {OldGood} to {NewGood}, change: {Change}",
-                        Context.User.Id, userInfo.Good, current, change);
-                    userInfo.Good = current;
-                    await DatabaseProviderService.UpdateAsync(userInfo).ConfigureAwait(false);
-                }
+                    try
+                    {
+                        var jObject = JObject.Parse(jsonHeader!);
+                        var current = jObject.TryGetValue("good", out var good) ? good.Value<int>() : 0;
+                        var change = jObject.TryGetValue("change", out var changeValue) ? changeValue.Value<int>() : 0;
+                        var (_, userInfo) = await DatabaseProviderService
+                            .GetOrCreateAsync<ChatUserInformation>(Context.User.Id)
+                            .ConfigureAwait(false);
+                        Logger.LogInformation(
+                            "User {UserId} has changed their good value from {OldGood} to {NewGood}, change: {Change}",
+                            Context.User.Id, userInfo.Good, current, change);
+                        userInfo.Good = current;
+                        await DatabaseProviderService.UpdateAsync(userInfo).ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogError(ex, "Error while parsing the JSON header");
+                    }
 
                 if (!string.IsNullOrWhiteSpace(content))
                     await ModifyOriginalResponseAsync(x => x.Content = content)
