@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Text;
 using Discord;
 using Discord.Interactions;
@@ -23,7 +22,9 @@ namespace RitsukageBot.Modules
         /// </summary>
         public const string CustomId = "ai_interaction";
 
-        private static readonly ConcurrentDictionary<ulong, bool> IsProcessing = [];
+        private static readonly HashSet<ulong> IsProcessing = [];
+
+        private static readonly Lock LockObject = new();
 
         /// <summary>
         ///     Logger
@@ -52,7 +53,14 @@ namespace RitsukageBot.Modules
         public async Task ChatAsync(string message)
         {
             await DeferAsync().ConfigureAwait(false);
-            if (IsProcessing.TryGetValue(Context.User.Id, out var isProcessing) && isProcessing)
+
+            bool isChatting;
+            lock (LockObject)
+            {
+                isChatting = IsProcessing.Contains(Context.User.Id);
+            }
+
+            if (isChatting)
             {
                 var embed = new EmbedBuilder
                 {
@@ -75,7 +83,10 @@ namespace RitsukageBot.Modules
                 await ModifyOriginalResponseAsync(x => x.Embed = embed.Build()).ConfigureAwait(false);
             }
 
-            IsProcessing.AddOrUpdate(Context.User.Id, true, (_, _) => true);
+            lock (LockObject)
+            {
+                IsProcessing.Add(Context.User.Id);
+            }
 
             var messageList = new List<ChatMessage>();
             if (GetRoleData() is { } roleData)
@@ -95,7 +106,10 @@ namespace RitsukageBot.Modules
 
             messageList.Add(userMessage);
             await BeginChatAsync(messageList, false, 3).ConfigureAwait(false);
-            IsProcessing.Remove(Context.User.Id, out _);
+            lock (LockObject)
+            {
+                IsProcessing.Remove(Context.User.Id);
+            }
         }
 
         private ChatMessage? GetRoleData()
@@ -123,178 +137,167 @@ namespace RitsukageBot.Modules
 
         private async Task BeginChatAsync(IList<ChatMessage> messageList, bool useTools = false, int retry = 0)
         {
-            string? userInputMessage = null;
-            var lastUserMessage = messageList.LastOrDefault(x => x.Role == ChatRole.User);
-            if (lastUserMessage is not null)
-                userInputMessage = lastUserMessage.ToString();
-            if (string.IsNullOrWhiteSpace(userInputMessage))
+            if (!CheckUserInputMessage(messageList))
             {
-                await ModifyOriginalResponseAsync(x => x.Content = "Please provide a message to chat with the AI")
-                    .ConfigureAwait(false);
+                var embed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "Please provide a message to chat with the AI",
+                    Color = Color.Red,
+                };
+                await ModifyOriginalResponseAsync(x => x.Embed = embed.Build()).ConfigureAwait(false);
                 return;
             }
 
-            var sb = new StringBuilder();
-            var isCompleted = false;
-            var retryCount = 0;
-            var isUpdated = false;
-            var isErrored = false;
-            var haveContent = false;
-            var lockObject = new Lock();
-            _ = Task.Run(async () =>
-            {
-                retry = Math.Max(1, retry + 1);
+            var (isSuccess, errorMessage) = await TryGettingResponse(messageList, useTools).ConfigureAwait(false);
+            if (isSuccess) return;
+
+            if (retry > 0)
                 for (var i = 0; i < retry; i++)
                 {
-                    var failed = false;
-                    var cancellationTokenSource = new CancellationTokenSource();
-                    _ = Task.Delay(TimeSpan.FromMinutes(1), cancellationTokenSource.Token).ContinueWith(x =>
+                    var retryMessage = $"{errorMessage}\nRetrying... ({i + 1}/{retry})";
+                    await ModifyOriginalResponseAsync(x => x.Content = retryMessage).ConfigureAwait(false);
+                    (isSuccess, errorMessage) = await TryGettingResponse(messageList, useTools).ConfigureAwait(false);
+                    if (isSuccess) return;
+                }
+
+            var errorEmbed = new EmbedBuilder
+            {
+                Title = "Error",
+                Description = errorMessage,
+                Color = Color.Red,
+            };
+            await ModifyOriginalResponseAsync(x =>
+            {
+                x.Content = null;
+                x.Embed = errorEmbed.Build();
+            }).ConfigureAwait(false);
+        }
+
+        private async Task<(bool, string?)> TryGettingResponse(IList<ChatMessage> messageList, bool useTools = false,
+            long timeout = 60000)
+        {
+            var sb = new StringBuilder();
+            var haveContent = false;
+            var isCompleted = false;
+            var isUpdated = false;
+            var isErrored = false;
+            var isTimeout = false;
+            var lockObject = new Lock();
+            {
+                var cancellationTokenSource = new CancellationTokenSource();
+                var timeoutTask = Task.Delay(TimeSpan.FromMilliseconds(timeout), cancellationTokenSource.Token)
+                    .ContinueWith(x =>
                     {
+                        if (x.IsFaulted) return;
                         lock (lockObject)
                         {
                             // ReSharper disable once AccessToModifiedClosure
                             if (haveContent) return;
                             cancellationTokenSource.Cancel();
-                            failed = true;
+                            isTimeout = true;
+                            Logger.LogWarning("The chat with AI tools took too long to respond");
                         }
                     }, cancellationTokenSource.Token);
-                    await foreach (var response in ChatClientProviderService.CompleteStreamingAsync(messageList,
-                                       useTools,
-                                       cancellationTokenSource.Token))
-                        lock (lockObject)
-                        {
-                            if (string.IsNullOrWhiteSpace(response.ToString()))
-                                continue;
-                            sb.Append(response);
-                            isUpdated = true;
-                            haveContent = true;
-                        }
-
-                    if (failed)
+                _ = Task.Run(async () =>
                     {
-                        retryCount++;
-                        continue;
-                    }
+                        await foreach (var response in ChatClientProviderService.CompleteStreamingAsync(messageList,
+                                           useTools,
+                                           cancellationTokenSource.Token))
+                            lock (lockObject)
+                            {
+                                if (string.IsNullOrWhiteSpace(response.ToString()))
+                                    continue;
+                                sb.Append(response);
+                                isUpdated = true;
+                                haveContent = true;
+                            }
 
-                    isCompleted = true;
-                    await cancellationTokenSource.CancelAsync().ConfigureAwait(false);
-                    break;
-                }
+                        isCompleted = true;
+                        await cancellationTokenSource.CancelAsync().ConfigureAwait(false);
+                    }, cancellationTokenSource.Token)
+                    .ContinueWith(x =>
+                    {
+                        if (!x.IsFaulted) return;
+                        if (isTimeout) return;
+                        isErrored = true;
+                        Logger.LogError(x.Exception, "Error while processing the chat with AI tools");
+                    }, cancellationTokenSource.Token);
+            }
 
-                if (!isCompleted)
-                {
-                    isCompleted = true;
-                    isUpdated = true;
-                    isErrored = true;
-                    sb = new();
-                    sb.Append("The chat with AI tools took too long to respond");
-                    Logger.LogWarning("The chat with AI tools took too long to respond");
-                }
-            }).ContinueWith(x =>
-            {
-                if (!x.IsFaulted) return;
-                isCompleted = true;
-                isUpdated = true;
-                isErrored = true;
-                sb = new();
-                sb.Append("An error occurred while processing the chat with AI tools");
-                Logger.LogError(x.Exception, "Error while processing the chat with AI tools");
-            });
             while (!isCompleted)
             {
-                string? content = null;
+                string? updatingContent = null;
                 lock (lockObject)
                 {
-                    if (!haveContent && retryCount > 0)
+                    if (isUpdated)
                     {
-                        content = $"Retrying {retryCount} time(s)...";
-                    }
-                    else if (isUpdated)
-                    {
-                        (_, content, _) = FormatResponse(sb.ToString());
+                        (_, updatingContent, _) = FormatResponse(sb.ToString());
                         isUpdated = false;
                     }
                 }
 
-                if (!string.IsNullOrWhiteSpace(content))
-                    await ModifyOriginalResponseAsync(x => x.Content = content).ConfigureAwait(false);
+                if (!string.IsNullOrWhiteSpace(updatingContent))
+                    await ModifyOriginalResponseAsync(x => x.Content = updatingContent).ConfigureAwait(false);
                 await Task.Delay(1000).ConfigureAwait(false);
             }
 
-            if (isErrored)
-            {
-                var embed = new EmbedBuilder
-                {
-                    Title = "Error",
-                    Description = sb.ToString(),
-                    Color = Color.Red,
-                };
-                await ModifyOriginalResponseAsync(x =>
-                {
-                    x.Content = null;
-                    x.Embed = embed.Build();
-                }).ConfigureAwait(false);
-            }
-            else if (!haveContent)
-            {
-                var embed = new EmbedBuilder
-                {
-                    Title = "Error",
-                    Description = "No content was received from the AI",
-                    Color = Color.Red,
-                };
-                await ModifyOriginalResponseAsync(x =>
-                {
-                    x.Content = null;
-                    x.Embed = embed.Build();
-                }).ConfigureAwait(false);
-            }
-            else
-            {
-                var (hasJsonHeader, content, jsonHeader) = FormatResponse(sb.ToString());
-                if (hasJsonHeader)
-                    try
-                    {
-                        var jObject = JObject.Parse(jsonHeader!);
-                        var current = jObject.TryGetValue("good", out var good) ? good.Value<int>() : 0;
-                        var before = jObject.TryGetValue("before", out var beforeValue) ? beforeValue.Value<int>() : 0;
-                        var change = jObject.TryGetValue("change", out var changeValue) ? changeValue.Value<int>() : 0;
-                        var reason = jObject.TryGetValue("reason", out var reasonValue)
-                            ? reasonValue.Value<string>()
-                            : null;
-                        var (_, userInfo) = await DatabaseProviderService
-                            .GetOrCreateAsync<ChatUserInformation>(Context.User.Id)
-                            .ConfigureAwait(false);
-                        if (string.IsNullOrEmpty(reason))
-                            Logger.LogInformation("User {UserId} got {Change} points, {Before} -> {Current}",
-                                Context.User.Id, change, before, current);
-                        else
-                            Logger.LogInformation("User {UserId} got {Change} points, {Before} -> {Current} ({Reason})",
-                                Context.User.Id, change, before, current, reason);
-                        userInfo.Good = current;
-                        await DatabaseProviderService.InsertOrUpdateAsync(userInfo).ConfigureAwait(false);
-                        if (change != 0)
-                        {
-                            var embed = new EmbedBuilder();
-                            embed.WithColor(change > 0 ? Color.Green : Color.Red);
-                            var description = change > 0
-                                ? $"Increased by {change} points, current points: {current}"
-                                : $"Decreased by {Math.Abs(change)} points, current points: {current}";
-                            embed.WithDescription(!string.IsNullOrWhiteSpace(reason)
-                                ? $"{description} ({reason})"
-                                : description);
-                            await ModifyOriginalResponseAsync(x => x.Embed = embed.Build()).ConfigureAwait(false);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.LogError(ex, "Error while parsing the JSON header");
-                    }
+            if (isErrored) return (false, "An error occurred while processing the chat with AI tools");
+            if (isTimeout) return (false, "The chat with AI tools took too long to respond");
 
-                if (!string.IsNullOrWhiteSpace(content))
-                    await ModifyOriginalResponseAsync(x => x.Content = content)
+            var (hasJsonHeader, content, jsonHeader) = FormatResponse(sb.ToString());
+            if (hasJsonHeader)
+                try
+                {
+                    var jObject = JObject.Parse(jsonHeader!);
+                    var current = jObject.TryGetValue("good", out var good) ? good.Value<int>() : 0;
+                    var before = jObject.TryGetValue("before", out var beforeValue) ? beforeValue.Value<int>() : 0;
+                    var change = jObject.TryGetValue("change", out var changeValue) ? changeValue.Value<int>() : 0;
+                    var reason = jObject.TryGetValue("reason", out var reasonValue)
+                        ? reasonValue.Value<string>()
+                        : null;
+                    var (_, userInfo) = await DatabaseProviderService
+                        .GetOrCreateAsync<ChatUserInformation>(Context.User.Id)
                         .ConfigureAwait(false);
-            }
+                    if (string.IsNullOrEmpty(reason))
+                        Logger.LogInformation("User {UserId} got {Change} points, {Before} -> {Current}",
+                            Context.User.Id, change, before, current);
+                    else
+                        Logger.LogInformation("User {UserId} got {Change} points, {Before} -> {Current} ({Reason})",
+                            Context.User.Id, change, before, current, reason);
+                    userInfo.Good = current;
+                    await DatabaseProviderService.InsertOrUpdateAsync(userInfo).ConfigureAwait(false);
+                    if (change != 0)
+                    {
+                        var embed = new EmbedBuilder();
+                        embed.WithColor(change > 0 ? Color.Green : Color.Red);
+                        var description = change > 0
+                            ? $"Increased by {change} points, current points: {current}"
+                            : $"Decreased by {Math.Abs(change)} points, current points: {current}";
+                        embed.WithDescription(!string.IsNullOrWhiteSpace(reason)
+                            ? $"{description} ({reason})"
+                            : description);
+                        await ModifyOriginalResponseAsync(x => x.Embed = embed.Build()).ConfigureAwait(false);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "Error while parsing the JSON header");
+                }
+
+            if (!string.IsNullOrWhiteSpace(content))
+                await ModifyOriginalResponseAsync(x => x.Content = content).ConfigureAwait(false);
+
+            return (true, null);
+        }
+
+        private static bool CheckUserInputMessage(IList<ChatMessage> messageList)
+        {
+            string? userInputMessage = null;
+            var lastUserMessage = messageList.LastOrDefault(x => x.Role == ChatRole.User);
+            if (lastUserMessage is not null)
+                userInputMessage = lastUserMessage.ToString();
+            return !string.IsNullOrWhiteSpace(userInputMessage);
         }
 
         private static (bool, string, string?) CheckJsonHeader(string response)
