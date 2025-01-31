@@ -94,7 +94,7 @@ namespace RitsukageBot.Modules
             }
 
             messageList.Add(userMessage);
-            await BeginChatAsync(messageList).ConfigureAwait(false);
+            await BeginChatAsync(messageList, false, 3).ConfigureAwait(false);
             IsProcessing.Remove(Context.User.Id, out _);
         }
 
@@ -121,7 +121,7 @@ namespace RitsukageBot.Modules
             return new(ChatRole.User, jObject.ToString());
         }
 
-        private async Task BeginChatAsync(IList<ChatMessage> messageList, bool useTools = false)
+        private async Task BeginChatAsync(IList<ChatMessage> messageList, bool useTools = false, int retry = 0)
         {
             string? userInputMessage = null;
             var lastUserMessage = messageList.LastOrDefault(x => x.Role == ChatRole.User);
@@ -136,41 +136,60 @@ namespace RitsukageBot.Modules
 
             var sb = new StringBuilder();
             var isCompleted = false;
+            var retryCount = 0;
             var isUpdated = false;
             var isErrored = false;
             var haveContent = false;
             var lockObject = new Lock();
             _ = Task.Run(async () =>
             {
-                var cancellationTokenSource = new CancellationTokenSource();
-                _ = Task.Delay(TimeSpan.FromMinutes(1), cancellationTokenSource.Token).ContinueWith(x =>
+                retry = Math.Max(1, retry + 1);
+                for (var i = 0; i < retry; i++)
                 {
-                    lock (lockObject)
+                    var failed = false;
+                    var cancellationTokenSource = new CancellationTokenSource();
+                    _ = Task.Delay(TimeSpan.FromMinutes(1), cancellationTokenSource.Token).ContinueWith(x =>
                     {
-                        // ReSharper disable once AccessToModifiedClosure
-                        if (haveContent) return;
-                        cancellationTokenSource.Cancel();
-                        isCompleted = true;
-                        isUpdated = true;
-                        isErrored = true;
-                        sb = new();
-                        sb.Append("The chat with AI tools took too long to respond");
-                        Logger.LogWarning("The chat with AI tools took too long to respond");
-                    }
-                }, cancellationTokenSource.Token);
-                await foreach (var response in ChatClientProviderService.CompleteStreamingAsync(messageList, useTools,
-                                   cancellationTokenSource.Token))
-                    lock (lockObject)
+                        lock (lockObject)
+                        {
+                            // ReSharper disable once AccessToModifiedClosure
+                            if (haveContent) return;
+                            cancellationTokenSource.Cancel();
+                            failed = true;
+                        }
+                    }, cancellationTokenSource.Token);
+                    await foreach (var response in ChatClientProviderService.CompleteStreamingAsync(messageList,
+                                       useTools,
+                                       cancellationTokenSource.Token))
+                        lock (lockObject)
+                        {
+                            if (string.IsNullOrWhiteSpace(response.ToString()))
+                                continue;
+                            sb.Append(response);
+                            isUpdated = true;
+                            haveContent = true;
+                        }
+
+                    if (failed)
                     {
-                        if (string.IsNullOrWhiteSpace(response.ToString()))
-                            continue;
-                        sb.Append(response);
-                        isUpdated = true;
-                        haveContent = true;
+                        retryCount++;
+                        continue;
                     }
 
-                isCompleted = true;
-                await cancellationTokenSource.CancelAsync().ConfigureAwait(false);
+                    isCompleted = true;
+                    await cancellationTokenSource.CancelAsync().ConfigureAwait(false);
+                    break;
+                }
+
+                if (!isCompleted)
+                {
+                    isCompleted = true;
+                    isUpdated = true;
+                    isErrored = true;
+                    sb = new();
+                    sb.Append("The chat with AI tools took too long to respond");
+                    Logger.LogWarning("The chat with AI tools took too long to respond");
+                }
             }).ContinueWith(x =>
             {
                 if (!x.IsFaulted) return;
@@ -186,7 +205,11 @@ namespace RitsukageBot.Modules
                 string? content = null;
                 lock (lockObject)
                 {
-                    if (isUpdated)
+                    if (!haveContent && retryCount > 0)
+                    {
+                        content = $"Retrying {retryCount} time(s)...";
+                    }
+                    else if (isUpdated)
                     {
                         (_, content, _) = FormatResponse(sb.ToString());
                         isUpdated = false;
