@@ -213,7 +213,7 @@ namespace RitsukageBot.Modules
                             Logger.LogInformation("User {UserId} got {Change} points, {Before} -> {Current} ({Reason})",
                                 Context.User.Id, change, before, current, reason);
                         userInfo.Good = current;
-                        await DatabaseProviderService.UpdateAsync(userInfo).ConfigureAwait(false);
+                        await DatabaseProviderService.InsertOrUpdateAsync(userInfo).ConfigureAwait(false);
                     }
                     catch (Exception ex)
                     {
