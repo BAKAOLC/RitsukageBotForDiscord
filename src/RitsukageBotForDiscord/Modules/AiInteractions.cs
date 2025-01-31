@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text;
 using Discord;
 using Discord.Interactions;
@@ -21,6 +22,8 @@ namespace RitsukageBot.Modules
         ///     Custom ID
         /// </summary>
         public const string CustomId = "ai_interaction";
+
+        private static readonly ConcurrentDictionary<ulong, bool> IsProcessing = [];
 
         /// <summary>
         ///     Logger
@@ -49,6 +52,18 @@ namespace RitsukageBot.Modules
         public async Task ChatAsync(string message)
         {
             await DeferAsync().ConfigureAwait(false);
+            if (IsProcessing.TryGetValue(Context.User.Id, out var isProcessing) && isProcessing)
+            {
+                var embed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "You are already chatting with the AI",
+                    Color = Color.Red,
+                };
+                await ModifyOriginalResponseAsync(x => x.Embed = embed.Build()).ConfigureAwait(false);
+                return;
+            }
+
             if (string.IsNullOrWhiteSpace(message))
             {
                 var embed = new EmbedBuilder
@@ -59,6 +74,8 @@ namespace RitsukageBot.Modules
                 };
                 await ModifyOriginalResponseAsync(x => x.Embed = embed.Build()).ConfigureAwait(false);
             }
+
+            IsProcessing.AddOrUpdate(Context.User.Id, true, (_, _) => true);
 
             var messageList = new List<ChatMessage>();
             if (GetRoleData() is { } roleData)
@@ -78,6 +95,7 @@ namespace RitsukageBot.Modules
 
             messageList.Add(userMessage);
             await BeginChatAsync(messageList).ConfigureAwait(false);
+            IsProcessing.Remove(Context.User.Id, out _);
         }
 
         private ChatMessage? GetRoleData()
