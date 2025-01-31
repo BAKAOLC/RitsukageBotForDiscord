@@ -57,7 +57,7 @@ namespace RitsukageBot.Modules
                     Description = "Please provide a message to chat with the AI",
                     Color = Color.Red,
                 };
-                await ModifyOriginalResponseAsync(x => x.Embeds = new[] { embed.Build() }).ConfigureAwait(false);
+                await ModifyOriginalResponseAsync(x => x.Embed = embed.Build()).ConfigureAwait(false);
             }
 
             var messageList = new List<ChatMessage>();
@@ -72,7 +72,7 @@ namespace RitsukageBot.Modules
                     Description = "An error occurred while building the user chat message",
                     Color = Color.Red,
                 };
-                await ModifyOriginalResponseAsync(x => x.Embeds = new[] { embed.Build() }).ConfigureAwait(false);
+                await ModifyOriginalResponseAsync(x => x.Embed = embed.Build()).ConfigureAwait(false);
                 return;
             }
 
@@ -173,7 +173,7 @@ namespace RitsukageBot.Modules
                 await ModifyOriginalResponseAsync(x =>
                 {
                     x.Content = null;
-                    x.Embeds = new[] { embed.Build() };
+                    x.Embed = embed.Build();
                 }).ConfigureAwait(false);
             }
             else if (!haveContent)
@@ -187,7 +187,7 @@ namespace RitsukageBot.Modules
                 await ModifyOriginalResponseAsync(x =>
                 {
                     x.Content = null;
-                    x.Embeds = new[] { embed.Build() };
+                    x.Embed = embed.Build();
                 }).ConfigureAwait(false);
             }
             else
@@ -214,6 +214,18 @@ namespace RitsukageBot.Modules
                                 Context.User.Id, change, before, current, reason);
                         userInfo.Good = current;
                         await DatabaseProviderService.InsertOrUpdateAsync(userInfo).ConfigureAwait(false);
+                        if (change != 0)
+                        {
+                            var embed = new EmbedBuilder();
+                            embed.WithColor(change > 0 ? Color.Green : Color.Red);
+                            var description = change > 0
+                                ? $"Increased by {change} points, current points: {current}"
+                                : $"Decreased by {Math.Abs(change)} points, current points: {current}";
+                            embed.WithDescription(!string.IsNullOrWhiteSpace(reason)
+                                ? $"{description} ({reason})"
+                                : description);
+                            await ModifyOriginalResponseAsync(x => x.Embed = embed.Build()).ConfigureAwait(false);
+                        }
                     }
                     catch (Exception ex)
                     {
