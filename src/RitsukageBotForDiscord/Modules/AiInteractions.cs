@@ -198,13 +198,14 @@ namespace RitsukageBot.Modules
                     {
                         var jObject = JObject.Parse(jsonHeader!);
                         var current = jObject.TryGetValue("good", out var good) ? good.Value<int>() : 0;
+                        var before = jObject.TryGetValue("before", out var beforeValue) ? beforeValue.Value<int>() : 0;
                         var change = jObject.TryGetValue("change", out var changeValue) ? changeValue.Value<int>() : 0;
                         var (_, userInfo) = await DatabaseProviderService
                             .GetOrCreateAsync<ChatUserInformation>(Context.User.Id)
                             .ConfigureAwait(false);
                         Logger.LogInformation(
-                            "User {UserId} has changed their good value from {OldGood} to {NewGood}, change: {Change}",
-                            Context.User.Id, userInfo.Good, current, change);
+                            "User {UserId} has changed their good value from {OldGood} to {NewGood}, change: {ChangeValue} (message result: from {Before} to {After}, change: {Change})",
+                            Context.User.Id, userInfo.Good, current, current - userInfo.Good, before, current, change);
                         userInfo.Good = current;
                         await DatabaseProviderService.UpdateAsync(userInfo).ConfigureAwait(false);
                     }
