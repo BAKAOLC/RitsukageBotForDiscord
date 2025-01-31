@@ -66,7 +66,7 @@ namespace RitsukageBot.Services.Providers
                 }), modelId);
             _chatClient = new ChatClientBuilder(innerChatClient).UseFunctionInvocation()
                 .UseDistributedCache(serviceProvider.GetRequiredService<IDistributedCache>())
-                .UseLogging(serviceProvider.GetRequiredService<ILoggerFactory>())
+                //.UseLogging(serviceProvider.GetRequiredService<ILoggerFactory>())
                 .Build();
             _logger.LogInformation("Chat client is enabled");
             RegisterChatClientToolsBundle(Assembly.GetExecutingAssembly());
