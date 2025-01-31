@@ -5,6 +5,8 @@ using Discord.WebSocket;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
+using RitsukageBot.Library.Data;
 using RitsukageBot.Services.Providers;
 
 namespace RitsukageBot.Modules
@@ -31,6 +33,11 @@ namespace RitsukageBot.Modules
         public required ChatClientProviderService ChatClientProviderService { get; set; }
 
         /// <summary>
+        ///     Database provider service
+        /// </summary>
+        public required DatabaseProviderService DatabaseProviderService { get; set; }
+
+        /// <summary>
         ///     Configuration
         /// </summary>
         public required IConfiguration Configuration { get; set; }
@@ -43,15 +50,33 @@ namespace RitsukageBot.Modules
         {
             await DeferAsync().ConfigureAwait(false);
             if (string.IsNullOrWhiteSpace(message))
-                await ModifyOriginalResponseAsync(x => x.Content = "Please provide a message to chat with the AI")
-                    .ConfigureAwait(false);
-
-            var messageList = new List<ChatMessage>
             {
-                new(ChatRole.User, message),
-            };
+                var embed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "Please provide a message to chat with the AI",
+                    Color = Color.Red,
+                };
+                await ModifyOriginalResponseAsync(x => x.Embeds = new[] { embed.Build() }).ConfigureAwait(false);
+            }
+
+            var messageList = new List<ChatMessage>();
             if (GetRoleData() is { } roleData)
-                messageList.Insert(0, roleData);
+                messageList.Add(roleData);
+            if (await BuildUserChatMessage(Context.User.Id, Context.User.Username, message).ConfigureAwait(false)
+                is not { } userMessage)
+            {
+                var embed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "An error occurred while building the user chat message",
+                    Color = Color.Red,
+                };
+                await ModifyOriginalResponseAsync(x => x.Embeds = new[] { embed.Build() }).ConfigureAwait(false);
+                return;
+            }
+
+            messageList.Add(userMessage);
             await BeginChatAsync(messageList).ConfigureAwait(false);
         }
 
@@ -63,6 +88,19 @@ namespace RitsukageBot.Modules
             if (File.Exists(roleData))
                 roleData = File.ReadAllText(roleData);
             return new(ChatRole.System, roleData);
+        }
+
+        private async Task<ChatMessage?> BuildUserChatMessage(ulong id, string name, string message)
+        {
+            var (_, userInfo) = await DatabaseProviderService.GetOrCreateAsync<ChatUserInformation>(id)
+                .ConfigureAwait(false);
+            var jObject = new JObject
+            {
+                ["name"] = name,
+                ["message"] = message,
+                ["good"] = userInfo.Good,
+            };
+            return new(ChatRole.User, jObject.ToString());
         }
 
         private async Task BeginChatAsync(IList<ChatMessage> messageList, bool useTools = false)
@@ -114,7 +152,7 @@ namespace RitsukageBot.Modules
                 {
                     if (isUpdated)
                     {
-                        content = FormatResponse(sb.ToString());
+                        (_, content, _) = FormatResponse(sb.ToString());
                         isUpdated = false;
                     }
                 }
@@ -124,49 +162,81 @@ namespace RitsukageBot.Modules
                 await Task.Delay(1000).ConfigureAwait(false);
             }
 
-            if (isUpdated)
+            if (isErrored)
             {
-                if (isErrored)
+                var embed = new EmbedBuilder
                 {
-                    await DeleteOriginalResponseAsync().ConfigureAwait(false);
-                    var embed = new EmbedBuilder
-                    {
-                        Title = "Error",
-                        Description = sb.ToString(),
-                        Color = Color.Red,
-                    };
-                    await Context.Channel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
-                }
-                else
+                    Title = "Error",
+                    Description = sb.ToString(),
+                    Color = Color.Red,
+                };
+                await ModifyOriginalResponseAsync(x =>
                 {
-                    var content = FormatResponse(sb.ToString());
-                    if (!string.IsNullOrWhiteSpace(content))
-                        await ModifyOriginalResponseAsync(x => x.Content = content)
-                            .ConfigureAwait(false);
-                }
+                    x.Content = null;
+                    x.Embeds = new[] { embed.Build() };
+                }).ConfigureAwait(false);
             }
-
-            if (!haveContent)
+            else if (!haveContent)
             {
-                await DeleteOriginalResponseAsync().ConfigureAwait(false);
                 var embed = new EmbedBuilder
                 {
                     Title = "Error",
                     Description = "No content was received from the AI",
                     Color = Color.Red,
                 };
-                await Context.Channel.SendMessageAsync(embed: embed.Build()).ConfigureAwait(false);
+                await ModifyOriginalResponseAsync(x =>
+                {
+                    x.Content = null;
+                    x.Embeds = new[] { embed.Build() };
+                }).ConfigureAwait(false);
+            }
+            else
+            {
+                var (hasJsonHeader, content, jsonHeader) = FormatResponse(sb.ToString());
+                if (hasJsonHeader)
+                {
+                    var jObject = JObject.Parse(jsonHeader!);
+                    var current = jObject.TryGetValue("good", out var good) ? good.Value<int>() : 0;
+                    var change = jObject.TryGetValue("change", out var changeValue) ? changeValue.Value<int>() : 0;
+                    var (_, userInfo) = await DatabaseProviderService
+                        .GetOrCreateAsync<ChatUserInformation>(Context.User.Id)
+                        .ConfigureAwait(false);
+                    Logger.LogInformation(
+                        "User {UserId} has changed their good value from {OldGood} to {NewGood}, change: {Change}",
+                        Context.User.Id, userInfo.Good, current, change);
+                    userInfo.Good = current;
+                    await DatabaseProviderService.UpdateAsync(userInfo).ConfigureAwait(false);
+                }
+
+                if (!string.IsNullOrWhiteSpace(content))
+                    await ModifyOriginalResponseAsync(x => x.Content = content)
+                        .ConfigureAwait(false);
             }
         }
 
-        private static string FormatResponse(string response)
+        private static (bool, string, string?) CheckJsonHeader(string response)
+        {
+            if (!response.StartsWith('{')) return (false, response, null);
+            var firstLineEndIndex = response.IndexOf('\n');
+            if (firstLineEndIndex == -1)
+                firstLineEndIndex = response.IndexOf('\r');
+            if (firstLineEndIndex == -1)
+                return (false, string.Empty, response);
+            var firstLine = response[..firstLineEndIndex];
+            response = response[(firstLineEndIndex + 1)..];
+            return (true, response, firstLine);
+        }
+
+        private static (bool, string, string?) FormatResponse(string response)
         {
             response = response.Trim();
 
             if (!response.StartsWith("<think>"))
-                return response;
+                return CheckJsonHeader(response);
 
             string thinkContent;
+            var hasJsonHeader = false;
+            string? jsonHeader = null;
             var content = string.Empty;
 
             var thinkEndIndex = response.IndexOf("</think>", StringComparison.Ordinal);
@@ -188,9 +258,10 @@ namespace RitsukageBot.Modules
                 sb.AppendLine(line);
             }
 
-            if (string.IsNullOrWhiteSpace(content)) return sb.ToString();
+            if (string.IsNullOrWhiteSpace(content)) return (hasJsonHeader, sb.ToString(), jsonHeader);
+            (hasJsonHeader, content, jsonHeader) = CheckJsonHeader(content);
             sb.Append(content);
-            return sb.ToString();
+            return (hasJsonHeader, sb.ToString(), jsonHeader);
         }
     }
 }
