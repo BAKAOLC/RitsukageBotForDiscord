@@ -130,16 +130,14 @@ namespace RitsukageBot.Modules
                     lock (lockObject)
                     {
                         // ReSharper disable once AccessToModifiedClosure
-                        if (!haveContent)
-                        {
-                            cancellationTokenSource.Cancel();
-                            isCompleted = true;
-                            isUpdated = true;
-                            isErrored = true;
-                            sb = new();
-                            sb.Append("The chat with AI tools took too long to respond");
-                            Logger.LogWarning("The chat with AI tools took too long to respond");
-                        }
+                        if (haveContent) return;
+                        cancellationTokenSource.Cancel();
+                        isCompleted = true;
+                        isUpdated = true;
+                        isErrored = true;
+                        sb = new();
+                        sb.Append("The chat with AI tools took too long to respond");
+                        Logger.LogWarning("The chat with AI tools took too long to respond");
                     }
                 }, cancellationTokenSource.Token);
                 await foreach (var response in ChatClientProviderService.CompleteStreamingAsync(messageList, useTools,
