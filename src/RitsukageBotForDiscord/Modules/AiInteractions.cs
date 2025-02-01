@@ -183,9 +183,10 @@ namespace RitsukageBot.Modules
                     .ConfigureAwait(false);
             if (isSuccess) return;
 
-            if (retry > 0)
+            if (retry > 0 && !cancellationToken.IsCancellationRequested)
                 for (var i = 0; i < retry; i++)
                 {
+                    if (cancellationToken.IsCancellationRequested) break;
                     var retryMessage = $"{errorMessage}\nRetrying... ({i + 1}/{retry})";
                     var retryEmbed = new EmbedBuilder
                     {
@@ -200,12 +201,19 @@ namespace RitsukageBot.Modules
                     if (isSuccess) return;
                 }
 
-            var errorEmbed = new EmbedBuilder
-            {
-                Title = "Error",
-                Description = errorMessage,
-                Color = Color.Red,
-            };
+            var errorEmbed = cancellationToken.IsCancellationRequested
+                ? new()
+                {
+                    Title = "Chat Canceled",
+                    Description = "The chat with AI was canceled",
+                    Color = Color.DarkGrey,
+                }
+                : new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = errorMessage,
+                    Color = Color.Red,
+                };
             await ModifyOriginalResponseAsync(x =>
             {
                 x.Content = null;
