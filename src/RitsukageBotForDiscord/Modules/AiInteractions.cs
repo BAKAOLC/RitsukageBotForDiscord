@@ -182,11 +182,11 @@ namespace RitsukageBot.Modules
                 await TryGettingResponse(messageList, useTools, cancellationToken: cancellationToken)
                     .ConfigureAwait(false);
             if (isSuccess) return;
+            if (cancellationToken.IsCancellationRequested) return;
 
             if (retry > 0 && !cancellationToken.IsCancellationRequested)
                 for (var i = 0; i < retry; i++)
                 {
-                    if (cancellationToken.IsCancellationRequested) break;
                     var retryMessage = $"{errorMessage}\nRetrying... ({i + 1}/{retry})";
                     var retryEmbed = new EmbedBuilder
                     {
@@ -199,24 +199,10 @@ namespace RitsukageBot.Modules
                         await TryGettingResponse(messageList, useTools, cancellationToken: cancellationToken)
                             .ConfigureAwait(false);
                     if (isSuccess) return;
+                    if (cancellationToken.IsCancellationRequested) return;
                 }
 
-            if (cancellationToken.IsCancellationRequested)
-            {
-                var cancelEmbed = new EmbedBuilder
-                {
-                    Title = "Chat Canceled",
-                    Description = "The chat with AI was canceled",
-                    Color = Color.DarkGrey,
-                };
-                await ModifyOriginalResponseAsync(x =>
-                {
-                    x.Content = null;
-                    x.Embed = cancelEmbed.Build();
-                    x.Components = null;
-                }).ConfigureAwait(false);
-                return;
-            }
+            if (cancellationToken.IsCancellationRequested) return;
 
             var errorEmbed = new EmbedBuilder
             {
@@ -450,7 +436,18 @@ namespace RitsukageBot.Modules
         {
             Logger.LogInformation("Ai chat interaction canceled for {MessageId}", Context.Interaction.Message.Id);
             AiInteractions.ShutdownChat(Context.User.Id);
-            return Context.Interaction.UpdateAsync(x => x.Components = null);
+            var embed = new EmbedBuilder
+            {
+                Title = "Chat with AI",
+                Description = "The chat with AI was canceled",
+                Color = Color.DarkGrey,
+            };
+            return Context.Interaction.UpdateAsync(x =>
+            {
+                x.Content = null;
+                x.Embed = embed.Build();
+                x.Components = null;
+            });
         }
     }
 }
