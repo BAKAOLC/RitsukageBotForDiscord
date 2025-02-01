@@ -276,21 +276,28 @@ namespace RitsukageBot.Modules
                     }, cancellationTokenSource2.Token);
             }
 
-            while (!isCompleted && !isError && !isTimeout && !cancellationToken.IsCancellationRequested)
+            try
             {
-                string? updatingContent = null;
-                lock (lockObject)
+                while (!isCompleted && !isError && !isTimeout && !cancellationToken.IsCancellationRequested)
                 {
-                    if (isUpdated)
+                    string? updatingContent = null;
+                    lock (lockObject)
                     {
-                        (_, updatingContent, _) = FormatResponse(sb.ToString());
-                        isUpdated = false;
+                        if (isUpdated)
+                        {
+                            (_, updatingContent, _) = FormatResponse(sb.ToString());
+                            isUpdated = false;
+                        }
                     }
-                }
 
-                if (!string.IsNullOrWhiteSpace(updatingContent))
-                    await ModifyOriginalResponseAsync(x => x.Content = updatingContent).ConfigureAwait(false);
-                await Task.Delay(1000, cancellationToken).ConfigureAwait(false);
+                    if (!string.IsNullOrWhiteSpace(updatingContent))
+                        await ModifyOriginalResponseAsync(x => x.Content = updatingContent).ConfigureAwait(false);
+                    await Task.Delay(1000, cancellationToken).ConfigureAwait(false);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                Logger.LogInformation("The chat with AI was canceled");
             }
 
             if (isError) return (false, "An error occurred while processing the chat with AI tools");
