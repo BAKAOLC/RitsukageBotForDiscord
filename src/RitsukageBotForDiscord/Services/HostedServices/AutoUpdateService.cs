@@ -47,6 +47,7 @@ namespace RitsukageBot.Services.HostedServices
             PlatformID.Win32NT => "windows-latest",
             PlatformID.Unix => "ubuntu-latest",
             PlatformID.MacOSX => "macos-latest",
+            // ReSharper disable once ThrowExceptionInUnexpectedLocation
             _ => throw new NotSupportedException("Unsupported operating system."),
         };
 
@@ -58,6 +59,7 @@ namespace RitsukageBot.Services.HostedServices
         public Task StartAsync(CancellationToken cancellationToken)
         {
             if (!_option.Enabled) return Task.CompletedTask;
+            // ReSharper disable once AsyncVoidFunctionExpression
             _timer = new(async void (_) => await CheckUpdateAsync().ConfigureAwait(false), null, TimeSpan.Zero,
                 TimeSpan.FromMilliseconds(_option.CheckInterval));
             logger.LogInformation("Auto update service started");

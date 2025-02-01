@@ -303,9 +303,9 @@ namespace RitsukageBot.Modules
                     await Task.Delay(1000, cancellationToken).ConfigureAwait(false);
                 }
             }
-            catch (OperationCanceledException)
+            catch
             {
-                Logger.LogInformation("The chat with AI was canceled");
+                return (false, "The chat with AI was canceled");
             }
 
             if (isError) return (false, "An error occurred while processing the chat with AI tools");

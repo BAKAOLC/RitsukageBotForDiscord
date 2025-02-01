@@ -282,11 +282,6 @@ namespace RitsukageBot.Modules
                 Logger.LogError(ex, "Failed to download image");
                 message = ex.Message;
             }
-            catch (NotSupportedException ex)
-            {
-                Logger.LogError(ex, "Failed to download image");
-                message = ex.Message;
-            }
             catch (InvalidImageContentException)
             {
                 Logger.LogError("Invalid image content");
@@ -577,10 +572,6 @@ namespace RitsukageBot.Modules
                 image ??= await ImageCacheProviderService.GetImageAsync(attachment.Url).ConfigureAwait(false);
             }
             catch (HttpRequestException ex)
-            {
-                Logger.LogError(ex, "Failed to download image");
-            }
-            catch (NotSupportedException ex)
             {
                 Logger.LogError(ex, "Failed to download image");
             }

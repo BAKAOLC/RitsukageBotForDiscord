@@ -55,8 +55,9 @@ namespace RitsukageBot.Library.Minecraft.Server
                 Receive(cache, 0, offset, SocketFlags.None);
                 return cache;
             }
-            catch (OutOfMemoryException)
+            catch
             {
+                // ignored
             }
 
             return [];

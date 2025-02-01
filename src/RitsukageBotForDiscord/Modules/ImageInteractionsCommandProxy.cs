@@ -235,11 +235,6 @@ namespace RitsukageBot.Modules
                 Logger.LogError(ex, "Failed to download image");
                 message = ex.Message;
             }
-            catch (NotSupportedException ex)
-            {
-                Logger.LogError(ex, "Failed to download image");
-                message = ex.Message;
-            }
             catch (InvalidImageContentException)
             {
                 Logger.LogError("Invalid image content");
