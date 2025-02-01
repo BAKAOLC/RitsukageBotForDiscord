@@ -260,10 +260,6 @@ namespace RitsukageBot.Modules
                                 isUpdated = true;
                                 haveContent = true;
                             }
-
-                            if (checkedEmbed) continue;
-                            checkedEmbed = true;
-                            await ModifyOriginalResponseAsync(x => x.Embed = null).ConfigureAwait(false);
                         }
 
                         isCompleted = true;
@@ -295,7 +291,22 @@ namespace RitsukageBot.Modules
                     }
 
                     if (!string.IsNullOrWhiteSpace(updatingContent))
-                        await ModifyOriginalResponseAsync(x => x.Content = updatingContent).ConfigureAwait(false);
+                    {
+                        if (checkedEmbed)
+                        {
+                            await ModifyOriginalResponseAsync(x => x.Content = updatingContent).ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            checkedEmbed = true;
+                            await ModifyOriginalResponseAsync(x =>
+                            {
+                                x.Content = updatingContent;
+                                x.Embed = null;
+                            }).ConfigureAwait(false);
+                        }
+                    }
+
                     await Task.Delay(1000, cancellationToken).ConfigureAwait(false);
                 }
             }
@@ -341,6 +352,10 @@ namespace RitsukageBot.Modules
                             ? $"{description} ({reason})"
                             : description);
                         await ModifyOriginalResponseAsync(x => x.Embed = embed.Build()).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        await ModifyOriginalResponseAsync(x => x.Embed = null).ConfigureAwait(false);
                     }
                 }
                 catch (Exception ex)
