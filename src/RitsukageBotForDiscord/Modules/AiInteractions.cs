@@ -201,19 +201,29 @@ namespace RitsukageBot.Modules
                     if (isSuccess) return;
                 }
 
-            var errorEmbed = cancellationToken.IsCancellationRequested
-                ? new()
+            if (cancellationToken.IsCancellationRequested)
+            {
+                var cancelEmbed = new EmbedBuilder
                 {
                     Title = "Chat Canceled",
                     Description = "The chat with AI was canceled",
                     Color = Color.DarkGrey,
-                }
-                : new EmbedBuilder
-                {
-                    Title = "Error",
-                    Description = errorMessage,
-                    Color = Color.Red,
                 };
+                await ModifyOriginalResponseAsync(x =>
+                {
+                    x.Content = null;
+                    x.Embed = cancelEmbed.Build();
+                    x.Components = null;
+                }).ConfigureAwait(false);
+                return;
+            }
+
+            var errorEmbed = new EmbedBuilder
+            {
+                Title = "Error",
+                Description = errorMessage,
+                Color = Color.Red,
+            };
             await ModifyOriginalResponseAsync(x =>
             {
                 x.Content = null;
