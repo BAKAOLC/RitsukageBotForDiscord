@@ -22,7 +22,7 @@ namespace RitsukageBot.Modules
         /// </summary>
         public const string CustomId = "ai_interaction";
 
-        private static readonly HashSet<ulong> IsProcessing = [];
+        private static readonly Dictionary<ulong, CancellationTokenSource> IsProcessing = [];
 
         private static readonly Lock LockObject = new();
 
@@ -47,6 +47,19 @@ namespace RitsukageBot.Modules
         public required IConfiguration Configuration { get; set; }
 
         /// <summary>
+        ///     Shutdown the chat
+        /// </summary>
+        /// <param name="id"></param>
+        public static void ShutdownChat(ulong id)
+        {
+            lock (LockObject)
+            {
+                if (!IsProcessing.TryGetValue(id, out var cancellationTokenSource)) return;
+                cancellationTokenSource.Cancel();
+            }
+        }
+
+        /// <summary>
         ///     Chat with the AI
         /// </summary>
         [SlashCommand("chat", "Chat with the AI")]
@@ -57,7 +70,7 @@ namespace RitsukageBot.Modules
             bool isChatting;
             lock (LockObject)
             {
-                isChatting = IsProcessing.Contains(Context.User.Id);
+                isChatting = IsProcessing.ContainsKey(Context.User.Id);
             }
 
             if (isChatting)
@@ -83,9 +96,10 @@ namespace RitsukageBot.Modules
                 await ModifyOriginalResponseAsync(x => x.Embed = embed.Build()).ConfigureAwait(false);
             }
 
+            var cancellationTokenSource = new CancellationTokenSource();
             lock (LockObject)
             {
-                IsProcessing.Add(Context.User.Id);
+                IsProcessing.Add(Context.User.Id, cancellationTokenSource);
             }
 
             var messageList = new List<ChatMessage>();
@@ -105,7 +119,7 @@ namespace RitsukageBot.Modules
             }
 
             messageList.Add(userMessage);
-            await BeginChatAsync(messageList, false, 3).ConfigureAwait(false);
+            await BeginChatAsync(messageList, false, 3, cancellationTokenSource.Token).ConfigureAwait(false);
             lock (LockObject)
             {
                 IsProcessing.Remove(Context.User.Id);
@@ -135,7 +149,8 @@ namespace RitsukageBot.Modules
             return new(ChatRole.User, jObject.ToString());
         }
 
-        private async Task BeginChatAsync(IList<ChatMessage> messageList, bool useTools = false, int retry = 0)
+        private async Task BeginChatAsync(IList<ChatMessage> messageList, bool useTools = false, int retry = 0,
+            CancellationToken cancellationToken = default)
         {
             if (!CheckUserInputMessage(messageList))
             {
@@ -149,15 +164,39 @@ namespace RitsukageBot.Modules
                 return;
             }
 
-            var (isSuccess, errorMessage) = await TryGettingResponse(messageList, useTools).ConfigureAwait(false);
+            var component = new ComponentBuilder();
+            component.WithButton("Cancel", $"{CustomId}:cancel_chat", ButtonStyle.Danger);
+
+            var waitEmbed = new EmbedBuilder();
+            waitEmbed.WithTitle("Chatting with AI");
+            waitEmbed.WithDescription("Getting response from the AI...");
+            waitEmbed.WithColor(Color.Orange);
+
+            await ModifyOriginalResponseAsync(x =>
+            {
+                x.Embed = waitEmbed.Build();
+                x.Components = component.Build();
+            }).ConfigureAwait(false);
+
+            var (isSuccess, errorMessage) =
+                await TryGettingResponse(messageList, useTools, cancellationToken: cancellationToken)
+                    .ConfigureAwait(false);
             if (isSuccess) return;
 
             if (retry > 0)
                 for (var i = 0; i < retry; i++)
                 {
                     var retryMessage = $"{errorMessage}\nRetrying... ({i + 1}/{retry})";
-                    await ModifyOriginalResponseAsync(x => x.Content = retryMessage).ConfigureAwait(false);
-                    (isSuccess, errorMessage) = await TryGettingResponse(messageList, useTools).ConfigureAwait(false);
+                    var retryEmbed = new EmbedBuilder
+                    {
+                        Title = "Error",
+                        Description = retryMessage,
+                        Color = Color.Red,
+                    };
+                    await ModifyOriginalResponseAsync(x => x.Embed = retryEmbed.Build()).ConfigureAwait(false);
+                    (isSuccess, errorMessage) =
+                        await TryGettingResponse(messageList, useTools, cancellationToken: cancellationToken)
+                            .ConfigureAwait(false);
                     if (isSuccess) return;
                 }
 
@@ -171,14 +210,16 @@ namespace RitsukageBot.Modules
             {
                 x.Content = null;
                 x.Embed = errorEmbed.Build();
+                x.Components = null;
             }).ConfigureAwait(false);
         }
 
         private async Task<(bool, string?)> TryGettingResponse(IList<ChatMessage> messageList, bool useTools = false,
-            long timeout = 60000)
+            long timeout = 60000, CancellationToken cancellationToken = default)
         {
             var sb = new StringBuilder();
             var haveContent = false;
+            var checkedEmbed = false;
             var isCompleted = false;
             var isUpdated = false;
             var isError = false;
@@ -190,6 +231,7 @@ namespace RitsukageBot.Modules
                 _ = Task.Delay(TimeSpan.FromMilliseconds(timeout), cancellationTokenSource1.Token)
                     .ContinueWith(x =>
                     {
+                        if (cancellationToken.IsCancellationRequested) return;
                         if (x.IsFaulted) return;
                         lock (lockObject)
                         {
@@ -204,6 +246,8 @@ namespace RitsukageBot.Modules
                         await foreach (var response in ChatClientProviderService.CompleteStreamingAsync(messageList,
                                            useTools,
                                            cancellationTokenSource2.Token))
+                        {
+                            if (cancellationToken.IsCancellationRequested) return;
                             lock (lockObject)
                             {
                                 if (string.IsNullOrWhiteSpace(response.ToString()))
@@ -213,11 +257,17 @@ namespace RitsukageBot.Modules
                                 haveContent = true;
                             }
 
+                            if (checkedEmbed) continue;
+                            checkedEmbed = true;
+                            await ModifyOriginalResponseAsync(x => x.Embed = null).ConfigureAwait(false);
+                        }
+
                         isCompleted = true;
                         await cancellationTokenSource1.CancelAsync().ConfigureAwait(false);
                     }, cancellationTokenSource2.Token)
                     .ContinueWith(x =>
                     {
+                        if (cancellationToken.IsCancellationRequested) return;
                         if (!x.IsFaulted) return;
                         if (isTimeout) return;
                         isError = true;
@@ -226,7 +276,7 @@ namespace RitsukageBot.Modules
                     }, cancellationTokenSource2.Token);
             }
 
-            while (!isCompleted && !isError && !isTimeout)
+            while (!isCompleted && !isError && !isTimeout && !cancellationToken.IsCancellationRequested)
             {
                 string? updatingContent = null;
                 lock (lockObject)
@@ -240,11 +290,12 @@ namespace RitsukageBot.Modules
 
                 if (!string.IsNullOrWhiteSpace(updatingContent))
                     await ModifyOriginalResponseAsync(x => x.Content = updatingContent).ConfigureAwait(false);
-                await Task.Delay(1000).ConfigureAwait(false);
+                await Task.Delay(1000, cancellationToken).ConfigureAwait(false);
             }
 
             if (isError) return (false, "An error occurred while processing the chat with AI tools");
             if (isTimeout) return (false, "The chat with AI tools took too long to respond");
+            if (cancellationToken.IsCancellationRequested) return (false, "The chat with AI was canceled");
 
             var (hasJsonHeader, content, jsonHeader) = FormatResponse(sb.ToString());
             if (hasJsonHeader)
@@ -287,7 +338,11 @@ namespace RitsukageBot.Modules
                 }
 
             if (!string.IsNullOrWhiteSpace(content))
-                await ModifyOriginalResponseAsync(x => x.Content = content).ConfigureAwait(false);
+                await ModifyOriginalResponseAsync(x =>
+                {
+                    x.Content = content;
+                    x.Components = null;
+                }).ConfigureAwait(false);
 
             return (true, null);
         }
@@ -349,6 +404,28 @@ namespace RitsukageBot.Modules
             (hasJsonHeader, content, jsonHeader) = CheckJsonHeader(content);
             sb.Append(content);
             return (hasJsonHeader, sb.ToString(), jsonHeader);
+        }
+    }
+
+    /// <summary>
+    ///     AI interaction button
+    /// </summary>
+    public class AiInteractionButton : InteractionModuleBase<SocketInteractionContext<SocketMessageComponent>>
+    {
+        /// <summary>
+        ///     Logger
+        /// </summary>
+        public required ILogger<AiInteractionButton> Logger { get; set; }
+
+        /// <summary>
+        ///     Cancel the chat
+        /// </summary>
+        [ComponentInteraction($"{AiInteractions.CustomId}:cancel_chat")]
+        public Task CancelAsync()
+        {
+            Logger.LogInformation("Ai chat interaction canceled for {MessageId}", Context.Interaction.Message.Id);
+            AiInteractions.ShutdownChat(Context.User.Id);
+            return Context.Interaction.UpdateAsync(x => x.Components = null);
         }
     }
 }
