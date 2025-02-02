@@ -112,13 +112,16 @@ namespace RitsukageBot.Modules.Schedules
                         {
                             if (!x.IsFaulted) return;
                             cancellationTokenSource1.Cancel();
-                            _logger.LogError(x.Exception, "Error while processing the chat with AI tools");
+                            _logger.LogError(x.Exception, "Error occurred while generating time message for {TargetTime}",
+                                targetTime);
                         }, cancellationTokenSource2.Token);
                 }
 
                 while (!isCompleted && !isError) await Task.Delay(1000).ConfigureAwait(false);
 
                 if (!isCompleted) continue;
+                _logger.LogInformation("Generated time message for {TargetTime} with content:\n{Content}", targetTime,
+                    sb.ToString());
                 _broadcastTimes.Add(targetTime, sb.ToString());
                 break;
             }
