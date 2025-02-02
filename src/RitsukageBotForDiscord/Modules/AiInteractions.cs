@@ -62,8 +62,11 @@ namespace RitsukageBot.Modules
         /// <summary>
         ///     Chat with the AI
         /// </summary>
+        /// <param name="message"></param>
+        /// <param name="role"></param>
+        /// <returns></returns>
         [SlashCommand("chat", "Chat with the AI")]
-        public async Task ChatAsync(string message)
+        public async Task ChatAsync(string message, string role = "Normal")
         {
             await DeferAsync().ConfigureAwait(false);
 
@@ -96,15 +99,39 @@ namespace RitsukageBot.Modules
                 await ModifyOriginalResponseAsync(x => x.Embed = embed.Build()).ConfigureAwait(false);
             }
 
-            var cancellationTokenSource = new CancellationTokenSource();
-            lock (LockObject)
+            if (ChatClientProviderService.GetRoleData(role) is not { } roleData)
             {
-                IsProcessing.Add(Context.User.Id, cancellationTokenSource);
+                var embed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "Invalid role",
+                    Color = Color.Red,
+                };
+                await ModifyOriginalResponseAsync(x => x.Embed = embed.Build()).ConfigureAwait(false);
+                return;
             }
 
-            var messageList = new List<ChatMessage>();
-            if (ChatClientProviderService.GetRoleData() is { } roleData)
-                messageList.Add(roleData);
+
+            var cancellationTokenSource = new CancellationTokenSource();
+            bool valid;
+            lock (LockObject)
+            {
+                valid = IsProcessing.TryAdd(Context.User.Id, cancellationTokenSource);
+            }
+
+            if (!valid)
+            {
+                var embed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "Can not start a new chat with the AI",
+                    Color = Color.Red,
+                };
+                await ModifyOriginalResponseAsync(x => x.Embed = embed.Build()).ConfigureAwait(false);
+                return;
+            }
+
+            var messageList = new List<ChatMessage> { roleData };
             if (await BuildUserChatMessage(message).ConfigureAwait(false)
                 is not { } userMessage)
             {

@@ -98,9 +98,9 @@ namespace RitsukageBot.Services.Providers
         ///     Get role data
         /// </summary>
         /// <returns></returns>
-        public ChatMessage? GetRoleData()
+        public ChatMessage? GetRoleData(string type = "Normal")
         {
-            var roleData = _configuration.GetSection("AI:RoleData").Get<string>();
+            var roleData = _configuration.GetValue<string>($"AI:RoleData:{type}");
             if (string.IsNullOrWhiteSpace(roleData))
                 return null;
             if (File.Exists(roleData))
