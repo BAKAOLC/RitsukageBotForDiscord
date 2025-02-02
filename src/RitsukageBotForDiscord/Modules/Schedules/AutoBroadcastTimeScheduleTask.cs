@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using Discord.WebSocket;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
@@ -17,6 +18,8 @@ namespace RitsukageBot.Modules.Schedules
 
         private readonly ChatClientProviderService _chatClientProviderService =
             serviceProvider.GetRequiredService<ChatClientProviderService>();
+
+        private readonly IConfiguration _configuration = serviceProvider.GetRequiredService<IConfiguration>();
 
         private readonly DatabaseProviderService _databaseProviderService =
             serviceProvider.GetRequiredService<DatabaseProviderService>();
@@ -37,6 +40,8 @@ namespace RitsukageBot.Modules.Schedules
         public override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
             if (!_chatClientProviderService.IsEnabled()) return;
+            var prompt = _configuration.GetValue<string>("AI:Prompt:TimeBroadcast");
+            if (string.IsNullOrWhiteSpace(prompt)) return;
             var now = DateTimeOffset.Now;
             now = new(now.Year, now.Month, now.Day, now.Hour, 0, 0, now.Offset);
             if (_broadcastTimes.Remove(now, out var message)) await BroadcastTime(message).ConfigureAwait(false);
@@ -45,7 +50,7 @@ namespace RitsukageBot.Modules.Schedules
             var nextHour = now.AddHours(1);
             if (_broadcastTimes.ContainsKey(nextHour)) return;
             _generatingTime = nextHour;
-            await GenerateTimeMessage(nextHour).ConfigureAwait(false);
+            await GenerateTimeMessage(nextHour, prompt).ConfigureAwait(false);
             _generatingTime = null;
         }
 
@@ -61,12 +66,12 @@ namespace RitsukageBot.Modules.Schedules
                 await discordChannel.SendMessageAsync(message).ConfigureAwait(false);
         }
 
-        private async Task GenerateTimeMessage(DateTimeOffset targetTime)
+        private async Task GenerateTimeMessage(DateTimeOffset targetTime, string prompt)
         {
             var messageList = new List<ChatMessage>();
             if (_chatClientProviderService.GetRoleData() is { } roleData)
                 messageList.Add(roleData);
-            var message = CreateTimeMessageRequireMessage(targetTime);
+            var message = CreateTimeMessageRequireMessage(targetTime, prompt);
             messageList.Add(message);
             _logger.LogInformation("Generating time message for {TargetTime}", targetTime);
 
@@ -129,15 +134,12 @@ namespace RitsukageBot.Modules.Schedules
         }
 
 
-        private static ChatMessage CreateTimeMessageRequireMessage(DateTimeOffset targetTime)
+        private static ChatMessage CreateTimeMessageRequireMessage(DateTimeOffset targetTime, string prompt)
         {
             var jObject = new JObject
             {
                 ["name"] = "##SYSTEM##",
-                ["message"] = """
-                              请进行一次整点报时，要求输出完整的日期和时间，如果是什么特殊的日子或者有什么节日，也请一并报出。
-                              如果到了特定的时间点，需要带上如 "天亮了"、"天黑了"、"该吃饭了"、"该睡觉了"等提示，或者做出询问，如 "吃饭了吗？"、"睡觉了吗？" 等。
-                              """,
+                ["message"] = prompt,
                 ["data"] = new JObject
                 {
                     ["time"] = targetTime.ToString("yyyy-MM-dd HH:mm:ss zzz"),
