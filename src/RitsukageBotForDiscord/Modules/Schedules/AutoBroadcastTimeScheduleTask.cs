@@ -68,7 +68,7 @@ namespace RitsukageBot.Modules.Schedules
                 messageList.Add(roleData);
             var message = CreateTimeMessageRequireMessage(targetTime);
             messageList.Add(message);
-            _logger.LogInformation("Generated time message for {TargetTime}", targetTime);
+            _logger.LogInformation("Generating time message for {TargetTime}", targetTime);
 
             while (true)
             {
@@ -112,7 +112,8 @@ namespace RitsukageBot.Modules.Schedules
                         {
                             if (!x.IsFaulted) return;
                             cancellationTokenSource1.Cancel();
-                            _logger.LogError(x.Exception, "Error occurred while generating time message for {TargetTime}",
+                            _logger.LogError(x.Exception,
+                                "Error occurred while generating time message for {TargetTime}",
                                 targetTime);
                         }, cancellationTokenSource2.Token);
                 }
@@ -133,7 +134,10 @@ namespace RitsukageBot.Modules.Schedules
             var jObject = new JObject
             {
                 ["name"] = "##SYSTEM##",
-                ["message"] = "请进行一次报时",
+                ["message"] = """
+                              请进行一次报时，要求输出完整的日期和时间，如果是什么特殊的日子或者有什么节日，也请一并报出。
+                              如果到了特定的时间点，需要带上如 "天亮了"、"天黑了"、"该吃饭了"、"该睡觉了"等提示，或者做出询问，如 "吃饭了吗？"、"睡觉了吗？" 等。
+                              """,
                 ["data"] = new JObject
                 {
                     ["time"] = targetTime.ToString("yyyy-MM-dd HH:mm:ss zzz"),
