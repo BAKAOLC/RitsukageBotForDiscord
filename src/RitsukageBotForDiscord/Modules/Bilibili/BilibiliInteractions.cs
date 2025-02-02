@@ -55,10 +55,8 @@ namespace RitsukageBot.Modules.Bilibili
 
             config.AutomaticallyResolveBilibiliLinks = active;
             await DatabaseProviderService.InsertOrUpdateAsync(config).ConfigureAwait(false);
-            if (active)
-                await FollowupAsync("Automatically resolve Bilibili links has been enabled.").ConfigureAwait(false);
-            else
-                await FollowupAsync("Automatically resolve Bilibili links has been disabled.").ConfigureAwait(false);
+            await FollowupAsync($"Automatically resolve Bilibili links has been {(active ? "enabled" : "disabled")}.")
+                .ConfigureAwait(false);
         }
 
         private async Task<DiscordChannelConfiguration> GetConfigAsync(ulong channelId)

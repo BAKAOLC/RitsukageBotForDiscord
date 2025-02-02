@@ -20,5 +20,11 @@ namespace RitsukageBot.Library.Data
         /// </summary>
         [Column("automatically_resolve_bilibili_links")]
         public bool AutomaticallyResolveBilibiliLinks { get; set; }
+
+        /// <summary>
+        ///    Automatically AI broadcast time.
+        /// </summary>
+        [Column("automatically_ai_broadcast_time")]
+        public bool AutomaticallyAiBroadcastTime { get; set; }
     }
 }

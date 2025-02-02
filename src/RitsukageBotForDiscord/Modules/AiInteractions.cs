@@ -103,7 +103,7 @@ namespace RitsukageBot.Modules
             }
 
             var messageList = new List<ChatMessage>();
-            if (GetRoleData() is { } roleData)
+            if (ChatClientProviderService.GetRoleData() is { } roleData)
                 messageList.Add(roleData);
             if (await BuildUserChatMessage(message).ConfigureAwait(false)
                 is not { } userMessage)
@@ -126,14 +126,37 @@ namespace RitsukageBot.Modules
             }
         }
 
-        private ChatMessage? GetRoleData()
+        /// <summary>
+        ///     Automatically broadcast time
+        /// </summary>
+        /// <param name="active"></param>
+        [RequireUserPermission(GuildPermission.Administrator
+                               | GuildPermission.ManageGuild
+                               | GuildPermission.ManageChannels)]
+        [RequireUserPermission(ChannelPermission.ManageChannels)]
+        [SlashCommand("auto_broadcast_time", "Automatically AI broadcast time")]
+        public async Task AutoBroadcastTime(bool active = true)
         {
-            var roleData = Configuration.GetSection("AI:RoleData").Get<string>();
-            if (string.IsNullOrWhiteSpace(roleData))
-                return null;
-            if (File.Exists(roleData))
-                roleData = File.ReadAllText(roleData);
-            return new(ChatRole.System, roleData);
+            await DeferAsync().ConfigureAwait(false);
+            var channelId = Context.Channel.Id;
+            var config = await GetConfigAsync(channelId).ConfigureAwait(false);
+            if (active == config.AutomaticallyAiBroadcastTime)
+            {
+                await FollowupAsync("The setting is already set to the specified value.").ConfigureAwait(false);
+                return;
+            }
+
+            config.AutomaticallyAiBroadcastTime = active;
+            await DatabaseProviderService.InsertOrUpdateAsync(config).ConfigureAwait(false);
+            await FollowupAsync($"Automatically AI broadcast time has been {(active ? "enabled" : "disabled")}.")
+                .ConfigureAwait(false);
+        }
+
+        private async Task<DiscordChannelConfiguration> GetConfigAsync(ulong channelId)
+        {
+            var (_, config) = await DatabaseProviderService.GetOrCreateAsync<DiscordChannelConfiguration>(channelId)
+                .ConfigureAwait(false);
+            return config;
         }
 
         private async Task<ChatMessage?> BuildUserChatMessage(string message)

@@ -23,6 +23,7 @@ namespace RitsukageBot.Services.Providers
     {
         private readonly Dictionary<Assembly, List<AIFunction>> _bundleRecords = [];
         private readonly IChatClient? _chatClient;
+        private readonly IConfiguration _configuration;
         private readonly bool _isEnabled;
         private readonly ILogger<ChatClientProviderService> _logger;
         private readonly IServiceProvider _serviceProvider;
@@ -34,6 +35,7 @@ namespace RitsukageBot.Services.Providers
         public ChatClientProviderService(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
+            _configuration = serviceProvider.GetRequiredService<IConfiguration>();
             _logger = serviceProvider.GetRequiredService<ILogger<ChatClientProviderService>>();
             var configuration = serviceProvider.GetRequiredService<IConfiguration>();
             _isEnabled = configuration.GetValue<bool>("AI:Enabled");
@@ -89,6 +91,20 @@ namespace RitsukageBot.Services.Providers
         public IChatClient GetChatClient()
         {
             return _chatClient ?? throw new InvalidOperationException("Chat client is not enabled");
+        }
+
+        /// <summary>
+        ///    Get role data
+        /// </summary>
+        /// <returns></returns>
+        public ChatMessage? GetRoleData()
+        {
+            var roleData = _configuration.GetSection("AI:RoleData").Get<string>();
+            if (string.IsNullOrWhiteSpace(roleData))
+                return null;
+            if (File.Exists(roleData))
+                roleData = File.ReadAllText(roleData);
+            return new(ChatRole.System, roleData);
         }
 
         /// <summary>
