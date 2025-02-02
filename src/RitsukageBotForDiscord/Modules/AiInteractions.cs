@@ -148,7 +148,7 @@ namespace RitsukageBot.Modules
                 ["name"] = name,
                 ["message"] = message,
                 ["good"] = userInfo.Good,
-                ["timestamp"] = time.ToUnixTimeSeconds(),
+                ["time"] = time.ToString("yyyy-MM-dd HH:mm:ss zzz"),
             };
             return new(ChatRole.User, jObject.ToString());
         }
