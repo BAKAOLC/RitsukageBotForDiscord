@@ -105,7 +105,7 @@ namespace RitsukageBot.Modules
             var messageList = new List<ChatMessage>();
             if (GetRoleData() is { } roleData)
                 messageList.Add(roleData);
-            if (await BuildUserChatMessage(Context.User.Id, Context.User.Username, message).ConfigureAwait(false)
+            if (await BuildUserChatMessage(message).ConfigureAwait(false)
                 is not { } userMessage)
             {
                 var embed = new EmbedBuilder
@@ -136,8 +136,11 @@ namespace RitsukageBot.Modules
             return new(ChatRole.System, roleData);
         }
 
-        private async Task<ChatMessage?> BuildUserChatMessage(ulong id, string name, string message)
+        private async Task<ChatMessage?> BuildUserChatMessage(string message)
         {
+            var id = Context.User.Id;
+            var name = Context.User.Username;
+            var time = Context.Interaction.CreatedAt;
             var (_, userInfo) = await DatabaseProviderService.GetOrCreateAsync<ChatUserInformation>(id)
                 .ConfigureAwait(false);
             var jObject = new JObject
@@ -145,6 +148,7 @@ namespace RitsukageBot.Modules
                 ["name"] = name,
                 ["message"] = message,
                 ["good"] = userInfo.Good,
+                ["timestamp"] = time.ToUnixTimeSeconds(),
             };
             return new(ChatRole.User, jObject.ToString());
         }
