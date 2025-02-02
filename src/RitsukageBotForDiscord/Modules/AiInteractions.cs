@@ -315,7 +315,7 @@ namespace RitsukageBot.Modules
                     {
                         if (isUpdated)
                         {
-                            (_, updatingContent, _) = FormatResponse(sb.ToString());
+                            (_, updatingContent, _) = ChatClientProviderService.FormatResponse(sb.ToString());
                             isUpdated = false;
                         }
                     }
@@ -349,7 +349,7 @@ namespace RitsukageBot.Modules
             if (isTimeout) return (false, "The chat with AI tools took too long to respond");
             if (cancellationToken.IsCancellationRequested) return (false, "The chat with AI was canceled");
 
-            var (hasJsonHeader, content, jsonHeader) = FormatResponse(sb.ToString());
+            var (hasJsonHeader, content, jsonHeader) = ChatClientProviderService.FormatResponse(sb.ToString());
             if (hasJsonHeader)
                 try
                 {
@@ -410,56 +410,6 @@ namespace RitsukageBot.Modules
             if (lastUserMessage is not null)
                 userInputMessage = lastUserMessage.ToString();
             return !string.IsNullOrWhiteSpace(userInputMessage);
-        }
-
-        private static (bool, string, string?) CheckJsonHeader(string response)
-        {
-            if (response is not ['{', ..]) return (false, response, null);
-            var firstLineEndIndex = response.IndexOf('\n');
-            if (firstLineEndIndex == -1)
-                firstLineEndIndex = response.IndexOf('\r');
-            if (firstLineEndIndex == -1)
-                return (false, string.Empty, response);
-            var firstLine = response[..firstLineEndIndex];
-            response = response[(firstLineEndIndex + 1)..];
-            return (true, response, firstLine);
-        }
-
-        private static (bool, string, string?) FormatResponse(string response)
-        {
-            response = response.Trim();
-
-            if (!response.StartsWith("<think>"))
-                return CheckJsonHeader(response);
-
-            string thinkContent;
-            var hasJsonHeader = false;
-            string? jsonHeader = null;
-            var content = string.Empty;
-
-            var thinkEndIndex = response.IndexOf("</think>", StringComparison.Ordinal);
-            if (thinkEndIndex != -1)
-            {
-                thinkContent = response[7..thinkEndIndex];
-                content = response[(thinkEndIndex + 8)..];
-            }
-            else
-            {
-                thinkContent = response[7..];
-            }
-
-            var lines = thinkContent.Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries);
-            var sb = new StringBuilder();
-            foreach (var line in lines)
-            {
-                sb.Append("> ");
-                sb.AppendLine(line);
-            }
-
-            if (string.IsNullOrWhiteSpace(content)) return (hasJsonHeader, sb.ToString(), jsonHeader);
-            (hasJsonHeader, content, jsonHeader) = CheckJsonHeader(content);
-            sb.Append(content);
-            return (hasJsonHeader, sb.ToString(), jsonHeader);
         }
     }
 

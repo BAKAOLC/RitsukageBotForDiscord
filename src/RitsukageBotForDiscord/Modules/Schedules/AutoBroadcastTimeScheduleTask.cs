@@ -126,9 +126,10 @@ namespace RitsukageBot.Modules.Schedules
                 while (!isCompleted && !isError) await Task.Delay(1000).ConfigureAwait(false);
 
                 if (!isCompleted) continue;
+                var (_, content, _) = ChatClientProviderService.FormatResponse(sb.ToString());
                 _logger.LogInformation("Generated time message for {TargetTime} with content:\n{Content}", targetTime,
-                    sb.ToString());
-                _broadcastTimes.Add(targetTime, sb.ToString());
+                    content);
+                _broadcastTimes.Add(targetTime, content);
                 break;
             }
         }

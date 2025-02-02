@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Text;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
@@ -94,7 +95,7 @@ namespace RitsukageBot.Services.Providers
         }
 
         /// <summary>
-        ///    Get role data
+        ///     Get role data
         /// </summary>
         /// <returns></returns>
         public ChatMessage? GetRoleData()
@@ -105,6 +106,66 @@ namespace RitsukageBot.Services.Providers
             if (File.Exists(roleData))
                 roleData = File.ReadAllText(roleData);
             return new(ChatRole.System, roleData);
+        }
+
+        /// <summary>
+        ///     Check message header
+        /// </summary>
+        /// <param name="response"></param>
+        /// <returns></returns>
+        public static (bool, string, string?) CheckJsonHeader(string response)
+        {
+            if (response is not ['{', ..]) return (false, response, null);
+            var firstLineEndIndex = response.IndexOf('\n');
+            if (firstLineEndIndex == -1)
+                firstLineEndIndex = response.IndexOf('\r');
+            if (firstLineEndIndex == -1)
+                return (false, string.Empty, response);
+            var firstLine = response[..firstLineEndIndex];
+            response = response[(firstLineEndIndex + 1)..];
+            return (true, response, firstLine);
+        }
+
+        /// <summary>
+        ///     Format response
+        /// </summary>
+        /// <param name="response"></param>
+        /// <returns></returns>
+        public static (bool, string, string?) FormatResponse(string response)
+        {
+            response = response.Trim();
+
+            if (!response.StartsWith("<think>"))
+                return CheckJsonHeader(response);
+
+            string thinkContent;
+            var hasJsonHeader = false;
+            string? jsonHeader = null;
+            var content = string.Empty;
+
+            var thinkEndIndex = response.IndexOf("</think>", StringComparison.Ordinal);
+            if (thinkEndIndex != -1)
+            {
+                thinkContent = response[7..thinkEndIndex];
+                content = response[(thinkEndIndex + 8)..];
+            }
+            else
+            {
+                thinkContent = response[7..];
+            }
+
+            var lines = thinkContent.Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries);
+            var sb = new StringBuilder();
+            foreach (var line in lines)
+            {
+                sb.Append("> ");
+                sb.AppendLine(line);
+            }
+
+            if (string.IsNullOrWhiteSpace(content)) return (hasJsonHeader, sb.ToString(), jsonHeader);
+            (hasJsonHeader, content, jsonHeader) = CheckJsonHeader(content);
+            sb.Append(content);
+            return (hasJsonHeader, sb.ToString(), jsonHeader);
         }
 
         /// <summary>
