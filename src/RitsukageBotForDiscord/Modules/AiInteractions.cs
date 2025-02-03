@@ -66,7 +66,9 @@ namespace RitsukageBot.Modules
         /// <param name="role"></param>
         /// <returns></returns>
         [SlashCommand("chat", "Chat with the AI")]
-        public async Task ChatAsync(string message, string role = "Normal")
+        public async Task ChatAsync(string message,
+            [Autocomplete(typeof(AiRolesInteractionAutocompleteHandler))]
+            string role = "Normal")
         {
             await DeferAsync().ConfigureAwait(false);
 
@@ -466,6 +468,32 @@ namespace RitsukageBot.Modules
                 x.Embed = embed.Build();
                 x.Components = null;
             });
+        }
+    }
+
+    /// <summary>
+    ///     AI interaction autocomplete handler
+    /// </summary>
+    public class AiRolesInteractionAutocompleteHandler : AutocompleteHandler
+    {
+        /// <summary>
+        ///     Chat client provider service
+        /// </summary>
+        public required ChatClientProviderService ChatClientProviderService { get; set; }
+
+        /// <summary>
+        ///     Generate suggestions
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="autocompleteInteraction"></param>
+        /// <param name="parameter"></param>
+        /// <param name="services"></param>
+        /// <returns></returns>
+        public override async Task<AutocompletionResult> GenerateSuggestionsAsync(IInteractionContext context,
+            IAutocompleteInteraction autocompleteInteraction, IParameterInfo parameter, IServiceProvider services)
+        {
+            var results = ChatClientProviderService.GetRoles().Select(x => new AutocompleteResult(x, x));
+            return AutocompletionResult.FromSuccess(results.Take(25));
         }
     }
 }
