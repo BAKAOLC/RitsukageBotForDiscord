@@ -11,36 +11,49 @@ using RitsukageBot.Services.Providers;
 
 namespace RitsukageBot.Modules.Schedules
 {
-    internal class AutoBroadcastTimeScheduleTask(IServiceProvider serviceProvider)
-        : PeriodicScheduleTask(serviceProvider)
+    internal class AutoBroadcastTimeScheduleTask : PeriodicScheduleTask
     {
         private readonly Dictionary<DateTimeOffset, string> _broadcastTimes = [];
 
-        private readonly ChatClientProviderService _chatClientProviderService =
-            serviceProvider.GetRequiredService<ChatClientProviderService>();
+        private readonly ChatClientProviderService _chatClientProviderService;
 
-        private readonly IConfiguration _configuration = serviceProvider.GetRequiredService<IConfiguration>();
+        private readonly IConfiguration _configuration;
 
-        private readonly DatabaseProviderService _databaseProviderService =
-            serviceProvider.GetRequiredService<DatabaseProviderService>();
+        private readonly DatabaseProviderService _databaseProviderService;
 
-        private readonly DiscordSocketClient _discordClient = serviceProvider.GetRequiredService<DiscordSocketClient>();
+        private readonly DiscordSocketClient _discordClient;
 
-        private readonly ILogger<AutoBroadcastTimeScheduleTask> _logger =
-            serviceProvider.GetRequiredService<ILogger<AutoBroadcastTimeScheduleTask>>();
+        private readonly ILogger<AutoBroadcastTimeScheduleTask> _logger;
+
+        private readonly IServiceProvider _serviceProvider;
 
         private DateTimeOffset? _generatingTime;
 
-        public override ScheduleConfigurationBase Configuration { get; } = new PeriodicScheduleConfiguration
+        public AutoBroadcastTimeScheduleTask(IServiceProvider serviceProvider) : base(serviceProvider)
         {
-            IsEnabled = true,
-            Interval = TimeSpan.FromMinutes(1),
-        };
+            _serviceProvider = serviceProvider;
+            _chatClientProviderService = serviceProvider.GetRequiredService<ChatClientProviderService>();
+            _configuration = serviceProvider.GetRequiredService<IConfiguration>();
+            _databaseProviderService = serviceProvider.GetRequiredService<DatabaseProviderService>();
+            _discordClient = serviceProvider.GetRequiredService<DiscordSocketClient>();
+            _logger = serviceProvider.GetRequiredService<ILogger<AutoBroadcastTimeScheduleTask>>();
+            {
+                var enabled = _configuration.GetValue<bool>("AI:Function:TimeBroadcast:Enabled");
+                var interval = _configuration.GetValue<int>("AI:Function:TimeBroadcast:Interval");
+                Configuration = new PeriodicScheduleConfiguration
+                {
+                    IsEnabled = enabled,
+                    Interval = TimeSpan.FromMilliseconds(interval),
+                };
+            }
+        }
+
+        public override ScheduleConfigurationBase Configuration { get; }
 
         public override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
             if (!_chatClientProviderService.IsEnabled()) return;
-            var prompt = _configuration.GetValue<string>("AI:Prompt:TimeBroadcast");
+            var prompt = _configuration.GetValue<string>("AI:Function:TimeBroadcast:Prompt");
             if (string.IsNullOrWhiteSpace(prompt)) return;
             var now = DateTimeOffset.Now;
             now = new(now.Year, now.Month, now.Day, now.Hour, 0, 0, now.Offset);
@@ -125,7 +138,17 @@ namespace RitsukageBot.Modules.Schedules
 
                 while (!isCompleted && !isError) await Task.Delay(1000).ConfigureAwait(false);
 
-                if (!isCompleted) continue;
+                if (!isCompleted)
+                {
+                    if (DateTimeOffset.Now > targetTime)
+                    {
+                        _logger.LogWarning("Failed to generate time message for {TargetTime}", targetTime);
+                        break;
+                    }
+
+                    continue;
+                }
+
                 var (_, content, _) = ChatClientProviderService.FormatResponse(sb.ToString());
                 _logger.LogInformation("Generated time message for {TargetTime} with content:\n{Content}", targetTime,
                     content);
