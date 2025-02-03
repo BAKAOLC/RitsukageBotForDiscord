@@ -436,6 +436,32 @@ namespace RitsukageBot.Modules
                 userInputMessage = lastUserMessage.ToString();
             return !string.IsNullOrWhiteSpace(userInputMessage);
         }
+
+        /// <summary>
+        ///     AI interaction autocomplete handler
+        /// </summary>
+        public class AiRolesInteractionAutocompleteHandler : AutocompleteHandler
+        {
+            /// <summary>
+            ///     Chat client provider service
+            /// </summary>
+            public required ChatClientProviderService ChatClientProviderService { get; set; }
+
+            /// <summary>
+            ///     Generate suggestions
+            /// </summary>
+            /// <param name="context"></param>
+            /// <param name="autocompleteInteraction"></param>
+            /// <param name="parameter"></param>
+            /// <param name="services"></param>
+            /// <returns></returns>
+            public override Task<AutocompletionResult> GenerateSuggestionsAsync(IInteractionContext context,
+                IAutocompleteInteraction autocompleteInteraction, IParameterInfo parameter, IServiceProvider services)
+            {
+                var results = ChatClientProviderService.GetRoles().Select(x => new AutocompleteResult(x, x));
+                return Task.FromResult(AutocompletionResult.FromSuccess(results.Take(25)));
+            }
+        }
     }
 
     /// <summary>
@@ -468,32 +494,6 @@ namespace RitsukageBot.Modules
                 x.Embed = embed.Build();
                 x.Components = null;
             });
-        }
-    }
-
-    /// <summary>
-    ///     AI interaction autocomplete handler
-    /// </summary>
-    public class AiRolesInteractionAutocompleteHandler : AutocompleteHandler
-    {
-        /// <summary>
-        ///     Chat client provider service
-        /// </summary>
-        public required ChatClientProviderService ChatClientProviderService { get; set; }
-
-        /// <summary>
-        ///     Generate suggestions
-        /// </summary>
-        /// <param name="context"></param>
-        /// <param name="autocompleteInteraction"></param>
-        /// <param name="parameter"></param>
-        /// <param name="services"></param>
-        /// <returns></returns>
-        public override async Task<AutocompletionResult> GenerateSuggestionsAsync(IInteractionContext context,
-            IAutocompleteInteraction autocompleteInteraction, IParameterInfo parameter, IServiceProvider services)
-        {
-            var results = ChatClientProviderService.GetRoles().Select(x => new AutocompleteResult(x, x));
-            return AutocompletionResult.FromSuccess(results.Take(25));
         }
     }
 }
