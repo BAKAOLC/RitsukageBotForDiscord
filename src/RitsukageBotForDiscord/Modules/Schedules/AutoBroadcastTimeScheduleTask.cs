@@ -8,12 +8,15 @@ using Newtonsoft.Json.Linq;
 using RitsukageBot.Library.Data;
 using RitsukageBot.Library.Modules.Schedules;
 using RitsukageBot.Services.Providers;
+using ZiggyCreatures.Caching.Fusion;
 
 namespace RitsukageBot.Modules.Schedules
 {
     internal class AutoBroadcastTimeScheduleTask : PeriodicScheduleTask
     {
         private readonly Dictionary<DateTimeOffset, string> _broadcastTimes = [];
+
+        private readonly IFusionCache _cacheProvider;
 
         private readonly ChatClientProviderService _chatClientProviderService;
 
@@ -29,6 +32,7 @@ namespace RitsukageBot.Modules.Schedules
 
         public AutoBroadcastTimeScheduleTask(IServiceProvider serviceProvider) : base(serviceProvider)
         {
+            _cacheProvider = serviceProvider.GetRequiredService<IFusionCache>();
             _chatClientProviderService = serviceProvider.GetRequiredService<ChatClientProviderService>();
             _configuration = serviceProvider.GetRequiredService<IConfiguration>();
             _databaseProviderService = serviceProvider.GetRequiredService<DatabaseProviderService>();
@@ -77,6 +81,16 @@ namespace RitsukageBot.Modules.Schedules
 
         private async Task GenerateTimeMessage(DateTimeOffset targetTime, string prompt)
         {
+            var cacheKey = $"ai_message:time_broadcast:{targetTime.ToUnixTimeSeconds()}";
+            var cacheMessage = await _cacheProvider.GetOrDefaultAsync<string>(cacheKey).ConfigureAwait(false);
+            if (cacheMessage is not null)
+            {
+                _broadcastTimes.Add(targetTime, cacheMessage);
+                _logger.LogInformation("Generated time message for {TargetTime} from cache, content:\n{Content}",
+                    targetTime, cacheMessage);
+                return;
+            }
+
             var messageList = new List<ChatMessage>();
             var roles = _chatClientProviderService.GetRoles();
             var role = roles[Random.Shared.Next(roles.Length)];
@@ -152,6 +166,8 @@ namespace RitsukageBot.Modules.Schedules
                     content);
                 content = $"> Auto time broadcast with role: {role}\n{content}";
                 _broadcastTimes.Add(targetTime, content);
+                await _cacheProvider.SetAsync(cacheKey, content, TimeSpan.FromHours(3)).ConfigureAwait(false);
+                _logger.LogInformation("Cached time message for {TargetTime}", targetTime);
                 break;
             }
         }
