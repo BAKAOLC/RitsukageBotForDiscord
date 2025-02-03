@@ -84,7 +84,7 @@ namespace RitsukageBot.Modules
                     Description = "You are already chatting with the AI",
                     Color = Color.Red,
                 };
-                await ModifyOriginalResponseAsync(x => x.Embed = embed.Build()).ConfigureAwait(false);
+                await FollowupAsync(embed: embed.Build(), ephemeral: true).ConfigureAwait(false);
                 return;
             }
 
@@ -96,7 +96,7 @@ namespace RitsukageBot.Modules
                     Description = "Please provide a message to chat with the AI",
                     Color = Color.Red,
                 };
-                await ModifyOriginalResponseAsync(x => x.Embed = embed.Build()).ConfigureAwait(false);
+                await FollowupAsync(embed: embed.Build(), ephemeral: true).ConfigureAwait(false);
             }
 
             if (ChatClientProviderService.GetRoleData(role) is not { } roleData)
@@ -107,7 +107,7 @@ namespace RitsukageBot.Modules
                     Description = "Invalid role",
                     Color = Color.Red,
                 };
-                await ModifyOriginalResponseAsync(x => x.Embed = embed.Build()).ConfigureAwait(false);
+                await FollowupAsync(embed: embed.Build(), ephemeral: true).ConfigureAwait(false);
                 return;
             }
 
@@ -127,7 +127,7 @@ namespace RitsukageBot.Modules
                     Description = "Can not start a new chat with the AI",
                     Color = Color.Red,
                 };
-                await ModifyOriginalResponseAsync(x => x.Embed = embed.Build()).ConfigureAwait(false);
+                await FollowupAsync(embed: embed.Build(), ephemeral: true).ConfigureAwait(false);
                 return;
             }
 
@@ -141,7 +141,7 @@ namespace RitsukageBot.Modules
                     Description = "An error occurred while building the user chat message",
                     Color = Color.Red,
                 };
-                await ModifyOriginalResponseAsync(x => x.Embed = embed.Build()).ConfigureAwait(false);
+                await FollowupAsync(embed: embed.Build(), ephemeral: true).ConfigureAwait(false);
                 return;
             }
 
@@ -214,7 +214,7 @@ namespace RitsukageBot.Modules
                     Description = "Please provide a message to chat with the AI",
                     Color = Color.Red,
                 };
-                await ModifyOriginalResponseAsync(x => x.Embed = embed.Build()).ConfigureAwait(false);
+                await FollowupAsync(embed: embed.Build(), ephemeral: true).ConfigureAwait(false);
                 return;
             }
 
@@ -229,11 +229,7 @@ namespace RitsukageBot.Modules
             waitEmbed.WithDescription("Getting response from the AI...");
             waitEmbed.WithColor(Color.Orange);
 
-            await ModifyOriginalResponseAsync(x =>
-            {
-                x.Embed = waitEmbed.Build();
-                x.Components = component.Build();
-            }).ConfigureAwait(false);
+            await FollowupAsync(embed: waitEmbed.Build(), components: component.Build()).ConfigureAwait(false);
 
             var (isSuccess, errorMessage) =
                 await TryGettingResponse(messageList, useTools, cancellationToken: cancellationToken)
