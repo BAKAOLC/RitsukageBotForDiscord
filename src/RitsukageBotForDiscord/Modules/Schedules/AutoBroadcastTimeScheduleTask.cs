@@ -78,11 +78,13 @@ namespace RitsukageBot.Modules.Schedules
         private async Task GenerateTimeMessage(DateTimeOffset targetTime, string prompt)
         {
             var messageList = new List<ChatMessage>();
-            if (_chatClientProviderService.GetRoleData() is { } roleData)
+            var roles = _chatClientProviderService.GetRoles();
+            var role = roles[Random.Shared.Next(roles.Length)];
+            if (_chatClientProviderService.GetRoleData(role) is { } roleData)
                 messageList.Add(roleData);
             var message = CreateTimeMessageRequireMessage(targetTime, prompt);
             messageList.Add(message);
-            _logger.LogInformation("Generating time message for {TargetTime}", targetTime);
+            _logger.LogInformation("Generating time message for {TargetTime} with role: {Role}", targetTime, role);
 
             while (true)
             {
@@ -148,6 +150,7 @@ namespace RitsukageBot.Modules.Schedules
                 var (_, content, _) = ChatClientProviderService.FormatResponse(sb.ToString());
                 _logger.LogInformation("Generated time message for {TargetTime} with content:\n{Content}", targetTime,
                     content);
+                content = $"> Auto time broadcast with role: {role}\n{content}";
                 _broadcastTimes.Add(targetTime, content);
                 break;
             }

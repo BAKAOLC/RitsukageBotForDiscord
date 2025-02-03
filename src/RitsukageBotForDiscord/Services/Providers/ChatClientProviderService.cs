@@ -109,6 +109,15 @@ namespace RitsukageBot.Services.Providers
         }
 
         /// <summary>
+        ///     Get roles
+        /// </summary>
+        /// <returns></returns>
+        public string[] GetRoles()
+        {
+            return _configuration.GetSection("AI:RoleData").GetChildren().Select(x => x.Key).ToArray();
+        }
+
+        /// <summary>
         ///     Check message header
         /// </summary>
         /// <param name="response"></param>
