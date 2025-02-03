@@ -25,13 +25,10 @@ namespace RitsukageBot.Modules.Schedules
 
         private readonly ILogger<AutoBroadcastTimeScheduleTask> _logger;
 
-        private readonly IServiceProvider _serviceProvider;
-
         private DateTimeOffset? _generatingTime;
 
         public AutoBroadcastTimeScheduleTask(IServiceProvider serviceProvider) : base(serviceProvider)
         {
-            _serviceProvider = serviceProvider;
             _chatClientProviderService = serviceProvider.GetRequiredService<ChatClientProviderService>();
             _configuration = serviceProvider.GetRequiredService<IConfiguration>();
             _databaseProviderService = serviceProvider.GetRequiredService<DatabaseProviderService>();
@@ -39,11 +36,10 @@ namespace RitsukageBot.Modules.Schedules
             _logger = serviceProvider.GetRequiredService<ILogger<AutoBroadcastTimeScheduleTask>>();
             {
                 var enabled = _configuration.GetValue<bool>("AI:Function:TimeBroadcast:Enabled");
-                var interval = _configuration.GetValue<int>("AI:Function:TimeBroadcast:Interval");
                 Configuration = new PeriodicScheduleConfiguration
                 {
                     IsEnabled = enabled,
-                    Interval = TimeSpan.FromMilliseconds(interval),
+                    Interval = TimeSpan.FromMinutes(1),
                 };
             }
         }
