@@ -166,7 +166,7 @@ namespace RitsukageBot.Modules.Schedules
                     content);
                 content = $"> Auto time broadcast with role: {role}\n{content}";
                 _broadcastTimes.Add(targetTime, content);
-                await _cacheProvider.SetAsync(cacheKey, content, TimeSpan.FromHours(3)).ConfigureAwait(false);
+                await _cacheProvider.SetAsync(cacheKey, content, TimeSpan.FromHours(1)).ConfigureAwait(false);
                 _logger.LogInformation("Cached time message for {TargetTime}", targetTime);
                 break;
             }
