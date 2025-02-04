@@ -242,7 +242,7 @@ namespace RitsukageBot.Modules
                     var toppedUpBalance = balanceInfo.Value<string>("topped_up_balance");
                     var embed = new EmbedBuilder();
                     if (!string.IsNullOrWhiteSpace(currency))
-                        embed.AddField("Currency", currency, true);
+                        embed.AddField("Currency", currency);
 
                     if (double.TryParse(totalBalance, out var totalBalanceValue))
                     {
@@ -259,14 +259,14 @@ namespace RitsukageBot.Modules
                                 break;
                         }
 
-                        embed.AddField("Total Balance", totalBalance, true);
+                        embed.AddField("Total Balance", totalBalance);
                     }
 
                     if (!string.IsNullOrWhiteSpace(grantedBalance))
-                        embed.AddField("Granted Balance", grantedBalance, true);
+                        embed.AddField("Granted Balance", grantedBalance);
 
                     if (!string.IsNullOrWhiteSpace(toppedUpBalance))
-                        embed.AddField("Topped Up Balance", toppedUpBalance, true);
+                        embed.AddField("Topped Up Balance", toppedUpBalance);
 
                     embeds.Add(embed);
                 }
