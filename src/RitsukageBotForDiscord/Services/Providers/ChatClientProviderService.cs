@@ -105,7 +105,11 @@ namespace RitsukageBot.Services.Providers
             chatMessage = null;
             temperature = 1.0f;
             var roleData = _configuration.GetValue<RoleConfig>($"AI:RoleData:{type}");
-            if (roleData is null) return false;
+            if (roleData is null)
+            {
+                _logger.LogWarning("Role {Type} data not found", type);
+                return false;
+            }
 
             if (roleData.Temperature.HasValue)
                 temperature = roleData.Temperature.Value;
