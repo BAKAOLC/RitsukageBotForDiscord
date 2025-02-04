@@ -39,6 +39,7 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
             _client.MessageCommandExecuted += HandleMessageCommandExecutedAsync;
             _client.UserCommandExecuted += HandleUserCommandExecutedAsync;
             _client.SelectMenuExecuted += HandleSelectMenuExecutedAsync;
+            _client.AutocompleteExecuted += HandleAutocompleteExecutedAsync;
             _client.Ready += RegisterCommandsAsync;
             _interaction.Log += discordBotService.LogAsync;
             await _interaction.AddModulesAsync(Assembly.GetEntryAssembly(), services).ConfigureAwait(false);
@@ -67,6 +68,8 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
                 SocketMessageCommand message => new SocketInteractionContext<SocketMessageCommand>(client, message),
                 SocketMessageComponent component => new SocketInteractionContext<SocketMessageComponent>(client,
                     component),
+                SocketAutocompleteInteraction autocomplete =>
+                    new SocketInteractionContext<SocketAutocompleteInteraction>(client, autocomplete),
                 _ => throw new InvalidOperationException("This interaction type is unsupported! Please report this."),
             };
         }
@@ -114,6 +117,14 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
             _logger.LogInformation("User {UserId} executed select menu {InteractionEntitlements}", context.User.Id,
                 context.Interaction.Entitlements);
             return _interaction.ExecuteCommandAsync(context, services);
+        }
+
+        private async Task HandleAutocompleteExecutedAsync(SocketAutocompleteInteraction arg)
+        {
+            var context = CreateGeneric(_client, arg);
+            _logger.LogInformation("User {UserId} executed autocomplete {InteractionEntitlements}", context.User.Id,
+                context.Interaction.Entitlements);
+            await _interaction.ExecuteCommandAsync(context, services).ConfigureAwait(false);
         }
 
         internal static string FormatSlashCommandData(SocketSlashCommandData data)
