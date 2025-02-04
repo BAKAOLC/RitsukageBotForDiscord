@@ -42,6 +42,11 @@ namespace RitsukageBot.Modules
         public required DatabaseProviderService DatabaseProviderService { get; set; }
 
         /// <summary>
+        ///     HTTP client factory
+        /// </summary>
+        public required IHttpClientFactory HttpClientFactory { get; set; }
+
+        /// <summary>
         ///     Configuration
         /// </summary>
         public required IConfiguration Configuration { get; set; }
@@ -152,6 +157,134 @@ namespace RitsukageBot.Modules
             lock (LockObject)
             {
                 IsProcessing.Remove(Context.User.Id);
+            }
+        }
+
+        /// <summary>
+        ///     Query the balance of the AI
+        ///     Currently, only supports for DeepSeek
+        /// </summary>
+        /// <returns></returns>
+        [RequireOwner]
+        [SlashCommand("balance", "Query the balance of the AI")]
+        public async Task QueryBalance()
+        {
+            await DeferAsync(true).ConfigureAwait(false);
+            var endpoint = Configuration.GetValue<string>("AI:Endpoint");
+            if (string.IsNullOrWhiteSpace(endpoint))
+            {
+                var embed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "The AI endpoint is not configured",
+                    Color = Color.Red,
+                };
+                await FollowupAsync(embed: embed.Build()).ConfigureAwait(false);
+                return;
+            }
+
+            var token = Configuration.GetValue<string>("AI:ApiKey");
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                var embed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "The AI API key is not configured",
+                    Color = Color.Red,
+                };
+                await FollowupAsync(embed: embed.Build()).ConfigureAwait(false);
+                return;
+            }
+
+            var uri = new Uri(endpoint);
+            if (uri.Host != "api.deepseek.com")
+            {
+                var embed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "The AI endpoint is currently not supported",
+                    Color = Color.Red,
+                };
+                await FollowupAsync(embed: embed.Build()).ConfigureAwait(false);
+                return;
+            }
+
+            var time = DateTimeOffset.UtcNow;
+            var client = HttpClientFactory.CreateClient();
+            var request = new HttpRequestMessage(HttpMethod.Get, "https://api.deepseek.com/user/balance");
+            request.Headers.Add("Accept", "application/json");
+            request.Headers.Add("Authorization", "Bearer " + token.Trim());
+            var response = await client.SendAsync(request).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+            var resultData = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var jObject = JObject.Parse(resultData);
+            if (jObject.TryGetValue("is_available", out var isAvailable) && isAvailable.Value<bool>())
+            {
+                var balanceInfos = jObject.GetValue("balance_infos");
+                if (balanceInfos is not JArray { Count: > 0 })
+                {
+                    var emptyBalanceEmbed = new EmbedBuilder
+                    {
+                        Title = "Error",
+                        Description = "The balance information is empty",
+                        Color = Color.Red,
+                    };
+                    await FollowupAsync(embed: emptyBalanceEmbed.Build()).ConfigureAwait(false);
+                    return;
+                }
+
+                List<EmbedBuilder> embeds = [];
+                foreach (var balanceInfo in balanceInfos)
+                {
+                    var currency = balanceInfo.Value<string>("currency");
+                    var totalBalance = balanceInfo.Value<string>("total_balance");
+                    var grantedBalance = balanceInfo.Value<string>("granted_balance");
+                    var toppedUpBalance = balanceInfo.Value<string>("topped_up_balance");
+                    var embed = new EmbedBuilder();
+                    if (!string.IsNullOrWhiteSpace(currency))
+                        embed.AddField("Currency", currency, true);
+
+                    if (double.TryParse(totalBalance, out var totalBalanceValue))
+                    {
+                        switch (totalBalanceValue)
+                        {
+                            case > 5:
+                                embed.WithColor(Color.Green);
+                                break;
+                            case > 0:
+                                embed.WithColor(Color.Orange);
+                                break;
+                            default:
+                                embed.WithColor(Color.Red);
+                                break;
+                        }
+
+                        embed.AddField("Total Balance", totalBalance, true);
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(grantedBalance))
+                        embed.AddField("Granted Balance", grantedBalance, true);
+
+                    if (!string.IsNullOrWhiteSpace(toppedUpBalance))
+                        embed.AddField("Topped Up Balance", toppedUpBalance, true);
+
+                    embeds.Add(embed);
+                }
+
+                await FollowupAsync(embeds: embeds.Select(x
+                    => x.WithFooter("DeepSeek", "https://www.deepseek.com/favicon.ico")
+                        .WithTimestamp(time)
+                        .Build()).ToArray()).ConfigureAwait(false);
+            }
+            else
+            {
+                var embed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "You currently do not have access to the AI",
+                    Color = Color.Red,
+                };
+                await FollowupAsync(embed: embed.Build(), ephemeral: true).ConfigureAwait(false);
             }
         }
 
