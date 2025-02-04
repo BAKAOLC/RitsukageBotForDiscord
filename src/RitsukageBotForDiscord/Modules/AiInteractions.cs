@@ -272,7 +272,7 @@ namespace RitsukageBot.Modules
                 }
 
                 await FollowupAsync(embeds: embeds.Select(x
-                    => x.WithFooter("DeepSeek", "https://www.deepseek.com/favicon.ico")
+                    => x.WithFooter("DeepSeek", "https://avatars.githubusercontent.com/u/148330874")
                         .WithTimestamp(time)
                         .Build()).ToArray()).ConfigureAwait(false);
             }
