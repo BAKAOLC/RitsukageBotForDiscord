@@ -94,8 +94,13 @@ namespace RitsukageBot.Modules.Schedules
             var messageList = new List<ChatMessage>();
             var roles = _chatClientProviderService.GetRoles();
             var role = roles[Random.Shared.Next(roles.Length)];
+            var temperature = 1.0f;
             if (_chatClientProviderService.GetRoleData(role) is { } roleData)
-                messageList.Add(roleData);
+            {
+                (var chatRole, temperature) = roleData;
+                messageList.Add(chatRole);
+            }
+
             var message = CreateTimeMessageRequireMessage(targetTime, prompt);
             messageList.Add(message);
             _logger.LogInformation("Generating time message for {TargetTime} with role: {Role}", targetTime, role);
@@ -125,6 +130,7 @@ namespace RitsukageBot.Modules.Schedules
                         {
                             await foreach (var response in _chatClientProviderService.CompleteStreamingAsync(
                                                messageList,
+                                               option => option.Temperature = temperature,
                                                false,
                                                cancellationTokenSource2.Token))
                                 lock (lockObject)

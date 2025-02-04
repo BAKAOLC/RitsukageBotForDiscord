@@ -98,14 +98,25 @@ namespace RitsukageBot.Services.Providers
         ///     Get role data
         /// </summary>
         /// <returns></returns>
-        public ChatMessage? GetRoleData(string type = "Normal")
+        public (ChatMessage, float)? GetRoleData(string type = "Normal")
         {
-            var roleData = _configuration.GetValue<string>($"AI:RoleData:{type}");
-            if (string.IsNullOrWhiteSpace(roleData))
+            var roleData = _configuration.GetSection($"AI:RoleData:{type}");
+            if (roleData.Value is null)
                 return null;
-            if (File.Exists(roleData))
-                roleData = File.ReadAllText(roleData);
-            return new(ChatRole.System, roleData);
+            var prompt = roleData.GetValue("Prompt", string.Empty);
+            var promptFile = roleData.GetValue("PromptFile", string.Empty);
+            var temperature = roleData.GetValue("Temperature", 1.0f);
+            if (string.IsNullOrWhiteSpace(prompt))
+            {
+                if (string.IsNullOrWhiteSpace(promptFile) || !File.Exists(promptFile))
+                    return null;
+                prompt = File.ReadAllText(promptFile);
+            }
+
+            if (string.IsNullOrWhiteSpace(prompt))
+                return null;
+
+            return (new(ChatRole.System, prompt), temperature);
         }
 
         /// <summary>

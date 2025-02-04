@@ -118,7 +118,7 @@ namespace RitsukageBot.Modules
                 return;
             }
 
-
+            var (chatRole, temperature) = roleData;
             var cancellationTokenSource = new CancellationTokenSource();
             bool valid;
             lock (LockObject)
@@ -138,7 +138,7 @@ namespace RitsukageBot.Modules
                 return;
             }
 
-            var messageList = new List<ChatMessage> { roleData };
+            var messageList = new List<ChatMessage> { chatRole };
             if (await BuildUserChatMessage(message).ConfigureAwait(false)
                 is not { } userMessage)
             {
@@ -153,7 +153,8 @@ namespace RitsukageBot.Modules
             }
 
             messageList.Add(userMessage);
-            await BeginChatAsync(messageList, false, 3, cancellationTokenSource.Token).ConfigureAwait(false);
+            await BeginChatAsync(messageList, false, 3, temperature, cancellationTokenSource.Token)
+                .ConfigureAwait(false);
             lock (LockObject)
             {
                 IsProcessing.Remove(Context.User.Id);
@@ -339,6 +340,7 @@ namespace RitsukageBot.Modules
         }
 
         private async Task BeginChatAsync(IList<ChatMessage> messageList, bool useTools = false, int retry = 0,
+            float temperature = 1.0f,
             CancellationToken cancellationToken = default)
         {
             if (!CheckUserInputMessage(messageList))
@@ -367,7 +369,7 @@ namespace RitsukageBot.Modules
             await FollowupAsync(embed: waitEmbed.Build(), components: component.Build()).ConfigureAwait(false);
 
             var (isSuccess, errorMessage) =
-                await TryGettingResponse(messageList, useTools, cancellationToken: cancellationToken)
+                await TryGettingResponse(messageList, useTools, temperature, cancellationToken: cancellationToken)
                     .ConfigureAwait(false);
             if (isSuccess) return;
             if (cancellationToken.IsCancellationRequested) return;
@@ -407,6 +409,7 @@ namespace RitsukageBot.Modules
         }
 
         private async Task<(bool, string?)> TryGettingResponse(IList<ChatMessage> messageList, bool useTools = false,
+            float temperature = 1.0f,
             long timeout = 60000, CancellationToken cancellationToken = default)
         {
             var sb = new StringBuilder();
@@ -436,7 +439,7 @@ namespace RitsukageBot.Modules
                 _ = Task.Run(async () =>
                     {
                         await foreach (var response in ChatClientProviderService.CompleteStreamingAsync(messageList,
-                                           useTools,
+                                           option => option.Temperature = temperature, useTools,
                                            cancellationTokenSource2.Token))
                         {
                             if (cancellationToken.IsCancellationRequested) return;
