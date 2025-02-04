@@ -106,7 +106,7 @@ namespace RitsukageBot.Modules
                 await FollowupAsync(embed: embed.Build(), ephemeral: true).ConfigureAwait(false);
             }
 
-            if (ChatClientProviderService.GetRoleData(role) is not { } roleData)
+            if (!ChatClientProviderService.GetRoleData(out var roleData, out var temperature, role))
             {
                 var embed = new EmbedBuilder
                 {
@@ -118,7 +118,6 @@ namespace RitsukageBot.Modules
                 return;
             }
 
-            var (chatRole, temperature) = roleData;
             var cancellationTokenSource = new CancellationTokenSource();
             bool valid;
             lock (LockObject)
@@ -138,7 +137,7 @@ namespace RitsukageBot.Modules
                 return;
             }
 
-            var messageList = new List<ChatMessage> { chatRole };
+            var messageList = new List<ChatMessage> { roleData };
             if (await BuildUserChatMessage(message).ConfigureAwait(false)
                 is not { } userMessage)
             {

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Text;
 using Microsoft.Extensions.AI;
@@ -98,25 +99,42 @@ namespace RitsukageBot.Services.Providers
         ///     Get role data
         /// </summary>
         /// <returns></returns>
-        public (ChatMessage, float)? GetRoleData(string type = "Normal")
+        public bool GetRoleData([NotNullWhen(true)] out ChatMessage? chatMessage, out float temperature,
+            string type = "Normal")
         {
-            var roleData = _configuration.GetSection($"AI:RoleData:{type}");
-            if (roleData.Value is null)
-                return null;
-            var prompt = roleData.GetValue("Prompt", string.Empty);
-            var promptFile = roleData.GetValue("PromptFile", string.Empty);
-            var temperature = roleData.GetValue("Temperature", 1.0f);
+            chatMessage = null;
+            temperature = 1.0f;
+            var roleData = _configuration.GetValue<RoleConfig>($"AI:RoleData:{type}");
+            if (roleData is null) return false;
+
+            if (roleData.Temperature.HasValue)
+                temperature = roleData.Temperature.Value;
+            var prompt = roleData.Prompt;
             if (string.IsNullOrWhiteSpace(prompt))
             {
-                if (string.IsNullOrWhiteSpace(promptFile) || !File.Exists(promptFile))
-                    return null;
-                prompt = File.ReadAllText(promptFile);
+                if (string.IsNullOrWhiteSpace(roleData.PromptFile))
+                {
+                    _logger.LogWarning("Role {Type} has no prompt or prompt file", type);
+                    return false;
+                }
+
+                if (!File.Exists(roleData.PromptFile))
+                {
+                    _logger.LogWarning("Role {Type} prompt file does not exist", type);
+                    return false;
+                }
+
+                prompt = File.ReadAllText(roleData.PromptFile);
             }
 
             if (string.IsNullOrWhiteSpace(prompt))
-                return null;
+            {
+                _logger.LogWarning("Role {Type} prompt is empty", type);
+                return false;
+            }
 
-            return (new(ChatRole.System, prompt), temperature);
+            chatMessage = new(ChatRole.System, prompt);
+            return true;
         }
 
         /// <summary>
@@ -360,5 +378,7 @@ namespace RitsukageBot.Services.Providers
 
             return -1;
         }
+
+        internal record RoleConfig(string? Prompt, string? PromptFile, float? Temperature);
     }
 }

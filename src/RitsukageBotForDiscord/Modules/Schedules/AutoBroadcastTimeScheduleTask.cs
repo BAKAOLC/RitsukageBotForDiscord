@@ -94,12 +94,8 @@ namespace RitsukageBot.Modules.Schedules
             var messageList = new List<ChatMessage>();
             var roles = _chatClientProviderService.GetRoles();
             var role = roles[Random.Shared.Next(roles.Length)];
-            var temperature = 1.0f;
-            if (_chatClientProviderService.GetRoleData(role) is { } roleData)
-            {
-                (var chatRole, temperature) = roleData;
-                messageList.Add(chatRole);
-            }
+            if (_chatClientProviderService.GetRoleData(out var roleData, out var temperature, role))
+                messageList.Add(roleData);
 
             var message = CreateTimeMessageRequireMessage(targetTime, prompt);
             messageList.Add(message);
