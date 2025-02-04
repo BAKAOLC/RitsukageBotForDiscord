@@ -104,15 +104,14 @@ namespace RitsukageBot.Services.Providers
         {
             chatMessage = null;
             temperature = 1.0f;
-            var roleData = _configuration.GetValue<RoleConfig>($"AI:RoleData:{type}");
+            var roleData = _configuration.GetSection($"AI:RoleData:{type}").Get<RoleConfig>();
             if (roleData is null)
             {
                 _logger.LogWarning("Role {Type} data not found", type);
                 return false;
             }
 
-            if (roleData.Temperature.HasValue)
-                temperature = roleData.Temperature.Value;
+            temperature = roleData.Temperature;
             var prompt = roleData.Prompt;
             if (string.IsNullOrWhiteSpace(prompt))
             {
@@ -383,6 +382,6 @@ namespace RitsukageBot.Services.Providers
             return -1;
         }
 
-        internal record RoleConfig(string? Prompt, string? PromptFile, float? Temperature);
+        internal record RoleConfig(string Prompt, string PromptFile, float Temperature);
     }
 }

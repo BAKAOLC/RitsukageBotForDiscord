@@ -51,6 +51,6 @@ namespace RitsukageBot.Modules.Schedules
             await _discordClient.SetGameAsync(newStatus.Name, type: type).ConfigureAwait(false);
         }
 
-        public record StatusConfig(string Type, string Name);
+        internal record StatusConfig(string Type, string Name);
     }
 }
