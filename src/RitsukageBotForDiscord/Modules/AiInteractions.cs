@@ -178,7 +178,7 @@ namespace RitsukageBot.Modules
             embed.WithCurrentTimestamp();
             embed.WithTitle("User Good");
             embed.AddField("Good", userInfo.Good.ToString());
-            embed.WithAuthor(Context.User);
+            embed.WithAuthor(user);
             embed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
             var colorGood = Color.Green;
             var colorBad = Color.Red;
@@ -208,7 +208,7 @@ namespace RitsukageBot.Modules
             embed.WithDescription("The user's good has been modified");
             embed.AddField("From", userInfo.Good.ToString());
             embed.AddField("To", good.ToString());
-            embed.WithAuthor(Context.User);
+            embed.WithAuthor(user);
             embed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
             var colorGood = Color.Green;
             var colorBad = Color.Red;
