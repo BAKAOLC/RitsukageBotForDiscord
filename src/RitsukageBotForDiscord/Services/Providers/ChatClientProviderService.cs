@@ -136,7 +136,17 @@ namespace RitsukageBot.Services.Providers
                 return false;
             }
 
-            var chatRole = _configuration.GetValue("AI:PromptRole", ChatRole.System);
+            var chatRoleString = _configuration.GetValue<string>("AI:PromptRole", "System");
+            var chatRole = chatRoleString.ToLower() switch
+            {
+                "system" => ChatRole.System,
+                "user" => ChatRole.User,
+                "assistant" => ChatRole.Assistant,
+                "tool" => ChatRole.Tool,
+#pragma warning disable CA2208
+                _ => throw new ArgumentOutOfRangeException(nameof(chatRoleString), "Invalid chat role"),
+#pragma warning restore CA2208
+            };
             chatMessage = new(chatRole, prompt);
             return true;
         }
