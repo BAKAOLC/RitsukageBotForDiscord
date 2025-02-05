@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using RitsukageBot.Library.Data;
+using RitsukageBot.Library.Utils;
 using RitsukageBot.Services.Providers;
 
 namespace RitsukageBot.Modules
@@ -158,6 +159,59 @@ namespace RitsukageBot.Modules
             {
                 IsProcessing.Remove(Context.User.Id);
             }
+        }
+
+        /// <summary>
+        ///     Query the goods of the AI
+        /// </summary>
+        /// <returns></returns>
+        [SlashCommand("goods", "Query the goods of the AI")]
+        public async Task QueryGoods()
+        {
+            await DeferAsync().ConfigureAwait(false);
+
+            var (_, userInfo) = await DatabaseProviderService.GetOrCreateAsync<ChatUserInformation>(Context.User.Id)
+                .ConfigureAwait(false);
+            var embed = new EmbedBuilder();
+            embed.WithCurrentTimestamp();
+            embed.AddField("Good", userInfo.Good.ToString());
+            embed.WithAuthor(Context.User);
+            embed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
+            var colorGood = Color.Green;
+            var colorBad = Color.Red;
+            var rate = (userInfo.Good + 10000) / 20000.0;
+            var color = ColorUtility.Transition(colorBad, colorGood, rate);
+            embed.WithColor(color);
+            await FollowupAsync(embed: embed.Build()).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        ///     Modify the user's goods
+        /// </summary>
+        /// <param name="good"></param>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        public async Task ModifyUserGoods(int good = 0, SocketUser? user = null)
+        {
+            await DeferAsync().ConfigureAwait(false);
+            user ??= Context.User;
+            var (_, userInfo) = await DatabaseProviderService.GetOrCreateAsync<ChatUserInformation>(user.Id)
+                .ConfigureAwait(false);
+            var embed = new EmbedBuilder();
+            embed.WithCurrentTimestamp();
+            embed.WithDescription("The user's good has been modified");
+            embed.AddField("From", userInfo.Good.ToString());
+            embed.AddField("To", good.ToString());
+            embed.WithAuthor(Context.User);
+            embed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
+            var colorGood = Color.Green;
+            var colorBad = Color.Red;
+            var rate = (userInfo.Good + 10000) / 20000.0;
+            var color = ColorUtility.Transition(colorBad, colorGood, rate);
+            embed.WithColor(color);
+            userInfo.Good = good;
+            await DatabaseProviderService.InsertOrUpdateAsync(userInfo).ConfigureAwait(false);
+            await FollowupAsync(embed: embed.Build()).ConfigureAwait(false);
         }
 
         /// <summary>
