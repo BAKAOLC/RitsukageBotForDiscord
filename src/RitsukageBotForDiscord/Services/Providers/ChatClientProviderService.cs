@@ -136,7 +136,8 @@ namespace RitsukageBot.Services.Providers
                 return false;
             }
 
-            chatMessage = new(ChatRole.System, prompt);
+            var chatRole = _configuration.GetValue("AI:PromptRole", ChatRole.System);
+            chatMessage = new(chatRole, prompt);
             return true;
         }
 
