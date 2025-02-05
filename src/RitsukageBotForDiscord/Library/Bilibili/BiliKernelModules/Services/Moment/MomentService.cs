@@ -7,6 +7,7 @@ using Richasy.BiliKernel.Models.Moment;
 using Richasy.BiliKernel.Models.User;
 using Richasy.BiliKernel.Services.Moment;
 using Richasy.BiliKernel.Services.Moment.Core;
+using RichasyKernel;
 using RitsukageBot.Library.Bilibili.BiliKernelModules.Abstractions.Moment;
 
 namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Services.Moment
