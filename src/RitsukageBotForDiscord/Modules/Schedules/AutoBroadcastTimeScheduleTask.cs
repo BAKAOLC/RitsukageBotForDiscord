@@ -164,6 +164,15 @@ namespace RitsukageBot.Modules.Schedules
                 }
 
                 var (_, content, _) = ChatClientProviderService.FormatResponse(sb.ToString());
+                if (string.IsNullOrWhiteSpace(content))
+                {
+                    _logger.LogWarning("Failed to generate time message for {TargetTime}", targetTime);
+                    messageList.Remove(message);
+                    message = CreateTimeMessageRequireMessage(targetTime, prompt);
+                    messageList.Add(message);
+                    continue;
+                }
+
                 _logger.LogInformation("Generated time message for {TargetTime} with content:\n{Content}", targetTime,
                     content);
                 content = $"> Auto time broadcast with role: {role}\n{content}";
@@ -184,6 +193,7 @@ namespace RitsukageBot.Modules.Schedules
                 ["data"] = new JObject
                 {
                     ["time"] = targetTime.ToString("yyyy-MM-dd HH:mm:ss zzz"),
+                    ["randomSeed"] = Random.Shared.Next(),
                 },
             };
             return new(ChatRole.User, jObject.ToString());
