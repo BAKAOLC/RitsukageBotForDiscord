@@ -164,16 +164,19 @@ namespace RitsukageBot.Modules
         /// <summary>
         ///     Query the goods of the AI
         /// </summary>
+        /// <param name="user"></param>
         /// <returns></returns>
         [SlashCommand("goods", "Query the goods of the AI")]
-        public async Task QueryGoods()
+        public async Task QueryGoods(SocketUser? user = null)
         {
             await DeferAsync().ConfigureAwait(false);
 
-            var (_, userInfo) = await DatabaseProviderService.GetOrCreateAsync<ChatUserInformation>(Context.User.Id)
+            user ??= Context.User;
+            var (_, userInfo) = await DatabaseProviderService.GetOrCreateAsync<ChatUserInformation>(user.Id)
                 .ConfigureAwait(false);
             var embed = new EmbedBuilder();
             embed.WithCurrentTimestamp();
+            embed.WithTitle("User Good");
             embed.AddField("Good", userInfo.Good.ToString());
             embed.WithAuthor(Context.User);
             embed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
@@ -191,6 +194,8 @@ namespace RitsukageBot.Modules
         /// <param name="good"></param>
         /// <param name="user"></param>
         /// <returns></returns>
+        [RequireOwner]
+        [SlashCommand("modify_goods", "Modify the user's goods")]
         public async Task ModifyUserGoods(int good = 0, SocketUser? user = null)
         {
             await DeferAsync().ConfigureAwait(false);
@@ -199,6 +204,7 @@ namespace RitsukageBot.Modules
                 .ConfigureAwait(false);
             var embed = new EmbedBuilder();
             embed.WithCurrentTimestamp();
+            embed.WithTitle("User Good");
             embed.WithDescription("The user's good has been modified");
             embed.AddField("From", userInfo.Good.ToString());
             embed.AddField("To", good.ToString());
