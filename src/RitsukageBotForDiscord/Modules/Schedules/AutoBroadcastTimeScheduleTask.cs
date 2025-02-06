@@ -144,7 +144,9 @@ namespace RitsukageBot.Modules.Schedules
                                                messageList,
                                                option =>
                                                {
+                                                   // ReSharper disable once AccessToModifiedClosure
                                                    if (!string.IsNullOrWhiteSpace(modelId))
+                                                       // ReSharper disable once AccessToModifiedClosure
                                                        option.ModelId = modelId;
                                                    option.Temperature = temperature;
                                                },
