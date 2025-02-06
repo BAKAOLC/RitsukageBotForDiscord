@@ -54,13 +54,16 @@ namespace RitsukageBot.Services.Providers
                 return;
             }
 
-            var modelId = configuration.GetValue<string>("AI:ModelId");
-            if (string.IsNullOrEmpty(modelId))
+            var modelIds = configuration.GetValue<string[]>("AI:ModelId")?.Where(x => !string.IsNullOrWhiteSpace(x))
+                .ToArray();
+            if (modelIds is null || modelIds.Length == 0)
             {
                 _logger.LogError("Chat client model id is not set, chat client is disabled");
+                _isEnabled = false;
                 return;
             }
 
+            var modelId = modelIds[0];
             var key = configuration.GetValue<string>("AI:ApiKey");
             IChatClient innerChatClient = string.IsNullOrEmpty(key)
                 ? new OllamaChatClient(new Uri(endpoint), modelId)
@@ -93,6 +96,15 @@ namespace RitsukageBot.Services.Providers
         public IChatClient GetChatClient()
         {
             return _chatClient ?? throw new InvalidOperationException("Chat client is not enabled");
+        }
+
+        /// <summary>
+        ///     Get model id list
+        /// </summary>
+        /// <returns></returns>
+        public string[] GetModels()
+        {
+            return _configuration.GetSection("AI:ModelId").Get<string[]>() ?? [];
         }
 
         /// <summary>

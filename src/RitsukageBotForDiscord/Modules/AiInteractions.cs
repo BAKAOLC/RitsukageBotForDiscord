@@ -153,7 +153,9 @@ namespace RitsukageBot.Modules
             }
 
             messageList.Add(userMessage);
-            await BeginChatAsync(messageList, false, 3, temperature, cancellationTokenSource.Token)
+
+            var modelIds = ChatClientProviderService.GetModels();
+            await BeginChatAsync(messageList, role, false, 3, temperature, modelIds, cancellationTokenSource.Token)
                 .ConfigureAwait(false);
             lock (LockObject)
             {
@@ -398,10 +400,24 @@ namespace RitsukageBot.Modules
             return new(ChatRole.User, jObject.ToString());
         }
 
-        private async Task BeginChatAsync(IList<ChatMessage> messageList, bool useTools = false, int retry = 0,
-            float temperature = 1.0f,
+        private async Task BeginChatAsync(IList<ChatMessage> messageList, string role, bool useTools = false,
+            int retry = 0,
+            float temperature = 1.0f, string[]? modelIds = null,
             CancellationToken cancellationToken = default)
         {
+            modelIds ??= ChatClientProviderService.GetModels();
+            if (modelIds.Length == 0)
+            {
+                var embed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "No AI model is available",
+                    Color = Color.Red,
+                };
+                await FollowupAsync(embed: embed.Build(), ephemeral: true).ConfigureAwait(false);
+                return;
+            }
+
             if (!CheckUserInputMessage(messageList))
             {
                 var embed = new EmbedBuilder
@@ -427,15 +443,26 @@ namespace RitsukageBot.Modules
 
             await FollowupAsync(embed: waitEmbed.Build(), components: component.Build()).ConfigureAwait(false);
 
+            var modelId = modelIds[0];
             var (isSuccess, errorMessage) =
-                await TryGettingResponse(messageList, useTools, temperature, cancellationToken: cancellationToken)
+                await TryGettingResponse(messageList, role, useTools, modelId, temperature,
+                        cancellationToken: cancellationToken)
                     .ConfigureAwait(false);
             if (isSuccess) return;
             if (cancellationToken.IsCancellationRequested) return;
 
             if (retry > 0 && !cancellationToken.IsCancellationRequested)
+            {
+                var everyModelTry = modelIds.Length / (retry + 1);
+                everyModelTry = everyModelTry < 1 ? 1 : everyModelTry;
                 for (var i = 0; i < retry; i++)
                 {
+                    if ((i + 1) % everyModelTry == 0)
+                    {
+                        var index = (i + 1) / everyModelTry;
+                        modelId = modelIds[index];
+                    }
+
                     var retryMessage = $"{errorMessage}\nRetrying... ({i + 1}/{retry})";
                     var retryEmbed = new EmbedBuilder
                     {
@@ -445,11 +472,13 @@ namespace RitsukageBot.Modules
                     };
                     await ModifyOriginalResponseAsync(x => x.Embed = retryEmbed.Build()).ConfigureAwait(false);
                     (isSuccess, errorMessage) =
-                        await TryGettingResponse(messageList, useTools, cancellationToken: cancellationToken)
+                        await TryGettingResponse(messageList, role, useTools, modelId,
+                                cancellationToken: cancellationToken)
                             .ConfigureAwait(false);
                     if (isSuccess) return;
                     if (cancellationToken.IsCancellationRequested) return;
                 }
+            }
 
             if (cancellationToken.IsCancellationRequested) return;
 
@@ -467,8 +496,9 @@ namespace RitsukageBot.Modules
             }).ConfigureAwait(false);
         }
 
-        private async Task<(bool, string?)> TryGettingResponse(IList<ChatMessage> messageList, bool useTools = false,
-            float temperature = 1.0f,
+        private async Task<(bool, string?)> TryGettingResponse(IList<ChatMessage> messageList, string role,
+            bool useTools = false,
+            string? modelId = null, float temperature = 1.0f,
             long timeout = 60000, CancellationToken cancellationToken = default)
         {
             var sb = new StringBuilder();
@@ -498,7 +528,12 @@ namespace RitsukageBot.Modules
                 _ = Task.Run(async () =>
                     {
                         await foreach (var response in ChatClientProviderService.CompleteStreamingAsync(messageList,
-                                           option => option.Temperature = temperature, useTools,
+                                           option =>
+                                           {
+                                               if (!string.IsNullOrWhiteSpace(modelId))
+                                                   option.ModelId = modelId;
+                                               option.Temperature = temperature;
+                                           }, useTools,
                                            cancellationTokenSource2.Token))
                         {
                             if (cancellationToken.IsCancellationRequested) return;
@@ -542,6 +577,8 @@ namespace RitsukageBot.Modules
 
                     if (!string.IsNullOrWhiteSpace(updatingContent))
                     {
+                        updatingContent =
+                            $"> Message generated by role: {role} in model: {modelId}\n\n{updatingContent}";
                         if (checkedEmbed)
                         {
                             await ModifyOriginalResponseAsync(x => x.Content = updatingContent).ConfigureAwait(false);
@@ -613,12 +650,13 @@ namespace RitsukageBot.Modules
                     Logger.LogError(ex, "Error while parsing the JSON header");
                 }
 
-            if (!string.IsNullOrWhiteSpace(content))
-                await ModifyOriginalResponseAsync(x =>
-                {
-                    x.Content = content;
-                    x.Components = null;
-                }).ConfigureAwait(false);
+            if (string.IsNullOrWhiteSpace(content)) return (true, null);
+            content = $"> Generated by {modelId}\n\n{content}";
+            await ModifyOriginalResponseAsync(x =>
+            {
+                x.Content = content;
+                x.Components = null;
+            }).ConfigureAwait(false);
 
             return (true, null);
         }
