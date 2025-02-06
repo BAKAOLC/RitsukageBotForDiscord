@@ -176,7 +176,9 @@ namespace RitsukageBot.Modules.Schedules
                 var (_, content, _) = ChatClientProviderService.FormatResponse(sb.ToString());
                 if (!isCompleted || string.IsNullOrWhiteSpace(content))
                 {
-                    _logger.LogWarning("Failed to generate time message for {TargetTime}", targetTime);
+                    _logger.LogWarning(
+                        "Failed to generate time message for {TargetTime} with role: {Role} in model: {ModelId}",
+                        targetTime, role, modelId);
                     if (DateTimeOffset.Now > targetTime) break;
                     messageList.Remove(message);
                     message = CreateTimeMessageRequireMessage(targetTime, prompt);
@@ -185,8 +187,9 @@ namespace RitsukageBot.Modules.Schedules
                     continue;
                 }
 
-                _logger.LogInformation("Generated time message for {TargetTime} with content:\n{Content}", targetTime,
-                    content);
+                _logger.LogInformation(
+                    "Generated time message for {TargetTime} with role: {Role} in model: {ModelId}, content:\n{Content}",
+                    targetTime, role, modelId, content);
                 content = $"> Auto time broadcast with role: {role} in model: {modelId}\n\n{content}";
                 _broadcastTimes.Add(targetTime, content);
                 await _cacheProvider.SetAsync(cacheKey, content, TimeSpan.FromHours(1)).ConfigureAwait(false);
