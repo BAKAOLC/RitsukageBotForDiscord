@@ -714,7 +714,7 @@ namespace RitsukageBot.Modules
         public Task CancelAsync()
         {
             Logger.LogInformation("Ai chat interaction canceled for {MessageId}", Context.Interaction.Message.Id);
-            AiInteractions.ShutdownChat(Context.User.Id);
+            AiInteractions.ShutdownChat(Context.Interaction.Message.Interaction.User.Id);
             var embed = new EmbedBuilder
             {
                 Title = "Chat with AI",
