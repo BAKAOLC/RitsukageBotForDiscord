@@ -54,7 +54,8 @@ namespace RitsukageBot.Services.Providers
                 return;
             }
 
-            var modelIds = configuration.GetValue<string[]>("AI:ModelId")?.Where(x => !string.IsNullOrWhiteSpace(x))
+            var modelIds = configuration.GetSection("AI:ModelId").Get<string[]>()
+                ?.Where(x => !string.IsNullOrWhiteSpace(x))
                 .ToArray();
             if (modelIds is null || modelIds.Length == 0)
             {
