@@ -60,8 +60,14 @@ namespace RitsukageBot.Modules.Schedules
             if (_broadcastTimes.Remove(now, out var message)) await BroadcastTime(message).ConfigureAwait(false);
 
             if (_generatingTime is not null) return;
+            // Generate for next 2 hours
             var nextHour = now.AddHours(1);
-            if (_broadcastTimes.ContainsKey(nextHour)) return;
+            if (_broadcastTimes.ContainsKey(nextHour))
+            {
+                nextHour = nextHour.AddHours(1);
+                if (_broadcastTimes.ContainsKey(nextHour)) return;
+            }
+
             _generatingTime = nextHour;
             await GenerateTimeMessage(nextHour, prompt).ConfigureAwait(false);
             _generatingTime = null;
