@@ -60,7 +60,7 @@ namespace RitsukageBot.Modules
         {
             lock (LockObject)
             {
-                if (!IsProcessing.TryGetValue(id, out var cancellationTokenSource)) return;
+                if (!IsProcessing.Remove(id, out var cancellationTokenSource)) return;
                 cancellationTokenSource.Cancel();
             }
         }
@@ -81,7 +81,8 @@ namespace RitsukageBot.Modules
             bool isChatting;
             lock (LockObject)
             {
-                isChatting = IsProcessing.ContainsKey(Context.User.Id);
+                isChatting = IsProcessing.TryGetValue(Context.User.Id, out var value)
+                             && !value.IsCancellationRequested;
             }
 
             if (isChatting)
