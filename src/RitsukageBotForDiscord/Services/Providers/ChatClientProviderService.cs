@@ -24,7 +24,7 @@ namespace RitsukageBot.Services.Providers
     public class ChatClientProviderService
     {
         private readonly Dictionary<Assembly, List<AIFunction>> _bundleRecords = [];
-        private readonly IChatClient? _chatClient;
+        private readonly List<IChatClient> _chatClients = [];
         private readonly IConfiguration _configuration;
         private readonly bool _isEnabled;
         private readonly ILogger<ChatClientProviderService> _logger;
@@ -47,35 +47,32 @@ namespace RitsukageBot.Services.Providers
                 return;
             }
 
-            var endpoint = configuration.GetValue<string>("AI:Endpoint");
-            if (string.IsNullOrEmpty(endpoint))
+            var services = configuration.GetSection("AI:Service").Get<EndpointConfig[]>()
+                ?.Where(x => !string.IsNullOrWhiteSpace(x.Endpoint) && !string.IsNullOrWhiteSpace(x.ModelId)).ToArray();
+            if (services is null || services.Length == 0)
             {
                 _logger.LogError("Chat client endpoint is not set, chat client is disabled");
                 return;
             }
 
-            var modelIds = configuration.GetSection("AI:ModelId").Get<string[]>()
-                ?.Where(x => !string.IsNullOrWhiteSpace(x))
-                .ToArray();
-            if (modelIds is null || modelIds.Length == 0)
+            foreach (var service in services)
             {
-                _logger.LogError("Chat client model id is not set, chat client is disabled");
-                _isEnabled = false;
-                return;
+                IChatClient innerChatClient;
+                if (string.IsNullOrWhiteSpace(service.ApiKey))
+                    innerChatClient = new OllamaChatClient(new Uri(service.Endpoint), service.ModelId);
+                else
+                    innerChatClient = new OpenAIChatClient(new(new(service.ApiKey), new()
+                    {
+                        Endpoint = new(service.Endpoint),
+                    }), service.ModelId);
+
+                var client = new ChatClientBuilder(innerChatClient).UseFunctionInvocation()
+                    .UseDistributedCache(serviceProvider.GetRequiredService<IDistributedCache>())
+                    //.UseLogging(serviceProvider.GetRequiredService<ILoggerFactory>())
+                    .Build();
+                _chatClients.Add(client);
             }
 
-            var modelId = modelIds[0];
-            var key = configuration.GetValue<string>("AI:ApiKey");
-            IChatClient innerChatClient = string.IsNullOrEmpty(key)
-                ? new OllamaChatClient(new Uri(endpoint), modelId)
-                : new OpenAIChatClient(new(new(key), new()
-                {
-                    Endpoint = new(endpoint),
-                }), modelId);
-            _chatClient = new ChatClientBuilder(innerChatClient).UseFunctionInvocation()
-                .UseDistributedCache(serviceProvider.GetRequiredService<IDistributedCache>())
-                //.UseLogging(serviceProvider.GetRequiredService<ILoggerFactory>())
-                .Build();
             _logger.LogInformation("Chat client is enabled");
             RegisterChatClientToolsBundle(Assembly.GetExecutingAssembly());
         }
@@ -96,16 +93,33 @@ namespace RitsukageBot.Services.Providers
         /// <exception cref="InvalidOperationException"></exception>
         public IChatClient GetChatClient()
         {
-            return _chatClient ?? throw new InvalidOperationException("Chat client is not enabled");
+            if (_chatClients.Count == 0 || !_isEnabled)
+                throw new InvalidOperationException("Chat client is not enabled");
+            return _chatClients[0];
         }
 
         /// <summary>
-        ///     Get model id list
+        ///     Get chat client
         /// </summary>
         /// <returns></returns>
-        public string[] GetModels()
+        /// <exception cref="InvalidOperationException"></exception>
+        public IChatClient GetChatClientRandomly()
         {
-            return _configuration.GetSection("AI:ModelId").Get<string[]>() ?? [];
+            if (_chatClients.Count == 0 || !_isEnabled)
+                throw new InvalidOperationException("Chat client is not enabled");
+            return _chatClients[Random.Shared.Next(_chatClients.Count)];
+        }
+
+        /// <summary>
+        ///     Get chat client
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        public IChatClient[] GetChatClients()
+        {
+            if (_chatClients.Count == 0 || !_isEnabled)
+                throw new InvalidOperationException("Chat client is not enabled");
+            return _chatClients.ToArray();
         }
 
         /// <summary>
@@ -328,13 +342,15 @@ namespace RitsukageBot.Services.Providers
         /// </summary>
         /// <param name="message"></param>
         /// <param name="useTools"></param>
+        /// <param name="client"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         public IAsyncEnumerable<StreamingChatCompletionUpdate> CompleteStreamingAsync(string message,
             bool useTools = false,
+            IChatClient? client = null,
             CancellationToken cancellationToken = default)
         {
-            var client = GetChatClient();
+            client ??= GetChatClients()[0];
             return useTools
                 ? client.CompleteStreamingAsync(message, new() { Tools = GetAiFunctions() },
                     cancellationToken)
@@ -346,13 +362,15 @@ namespace RitsukageBot.Services.Providers
         /// </summary>
         /// <param name="messages"></param>
         /// <param name="useTools"></param>
+        /// <param name="client"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         public IAsyncEnumerable<StreamingChatCompletionUpdate> CompleteStreamingAsync(IList<ChatMessage> messages,
             bool useTools = false,
+            IChatClient? client = null,
             CancellationToken cancellationToken = default)
         {
-            var client = GetChatClient();
+            client ??= GetChatClients()[0];
             return useTools
                 ? client.CompleteStreamingAsync(messages, new() { Tools = GetAiFunctions() }, cancellationToken)
                 : client.CompleteStreamingAsync(messages, cancellationToken: cancellationToken);
@@ -364,14 +382,16 @@ namespace RitsukageBot.Services.Providers
         /// <param name="messages"></param>
         /// <param name="stopSequences"></param>
         /// <param name="useTools"></param>
+        /// <param name="client"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         public IAsyncEnumerable<StreamingChatCompletionUpdate> CompleteStreamingAsync(IList<ChatMessage> messages,
             IList<string> stopSequences,
             bool useTools = false,
+            IChatClient? client = null,
             CancellationToken cancellationToken = default)
         {
-            var client = GetChatClient();
+            client ??= GetChatClients()[0];
             var option = useTools ? new() { Tools = GetAiFunctions() } : new ChatOptions();
             option.StopSequences = stopSequences;
             return client.CompleteStreamingAsync(messages, option, cancellationToken);
@@ -383,14 +403,16 @@ namespace RitsukageBot.Services.Providers
         /// <param name="messages"></param>
         /// <param name="options"></param>
         /// <param name="useTools"></param>
+        /// <param name="client"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         public IAsyncEnumerable<StreamingChatCompletionUpdate> CompleteStreamingAsync(IList<ChatMessage> messages,
             Action<ChatOptions> options,
             bool useTools = false,
+            IChatClient? client = null,
             CancellationToken cancellationToken = default)
         {
-            var client = GetChatClient();
+            client ??= GetChatClients()[0];
             var option = useTools ? new() { Tools = GetAiFunctions() } : new ChatOptions();
             options(option);
             return client.CompleteStreamingAsync(messages, option, cancellationToken);
@@ -426,6 +448,8 @@ namespace RitsukageBot.Services.Providers
 
             return -1;
         }
+
+        internal record EndpointConfig(string Endpoint, string ApiKey, string ModelId);
 
         internal record RoleConfig(string Prompt, string PromptFile, float Temperature);
     }

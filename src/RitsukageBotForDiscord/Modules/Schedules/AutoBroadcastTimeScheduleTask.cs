@@ -53,8 +53,6 @@ namespace RitsukageBot.Modules.Schedules
         public override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
             if (!_chatClientProviderService.IsEnabled()) return;
-            var modelIds = _chatClientProviderService.GetModels();
-            if (modelIds.Length == 0) return;
 
             var prompt = _configuration.GetValue<string>("AI:Function:TimeBroadcast:Prompt");
             if (string.IsNullOrWhiteSpace(prompt)) return;
@@ -72,7 +70,7 @@ namespace RitsukageBot.Modules.Schedules
             }
 
             _generatingTime = nextHour;
-            await GenerateTimeMessage(nextHour, prompt, modelIds).ConfigureAwait(false);
+            await GenerateTimeMessage(nextHour, prompt).ConfigureAwait(false);
             _generatingTime = null;
         }
 
@@ -88,14 +86,8 @@ namespace RitsukageBot.Modules.Schedules
                 await discordChannel.SendMessageAsync(message).ConfigureAwait(false);
         }
 
-        private async Task GenerateTimeMessage(DateTimeOffset targetTime, string prompt, string[] modelIds)
+        private async Task GenerateTimeMessage(DateTimeOffset targetTime, string prompt)
         {
-            if (modelIds.Length == 0)
-            {
-                _logger.LogWarning("No model id available for generating time message for {TargetTime}", targetTime);
-                return;
-            }
-
             var cacheKey = $"ai_message:time_broadcast:{targetTime.ToUnixTimeSeconds()}";
             var cacheMessage = await _cacheProvider.GetOrDefaultAsync<string>(cacheKey).ConfigureAwait(false);
             if (cacheMessage is not null)
@@ -116,7 +108,7 @@ namespace RitsukageBot.Modules.Schedules
             messageList.Add(message);
             _logger.LogInformation("Generating time message for {TargetTime} with role: {Role}", targetTime, role);
 
-            var modelId = modelIds[0];
+            var client = _chatClientProviderService.GetChatClient();
             while (true)
             {
                 var haveContent = false;
@@ -142,15 +134,9 @@ namespace RitsukageBot.Modules.Schedules
                         {
                             await foreach (var response in _chatClientProviderService.CompleteStreamingAsync(
                                                messageList,
-                                               option =>
-                                               {
-                                                   // ReSharper disable once AccessToModifiedClosure
-                                                   if (!string.IsNullOrWhiteSpace(modelId))
-                                                       // ReSharper disable once AccessToModifiedClosure
-                                                       option.ModelId = modelId;
-                                                   option.Temperature = temperature;
-                                               },
+                                               option => { option.Temperature = temperature; },
                                                false,
+                                               client,
                                                cancellationTokenSource2.Token))
                                 lock (lockObject)
                                 {
@@ -179,24 +165,24 @@ namespace RitsukageBot.Modules.Schedules
                 if (!isCompleted || string.IsNullOrWhiteSpace(content))
                 {
                     _logger.LogWarning(
-                        "Failed to generate time message for {TargetTime} with role: {Role} in model: {ModelId}",
-                        targetTime, role, modelId);
+                        "Failed to generate time message for {TargetTime} with {ModelId} from {Url} with role: {Role}",
+                        targetTime, client.Metadata.ModelId, client.Metadata.ProviderUri, role);
                     if (DateTimeOffset.Now > targetTime) break;
                     messageList.Remove(message);
                     message = CreateTimeMessageRequireMessage(targetTime, prompt);
                     messageList.Add(message);
-                    modelId = modelIds[Random.Shared.Next(modelIds.Length)];
+                    client = _chatClientProviderService.GetChatClientRandomly();
                     continue;
                 }
 
                 if (!string.IsNullOrWhiteSpace(thinkContent))
                     _logger.LogInformation(
-                        "Think content for {TargetTime} with {ModelId} in role: {Role}:\n{ThinkContent}",
-                        targetTime, modelId, role, thinkContent);
+                        "Think content for time message for {TargetTime} with {ModelId} from {Url} with role: {Role}:\n{Content}",
+                        targetTime, client.Metadata.ModelId, client.Metadata.ProviderUri, role, thinkContent);
                 _logger.LogInformation(
-                    "Generated time message for {TargetTime} with {ModelId} in role: {Role}, content:\n{Content}",
-                    targetTime, modelId, role, content);
-                content = $"|| Generated by {modelId} with role: {role} ||\n{content}";
+                    "Generated time message for {TargetTime} with {ModelId} from {Url} with role: {Role}:\n{Content}",
+                    targetTime, client.Metadata.ModelId, client.Metadata.ProviderUri, role, content);
+                content = $"|| Generated by {client.Metadata.ModelId} with role: {role} ||\n{content}";
                 _broadcastTimes.Add(targetTime, content);
                 await _cacheProvider.SetAsync(cacheKey, content, TimeSpan.FromHours(1)).ConfigureAwait(false);
                 _logger.LogInformation("Cached time message for {TargetTime}", targetTime);

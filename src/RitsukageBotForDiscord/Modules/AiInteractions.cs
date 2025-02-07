@@ -155,8 +155,7 @@ namespace RitsukageBot.Modules
 
             messageList.Add(userMessage);
 
-            var modelIds = ChatClientProviderService.GetModels();
-            await BeginChatAsync(messageList, role, false, 3, temperature, modelIds, cancellationTokenSource.Token)
+            await BeginChatAsync(messageList, role, false, 3, temperature, cancellationTokenSource.Token)
                 .ConfigureAwait(false);
             lock (LockObject)
             {
@@ -402,23 +401,8 @@ namespace RitsukageBot.Modules
         }
 
         private async Task BeginChatAsync(IList<ChatMessage> messageList, string role, bool useTools = false,
-            int retry = 0,
-            float temperature = 1.0f, string[]? modelIds = null,
-            CancellationToken cancellationToken = default)
+            int retry = 0, float temperature = 1.0f, CancellationToken cancellationToken = default)
         {
-            modelIds ??= ChatClientProviderService.GetModels();
-            if (modelIds.Length == 0)
-            {
-                var embed = new EmbedBuilder
-                {
-                    Title = "Error",
-                    Description = "No AI model is available",
-                    Color = Color.Red,
-                };
-                await FollowupAsync(embed: embed.Build(), ephemeral: true).ConfigureAwait(false);
-                return;
-            }
-
             if (!CheckUserInputMessage(messageList))
             {
                 var embed = new EmbedBuilder
@@ -444,9 +428,9 @@ namespace RitsukageBot.Modules
 
             await FollowupAsync(embed: waitEmbed.Build(), components: component.Build()).ConfigureAwait(false);
 
-            var modelId = modelIds[0];
+            var client = ChatClientProviderService.GetChatClient();
             var (isSuccess, errorMessage) =
-                await TryGettingResponse(messageList, role, useTools, modelId, temperature,
+                await TryGettingResponse(messageList, role, useTools, client, temperature,
                         cancellationToken: cancellationToken)
                     .ConfigureAwait(false);
             if (isSuccess) return;
@@ -454,13 +438,14 @@ namespace RitsukageBot.Modules
 
             if (retry > 0 && !cancellationToken.IsCancellationRequested)
             {
-                var everyModelTry = (int)Math.Ceiling(((double)retry + 1) / modelIds.Length);
+                var clients = ChatClientProviderService.GetChatClients();
+                var eachTry = (int)Math.Ceiling(((double)retry + 1) / clients.Length);
                 for (var i = 0; i < retry; i++)
                 {
-                    if ((i + 1) % everyModelTry == 0)
+                    if ((i + 1) % eachTry == 0)
                     {
-                        var index = (i + 1) / everyModelTry;
-                        modelId = modelIds[index];
+                        var index = (i + 1) / eachTry;
+                        client = clients[index];
                     }
 
                     var retryMessage = $"{errorMessage}\nRetrying... ({i + 1}/{retry})";
@@ -472,7 +457,7 @@ namespace RitsukageBot.Modules
                     };
                     await ModifyOriginalResponseAsync(x => x.Embed = retryEmbed.Build()).ConfigureAwait(false);
                     (isSuccess, errorMessage) =
-                        await TryGettingResponse(messageList, role, useTools, modelId,
+                        await TryGettingResponse(messageList, role, useTools, client,
                                 cancellationToken: cancellationToken)
                             .ConfigureAwait(false);
                     if (isSuccess) return;
@@ -496,11 +481,13 @@ namespace RitsukageBot.Modules
             }).ConfigureAwait(false);
         }
 
+        // ReSharper disable once CyclomaticComplexity
         private async Task<(bool, string?)> TryGettingResponse(IList<ChatMessage> messageList, string role,
             bool useTools = false,
-            string? modelId = null, float temperature = 1.0f,
+            IChatClient? client = null, float temperature = 1.0f,
             long timeout = 60000, CancellationToken cancellationToken = default)
         {
+            client ??= ChatClientProviderService.GetChatClient();
             var sb = new StringBuilder();
             var haveContent = false;
             var checkedEmbed = false;
@@ -528,12 +515,7 @@ namespace RitsukageBot.Modules
                 _ = Task.Run(async () =>
                     {
                         await foreach (var response in ChatClientProviderService.CompleteStreamingAsync(messageList,
-                                           option =>
-                                           {
-                                               if (!string.IsNullOrWhiteSpace(modelId))
-                                                   option.ModelId = modelId;
-                                               option.Temperature = temperature;
-                                           }, useTools,
+                                           option => { option.Temperature = temperature; }, useTools, client,
                                            cancellationTokenSource2.Token))
                         {
                             if (cancellationToken.IsCancellationRequested) return;
@@ -577,7 +559,7 @@ namespace RitsukageBot.Modules
 
                     if (!string.IsNullOrWhiteSpace(updatingContent))
                     {
-                        updatingContent = $"|| Generated by {modelId} with role: {role} ||\n{updatingContent}";
+                        updatingContent = $"|| Generated by {client} with role: {role} ||\n{updatingContent}";
                         if (checkedEmbed)
                         {
                             await ModifyOriginalResponseAsync(x => x.Content = updatingContent).ConfigureAwait(false);
@@ -608,8 +590,8 @@ namespace RitsukageBot.Modules
             var (hasJsonHeader, content, jsonHeader, thinkContent) =
                 ChatClientProviderService.FormatResponse(sb.ToString());
             if (!string.IsNullOrWhiteSpace(thinkContent))
-                Logger.LogInformation("Think content for with {ModelId} in role: {Role}:\n{ThinkContent}",
-                    modelId, role, thinkContent);
+                Logger.LogInformation("Think content for with {ModelId} from {Url} in role: {Role}:\n{ThinkContent}",
+                    client.Metadata.ModelId, client.Metadata.ProviderUri, role, thinkContent);
 
             if (hasJsonHeader)
                 try
@@ -655,7 +637,7 @@ namespace RitsukageBot.Modules
                 }
 
             if (string.IsNullOrWhiteSpace(content)) return (true, null);
-            content = $"|| Generated by {modelId} with role: {role} ||\n{content}";
+            content = $"|| Generated by {client} with role: {role} ||\n{content}";
             await ModifyOriginalResponseAsync(x =>
             {
                 x.Content = content;
