@@ -454,8 +454,7 @@ namespace RitsukageBot.Modules
 
             if (retry > 0 && !cancellationToken.IsCancellationRequested)
             {
-                var everyModelTry = modelIds.Length / (retry + 1);
-                everyModelTry = everyModelTry < 1 ? 1 : everyModelTry;
+                var everyModelTry = (int)Math.Ceiling(((double)retry + 1) / modelIds.Length);
                 for (var i = 0; i < retry; i++)
                 {
                     if ((i + 1) % everyModelTry == 0)
