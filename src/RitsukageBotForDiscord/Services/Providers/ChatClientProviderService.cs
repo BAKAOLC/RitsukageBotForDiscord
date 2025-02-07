@@ -182,6 +182,7 @@ namespace RitsukageBot.Services.Providers
         /// <returns></returns>
         public static bool CheckJsonHeader(string response, out string content, out string? jsonHeader)
         {
+            response = response.Trim();
             if (response is not ['{', ..])
             {
                 content = response;
@@ -199,8 +200,8 @@ namespace RitsukageBot.Services.Providers
                 return false;
             }
 
-            var firstLine = response[..firstLineEndIndex];
-            response = response[(firstLineEndIndex + 1)..];
+            var firstLine = response[..firstLineEndIndex].Trim();
+            response = response[(firstLineEndIndex + 1)..].Trim();
             content = response;
             jsonHeader = firstLine;
             return true;
