@@ -439,14 +439,9 @@ namespace RitsukageBot.Modules
             if (retry > 0 && !cancellationToken.IsCancellationRequested)
             {
                 var clients = ChatClientProviderService.GetChatClients();
-                var eachTry = (int)Math.Ceiling(((double)retry + 1) / clients.Length);
                 for (var i = 0; i < retry; i++)
                 {
-                    if ((i + 1) % eachTry == 0)
-                    {
-                        var index = (i + 1) / eachTry;
-                        client = clients[index];
-                    }
+                    client = clients[Random.Shared.Next(clients.Length)];
 
                     var retryMessage = $"{errorMessage}\nRetrying... ({i + 1}/{retry})";
                     var retryEmbed = new EmbedBuilder
