@@ -22,7 +22,7 @@ namespace RitsukageBot.Library.Data
         public bool AutomaticallyResolveBilibiliLinks { get; set; }
 
         /// <summary>
-        ///    Automatically AI broadcast time.
+        ///     Automatically AI broadcast time.
         /// </summary>
         [Column("automatically_ai_broadcast_time")]
         public bool AutomaticallyAiBroadcastTime { get; set; }

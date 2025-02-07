@@ -177,18 +177,33 @@ namespace RitsukageBot.Services.Providers
         ///     Check message header
         /// </summary>
         /// <param name="response"></param>
+        /// <param name="content"></param>
+        /// <param name="jsonHeader"></param>
         /// <returns></returns>
-        public static (bool, string, string?) CheckJsonHeader(string response)
+        public static bool CheckJsonHeader(string response, out string content, out string? jsonHeader)
         {
-            if (response is not ['{', ..]) return (false, response, null);
+            if (response is not ['{', ..])
+            {
+                content = response;
+                jsonHeader = null;
+                return false;
+            }
+
             var firstLineEndIndex = response.IndexOf('\n');
             if (firstLineEndIndex == -1)
                 firstLineEndIndex = response.IndexOf('\r');
             if (firstLineEndIndex == -1)
-                return (false, string.Empty, response);
+            {
+                content = response;
+                jsonHeader = null;
+                return false;
+            }
+
             var firstLine = response[..firstLineEndIndex];
             response = response[(firstLineEndIndex + 1)..];
-            return (true, response, firstLine);
+            content = response;
+            jsonHeader = firstLine;
+            return true;
         }
 
         /// <summary>
@@ -196,41 +211,46 @@ namespace RitsukageBot.Services.Providers
         /// </summary>
         /// <param name="response"></param>
         /// <returns></returns>
-        public static (bool, string, string?) FormatResponse(string response)
+        public static (bool, string, string?, string?) FormatResponse(string response)
         {
             response = response.Trim();
 
             if (!response.StartsWith("<think>"))
-                return CheckJsonHeader(response);
-
-            string thinkContent;
-            var hasJsonHeader = false;
-            string? jsonHeader = null;
-            var content = string.Empty;
-
-            var thinkEndIndex = response.IndexOf("</think>", StringComparison.Ordinal);
-            if (thinkEndIndex != -1)
             {
-                thinkContent = response[7..thinkEndIndex];
-                content = response[(thinkEndIndex + 8)..];
-            }
-            else
-            {
-                thinkContent = response[7..];
+                if (CheckJsonHeader(response, out var content, out var jsonHeader))
+                    return (true, content, jsonHeader, null);
+                return (false, response, null, null);
             }
 
-            var lines = thinkContent.Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries);
-            var sb = new StringBuilder();
-            foreach (var line in lines)
             {
-                sb.Append("> ");
-                sb.AppendLine(line);
-            }
+                string thinkContent;
+                var hasJsonHeader = false;
+                string? jsonHeader = null;
+                var content = string.Empty;
 
-            if (string.IsNullOrWhiteSpace(content)) return (hasJsonHeader, sb.ToString(), jsonHeader);
-            (hasJsonHeader, content, jsonHeader) = CheckJsonHeader(content);
-            sb.Append(content);
-            return (hasJsonHeader, sb.ToString(), jsonHeader);
+                var thinkEndIndex = response.IndexOf("</think>", StringComparison.Ordinal);
+                if (thinkEndIndex != -1)
+                {
+                    thinkContent = response[7..thinkEndIndex];
+                    content = response[(thinkEndIndex + 8)..];
+                }
+                else
+                {
+                    thinkContent = response[7..];
+                }
+
+                var lines = thinkContent.Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries);
+                var sb = new StringBuilder();
+                foreach (var line in lines)
+                {
+                    sb.Append("> ");
+                    sb.AppendLine(line);
+                }
+
+                if (string.IsNullOrWhiteSpace(content)) return (hasJsonHeader, string.Empty, jsonHeader, sb.ToString());
+                hasJsonHeader = CheckJsonHeader(content, out content, out jsonHeader);
+                return (hasJsonHeader, content, jsonHeader, sb.ToString());
+            }
         }
 
         /// <summary>

@@ -570,7 +570,7 @@ namespace RitsukageBot.Modules
                     {
                         if (isUpdated)
                         {
-                            (_, updatingContent, _) = ChatClientProviderService.FormatResponse(sb.ToString());
+                            (_, updatingContent, _, _) = ChatClientProviderService.FormatResponse(sb.ToString());
                             isUpdated = false;
                         }
                     }
@@ -605,7 +605,12 @@ namespace RitsukageBot.Modules
             if (isTimeout) return (false, "The chat with AI tools took too long to respond");
             if (cancellationToken.IsCancellationRequested) return (false, "The chat with AI was canceled");
 
-            var (hasJsonHeader, content, jsonHeader) = ChatClientProviderService.FormatResponse(sb.ToString());
+            var (hasJsonHeader, content, jsonHeader, thinkContent) =
+                ChatClientProviderService.FormatResponse(sb.ToString());
+            if (!string.IsNullOrWhiteSpace(thinkContent))
+                Logger.LogInformation("Think content for with {ModelId} in role: {Role}:\n{ThinkContent}",
+                    modelId, role, thinkContent);
+
             if (hasJsonHeader)
                 try
                 {
