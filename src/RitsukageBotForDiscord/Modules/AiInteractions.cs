@@ -244,16 +244,20 @@ namespace RitsukageBot.Modules
                     .ThenBy(x => x.Id)
                     .ToArray();
 
-                var totalMessage = new StringBuilder();
+                var lines = new string[userInfo.Length];
                 for (var i = 0; i < userInfo.Length; i++)
                 {
                     var user = userInfo[i];
-                    totalMessage.AppendLine($"{i + 1}. {user.Name} ({user.Id}) - {user.Good}");
+                    var sb = new StringBuilder();
+                    sb.Append($"{i + 1,2}. ");
+                    sb.Append($"{user.Name} ({user.Id})".PadRight(50));
+                    sb.Append(user.Good.ToString().PadLeft(8));
+                    lines[i] = sb.ToString();
                 }
 
                 var totalEmbed = new EmbedBuilder();
                 totalEmbed.WithTitle("Good Rank");
-                totalEmbed.WithDescription(totalMessage.ToString());
+                totalEmbed.WithDescription(string.Join('\n', lines));
                 totalEmbed.WithColor(Color.Green);
                 totalEmbed.WithTimestamp(timestamp);
                 totalEmbed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
@@ -275,29 +279,37 @@ namespace RitsukageBot.Modules
                 .ConfigureAwait(false);
             var highUserInfo = await GetUserGoodInfoAsync(highUsers).ConfigureAwait(false);
             var lowUserInfo = await GetUserGoodInfoAsync(lowUsers).ConfigureAwait(false);
-            var highMessage = new StringBuilder();
+            var highLines = new string[highUserInfo.Length];
             for (var i = 0; i < highUserInfo.Length; i++)
             {
                 var user = highUserInfo[i];
-                highMessage.AppendLine($"{i + 1}. {user.Name} ({user.Id}) - {user.Good}");
+                var sb = new StringBuilder();
+                sb.Append($"{i + 1,2}. ");
+                sb.Append($"{user.Name} ({user.Id})".PadRight(50));
+                sb.Append(user.Good.ToString().PadLeft(8));
+                highLines[i] = sb.ToString();
             }
 
-            var lowMessage = new StringBuilder();
+            var lowLines = new string[lowUserInfo.Length];
             for (var i = 0; i < lowUserInfo.Length; i++)
             {
                 var user = lowUserInfo[i];
-                lowMessage.AppendLine($"{i + 1}. {user.Name} ({user.Id}) - {user.Good}");
+                var sb = new StringBuilder();
+                sb.Append($"{i + 1,2}. ");
+                sb.Append($"{user.Name} ({user.Id})".PadRight(50));
+                sb.Append(user.Good.ToString().PadLeft(8));
+                lowLines[i] = sb.ToString();
             }
 
             var highEmbed = new EmbedBuilder();
             highEmbed.WithTitle("Good Rank");
-            highEmbed.WithDescription(highMessage.ToString());
+            highEmbed.WithDescription(string.Join('\n', highLines));
             highEmbed.WithColor(Color.Green);
             highEmbed.WithTimestamp(timestamp);
             highEmbed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
             var lowEmbed = new EmbedBuilder();
             lowEmbed.WithTitle("Bad Rank");
-            lowEmbed.WithDescription(lowMessage.ToString());
+            lowEmbed.WithDescription(string.Join('\n', lowLines));
             lowEmbed.WithColor(Color.Red);
             lowEmbed.WithTimestamp(timestamp);
             lowEmbed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
