@@ -518,12 +518,22 @@ namespace RitsukageBot.Modules
                         if (cancellationToken.IsCancellationRequested) return;
                         if (!x.IsFaulted) return;
                         if (isTimeout) return;
-                        isError = true;
                         cancellationTokenSource1.Cancel();
                         Logger.LogError(x.Exception,
                             "An error occurred while getting a response from {ModelId} in {Url} with role: {Role}",
                             client.Metadata.ModelId, client.Metadata.ProviderUri, role);
-                        exception = x.Exception;
+                        var argumentOutOfRange = x.Exception?.InnerExceptions
+                            .OfType<ArgumentOutOfRangeException>()
+                            .FirstOrDefault();
+                        if (argumentOutOfRange != null)
+                        {
+                            isCompleted = true;
+                        }
+                        else
+                        {
+                            exception = x.Exception;
+                            isError = true;
+                        }
                     }, cancellationTokenSource2.Token);
             }
 
