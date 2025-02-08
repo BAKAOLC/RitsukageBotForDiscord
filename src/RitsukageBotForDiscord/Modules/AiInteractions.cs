@@ -238,12 +238,7 @@ namespace RitsukageBot.Modules
             if (count < 20)
             {
                 var users = await table.ToArrayAsync().ConfigureAwait(false);
-                var userInfo = users.Select(x =>
-                {
-                    var name = Context.Guild.GetUser(x.Id)?.Username ??
-                               Context.Client.GetUser(x.Id)?.Username ?? x.Id.ToString();
-                    return new UserGoodInfo(x.Id, name, x.Good);
-                }).ToArray();
+                var userInfo = await GetUserGoodInfoAsync(users).ConfigureAwait(false);
                 userInfo = userInfo.OrderByDescending(x => x.Good)
                     .ThenBy(x => x.Name)
                     .ThenBy(x => x.Id)
@@ -278,18 +273,8 @@ namespace RitsukageBot.Modules
                 .Take(10)
                 .ToArrayAsync()
                 .ConfigureAwait(false);
-            var highUserInfo = highUsers.Select(x =>
-            {
-                var name = Context.Guild.GetUser(x.Id)?.Username ??
-                           Context.Client.GetUser(x.Id)?.Username ?? x.Id.ToString();
-                return new UserGoodInfo(x.Id, name, x.Good);
-            }).ToArray();
-            var lowUserInfo = lowUsers.Select(x =>
-            {
-                var name = Context.Guild.GetUser(x.Id)?.Username ??
-                           Context.Client.GetUser(x.Id)?.Username ?? x.Id.ToString();
-                return new UserGoodInfo(x.Id, name, x.Good);
-            }).ToArray();
+            var highUserInfo = await GetUserGoodInfoAsync(highUsers).ConfigureAwait(false);
+            var lowUserInfo = await GetUserGoodInfoAsync(lowUsers).ConfigureAwait(false);
             var highMessage = new StringBuilder();
             for (var i = 0; i < highUserInfo.Length; i++)
             {
@@ -454,6 +439,26 @@ namespace RitsukageBot.Modules
             var (_, config) = await DatabaseProviderService.GetOrCreateAsync<DiscordChannelConfiguration>(channelId)
                 .ConfigureAwait(false);
             return config;
+        }
+
+        private async Task<UserGoodInfo[]> GetUserGoodInfoAsync(ChatUserInformation[] users)
+        {
+            var list = new List<UserGoodInfo>();
+            var channel = await Context.Client.GetChannelAsync(Context.Channel.Id).ConfigureAwait(false);
+            foreach (var user in users)
+            {
+                var userInfo = await channel.GetUserAsync(user.Id).ConfigureAwait(false) ??
+                               await Context.Client.Rest.GetUserAsync(user.Id).ConfigureAwait(false);
+                if (userInfo is null)
+                {
+                    list.Add(new(user.Id, "Unknown", user.Good));
+                    continue;
+                }
+
+                list.Add(new(user.Id, userInfo.GlobalName ?? userInfo.Username, user.Good));
+            }
+
+            return [..list];
         }
 
         private async Task<ChatMessage?> BuildUserChatMessage(string message)
