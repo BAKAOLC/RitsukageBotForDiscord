@@ -425,7 +425,11 @@ namespace RitsukageBot.Modules
                         Description = retryMessage,
                         Color = Color.Red,
                     };
-                    await ModifyOriginalResponseAsync(x => x.Embed = retryEmbed.Build()).ConfigureAwait(false);
+                    await ModifyOriginalResponseAsync(x =>
+                    {
+                        x.Content = null;
+                        x.Embed = retryEmbed.Build();
+                    }).ConfigureAwait(false);
                     (isSuccess, errorMessage) =
                         await TryGettingResponse(messageList, role, client, cancellationToken: cancellationToken)
                             .ConfigureAwait(false);
