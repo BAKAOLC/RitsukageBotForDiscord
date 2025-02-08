@@ -248,7 +248,7 @@ namespace RitsukageBot.Modules
                 for (var i = 0; i < userInfo.Length; i++)
                 {
                     var user = userInfo[i];
-                    lines[i] = $"{i + 1,2}. <@!${user.Id}> `**{user.Good}**`";
+                    lines[i] = $"{i + 1,2}. <@!{user.Id}> `{user.Good}`";
                 }
 
                 var totalEmbed = new EmbedBuilder();
@@ -279,14 +279,14 @@ namespace RitsukageBot.Modules
             for (var i = 0; i < highUserInfo.Length; i++)
             {
                 var user = highUserInfo[i];
-                highLines[i] = $"{i + 1,2}. <@!${user.Id}> `**{user.Good}**`";
+                highLines[i] = $"{i + 1,2}. <@!{user.Id}> `{user.Good}`";
             }
 
             var lowLines = new string[lowUserInfo.Length];
             for (var i = 0; i < lowUserInfo.Length; i++)
             {
                 var user = lowUserInfo[i];
-                lowLines[i] = $"{i + 1,2}. <@!${user.Id}> `**{user.Good}**`";
+                lowLines[i] = $"{i + 1,2}. <@!{user.Id}> `{user.Good}`";
             }
 
             var highEmbed = new EmbedBuilder();
