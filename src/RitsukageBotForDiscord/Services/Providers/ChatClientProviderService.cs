@@ -470,10 +470,10 @@ namespace RitsukageBot.Services.Providers
             }
         }
 
-        internal record EndpointConfig(string Endpoint, string ApiKey, string ModelId);
+        internal record EndpointConfig(string Endpoint, string ModelId, string ApiKey = "");
 
-        internal record PromptExtensionConfig(string Prompt, string PromptFile);
+        internal record PromptExtensionConfig(string Prompt = "", string PromptFile = "");
 
-        internal record RoleConfig(string Prompt, string PromptFile, float Temperature);
+        internal record RoleConfig(string Prompt = "", string PromptFile = "", float Temperature = 0.6f);
     }
 }
