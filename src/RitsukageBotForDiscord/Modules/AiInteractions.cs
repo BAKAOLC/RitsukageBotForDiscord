@@ -728,17 +728,19 @@ namespace RitsukageBot.Modules
                     if (actionData is not JObject data) continue;
                     try
                     {
-                        var action = data.ToObject<ActionData<ActionParam>>();
-                        if (action is null)
+                        var actionType = data.Value<string>("action");
+                        if (string.IsNullOrWhiteSpace(actionType))
                         {
                             Logger.LogWarning("Unable to parse the JSON: {Json}", data.ToString());
                             continue;
                         }
 
-                        switch (action.Action)
+                        switch (actionType)
                         {
                             case "good":
-                                if (action.Param is GoodActionParam goodActionParam)
+                            {
+                                var action = data.ToObject<ActionData<GoodActionParam>>();
+                                if (action?.Param is { } goodActionParam)
                                 {
                                     var embed = await ModifyGood(goodActionParam).ConfigureAwait(false);
                                     if (embed is not null)
@@ -750,27 +752,37 @@ namespace RitsukageBot.Modules
                                 }
 
                                 break;
+                            }
                             case "add_short_memory":
-                                if (action.Param is ShortMemoryActionParam shortMemoryActionParam)
+                            {
+                                var action = data.ToObject<ActionData<ShortMemoryActionParam>>();
+                                if (action?.Param is { } shortMemoryActionParam)
                                     await AddShortMemory(shortMemoryActionParam).ConfigureAwait(false);
                                 else
                                     throw new InvalidDataException(
                                         $"Invalid JSON data for add_short_memory action: {data}");
                                 break;
+                            }
                             case "add_long_memory":
-                                if (action.Param is LongMemoryActionParam longMemoryActionParam)
+                            {
+                                var action = data.ToObject<ActionData<LongMemoryActionParam>>();
+                                if (action?.Param is { } longMemoryActionParam)
                                     await AddLongMemory(longMemoryActionParam).ConfigureAwait(false);
                                 else
                                     throw new InvalidDataException(
                                         $"Invalid JSON data for add_long_memory action: {data}");
                                 break;
+                            }
                             case "remove_long_memory":
-                                if (action.Param is RemoveLongMemoryActionParam removeLongMemoryActionParam)
+                            {
+                                var action = data.ToObject<ActionData<RemoveLongMemoryActionParam>>();
+                                if (action?.Param is { } removeLongMemoryActionParam)
                                     await RemoveLongMemory(removeLongMemoryActionParam).ConfigureAwait(false);
                                 else
                                     throw new InvalidDataException(
                                         $"Invalid JSON data for remove_long_memory action: {data}");
                                 break;
+                            }
                         }
                     }
                     catch (Exception ex)
