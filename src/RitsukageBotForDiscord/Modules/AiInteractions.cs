@@ -5,6 +5,7 @@ using Discord.WebSocket;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RitsukageBot.Library.Data;
 using RitsukageBot.Library.Utils;
@@ -895,25 +896,28 @@ namespace RitsukageBot.Modules
 
         private class GoodActionParam
         {
-            public int Value { get; } = 0;
-            public string Reason { get; } = string.Empty;
+            [JsonProperty("value")] public int Value { get; }
+
+            [JsonProperty("reason")] public string Reason { get; } = string.Empty;
         }
 
         private class ShortMemoryActionParam
         {
-            public string Key { get; } = string.Empty;
-            public string Value { get; } = string.Empty;
+            [JsonProperty("key")] public string Key { get; } = string.Empty;
+
+            [JsonProperty("value")] public string Value { get; } = string.Empty;
         }
 
         private class LongMemoryActionParam
         {
-            public string Key { get; } = string.Empty;
-            public string Value { get; } = string.Empty;
+            [JsonProperty("key")] public string Key { get; } = string.Empty;
+
+            [JsonProperty("value")] public string Value { get; } = string.Empty;
         }
 
         private class RemoveLongMemoryActionParam
         {
-            public string Key { get; } = string.Empty;
+            [JsonProperty("key")] public string Key { get; } = string.Empty;
         }
     }
 
