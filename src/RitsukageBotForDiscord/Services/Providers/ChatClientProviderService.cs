@@ -205,9 +205,9 @@ namespace RitsukageBot.Services.Providers
                 firstLineEndIndex = response.IndexOf('\r');
             if (firstLineEndIndex == -1)
             {
-                content = response;
-                jsonHeader = null;
-                return false;
+                content = string.Empty;
+                jsonHeader = response;
+                return true;
             }
 
             var firstLine = response[..firstLineEndIndex].Trim();
