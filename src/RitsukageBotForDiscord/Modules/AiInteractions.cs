@@ -896,28 +896,28 @@ namespace RitsukageBot.Modules
 
         private class GoodActionParam
         {
-            [JsonProperty("value")] public int Value { get; }
+            [JsonProperty("value")] public int Value { get; set; }
 
-            [JsonProperty("reason")] public string Reason { get; } = string.Empty;
+            [JsonProperty("reason")] public string Reason { get; set; } = string.Empty;
         }
 
         private class ShortMemoryActionParam
         {
-            [JsonProperty("key")] public string Key { get; } = string.Empty;
+            [JsonProperty("key")] public string Key { get; set; } = string.Empty;
 
-            [JsonProperty("value")] public string Value { get; } = string.Empty;
+            [JsonProperty("value")] public string Value { get; set; } = string.Empty;
         }
 
         private class LongMemoryActionParam
         {
-            [JsonProperty("key")] public string Key { get; } = string.Empty;
+            [JsonProperty("key")] public string Key { get; set; } = string.Empty;
 
-            [JsonProperty("value")] public string Value { get; } = string.Empty;
+            [JsonProperty("value")] public string Value { get; set; } = string.Empty;
         }
 
         private class RemoveLongMemoryActionParam
         {
-            [JsonProperty("key")] public string Key { get; } = string.Empty;
+            [JsonProperty("key")] public string Key { get; set; } = string.Empty;
         }
     }
 
