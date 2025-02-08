@@ -70,8 +70,6 @@ namespace RitsukageBot.Services.Providers
                 await image.SaveAsPngAsync(cacheStream).ConfigureAwait(false);
             await cacheProvider.SetAsync(cacheKey, cacheStream.ToArray(), options =>
             {
-                options.FactorySoftTimeout = TimeSpan.FromSeconds(5);
-                options.FactorySoftTimeout = TimeSpan.FromSeconds(20);
                 options.Duration = cacheTime == TimeSpan.Zero ? TimeSpan.FromDays(1) : cacheTime;
                 options.FailSafeMaxDuration = options.Duration * 3;
             }).ConfigureAwait(false);
