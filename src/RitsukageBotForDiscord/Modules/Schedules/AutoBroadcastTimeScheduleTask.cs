@@ -151,8 +151,8 @@ namespace RitsukageBot.Modules.Schedules
                             if (!x.IsFaulted) return;
                             cancellationTokenSource1.Cancel();
                             _logger.LogError(x.Exception,
-                                "Error occurred while generating time message for {TargetTime}",
-                                targetTime);
+                                "Error occurred while generating time message for {TargetTime} with {ModelId} from {Url} with role: {Role}",
+                                targetTime, chatClient.Metadata.ModelId, chatClient.Metadata.ProviderUri, role);
                         }, cancellationTokenSource2.Token);
                 }
 

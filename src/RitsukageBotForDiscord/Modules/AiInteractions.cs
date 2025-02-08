@@ -155,7 +155,7 @@ namespace RitsukageBot.Modules
 
             messageList.Add(userMessage);
 
-            await BeginChatAsync(messageList, role, false, 3, temperature, cancellationTokenSource.Token)
+            await BeginChatAsync(messageList, role, 3, temperature, cancellationTokenSource.Token)
                 .ConfigureAwait(false);
             lock (LockObject)
             {
@@ -376,7 +376,7 @@ namespace RitsukageBot.Modules
             return new(ChatRole.User, jObject.ToString());
         }
 
-        private async Task BeginChatAsync(IList<ChatMessage> messageList, string role, bool useTools = false,
+        private async Task BeginChatAsync(IList<ChatMessage> messageList, string role,
             int retry = 0, float temperature = 1.0f, CancellationToken cancellationToken = default)
         {
             if (!CheckUserInputMessage(messageList))
@@ -406,8 +406,7 @@ namespace RitsukageBot.Modules
 
             var client = ChatClientProviderService.GetChatClient();
             var (isSuccess, errorMessage) =
-                await TryGettingResponse(messageList, role, useTools, client, temperature,
-                        cancellationToken: cancellationToken)
+                await TryGettingResponse(messageList, role, client, temperature, cancellationToken: cancellationToken)
                     .ConfigureAwait(false);
             if (isSuccess) return;
             if (cancellationToken.IsCancellationRequested) return;
@@ -428,8 +427,7 @@ namespace RitsukageBot.Modules
                     };
                     await ModifyOriginalResponseAsync(x => x.Embed = retryEmbed.Build()).ConfigureAwait(false);
                     (isSuccess, errorMessage) =
-                        await TryGettingResponse(messageList, role, useTools, client,
-                                cancellationToken: cancellationToken)
+                        await TryGettingResponse(messageList, role, client, cancellationToken: cancellationToken)
                             .ConfigureAwait(false);
                     if (isSuccess) return;
                     if (cancellationToken.IsCancellationRequested) return;
@@ -454,7 +452,6 @@ namespace RitsukageBot.Modules
 
         // ReSharper disable once CyclomaticComplexity
         private async Task<(bool, string?)> TryGettingResponse(IList<ChatMessage> messageList, string role,
-            bool useTools = false,
             IChatClient? client = null, float temperature = 1.0f,
             long timeout = 60000, CancellationToken cancellationToken = default)
         {
@@ -480,7 +477,9 @@ namespace RitsukageBot.Modules
                             if (haveContent) return;
                             cancellationTokenSource2.Cancel();
                             isTimeout = true;
-                            Logger.LogWarning("The chat with AI took too long to respond");
+                            Logger.LogWarning(
+                                "It took too long to get a response from {ModelId} in {Url} with role: {Role}",
+                                client.Metadata.ModelId, client.Metadata.ProviderUri, role);
                         }
                     }, cancellationTokenSource1.Token);
                 _ = Task.Run(async () =>
@@ -509,7 +508,9 @@ namespace RitsukageBot.Modules
                         if (isTimeout) return;
                         isError = true;
                         cancellationTokenSource1.Cancel();
-                        Logger.LogError(x.Exception, "Error while processing the chat with AI tools");
+                        Logger.LogError(x.Exception,
+                            "Failed to generate response from {ModelId} in {Url} with role: {Role}",
+                            client.Metadata.ModelId, client.Metadata.ProviderUri, role);
                     }, cancellationTokenSource2.Token);
             }
 
@@ -554,8 +555,12 @@ namespace RitsukageBot.Modules
                 return (false, "The chat with AI was canceled");
             }
 
-            if (isError) return (false, "An error occurred while processing the chat with AI tools");
-            if (isTimeout) return (false, "The chat with AI tools took too long to respond");
+            if (isError)
+                return (false,
+                    $"Failed to generate response from {client.Metadata.ModelId} in {client.Metadata.ProviderUri} with role: {role}");
+            if (isTimeout)
+                return (false,
+                    $"It took too long to get a response from {client.Metadata.ModelId} in {client.Metadata.ProviderUri} with role: {role}");
             if (cancellationToken.IsCancellationRequested) return (false, "The chat with AI was canceled");
 
             var (hasJsonHeader, content, jsonHeader, thinkContent) =
