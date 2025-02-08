@@ -108,7 +108,7 @@ namespace RitsukageBot.Modules.Schedules
             messageList.Add(message);
             _logger.LogInformation("Generating time message for {TargetTime} with role: {Role}", targetTime, role);
 
-            var client = _chatClientProviderService.GetChatClient();
+            var client = _chatClientProviderService.GetChatClientRandomly();
             while (true)
             {
                 var haveContent = false;

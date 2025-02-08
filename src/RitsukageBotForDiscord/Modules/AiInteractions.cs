@@ -506,7 +506,7 @@ namespace RitsukageBot.Modules
 
             await FollowupAsync(embed: waitEmbed.Build(), components: component.Build()).ConfigureAwait(false);
 
-            var client = ChatClientProviderService.GetChatClient();
+            var client = ChatClientProviderService.GetChatClientRandomly();
             var (isSuccess, errorMessage) =
                 await TryGettingResponse(messageList, role, client, temperature, cancellationToken: cancellationToken)
                     .ConfigureAwait(false);
@@ -568,7 +568,7 @@ namespace RitsukageBot.Modules
             IChatClient? client = null, float temperature = 1.0f,
             long timeout = 60000, CancellationToken cancellationToken = default)
         {
-            client ??= ChatClientProviderService.GetChatClient();
+            client ??= ChatClientProviderService.GetChatClientRandomly();
             var sb = new StringBuilder();
             var haveContent = false;
             var checkedEmbed = false;
