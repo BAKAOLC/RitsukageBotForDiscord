@@ -214,7 +214,7 @@ namespace RitsukageBot.Modules
             embed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
             var colorGood = Color.Green;
             var colorBad = Color.Red;
-            var rate = (userInfo.Good + 10000) / 20000.0;
+            var rate = (good + 10000) / 20000.0;
             var color = ColorUtility.Transition(colorBad, colorGood, rate);
             embed.WithColor(color);
             userInfo.Good = good;
