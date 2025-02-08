@@ -334,26 +334,32 @@ namespace RitsukageBot.Services.Providers
         /// <param name="id"></param>
         /// <param name="time"></param>
         /// <param name="message"></param>
+        /// <param name="extraData"></param>
         /// <returns></returns>
-        public async Task<ChatMessage?> BuildUserChatMessage(string name, ulong id, DateTimeOffset time,
-            string message)
+        public async Task<ChatMessage?> BuildUserChatMessage(string name, ulong? id, DateTimeOffset time,
+            string message, JObject? extraData = null)
         {
-            var (_, userInfo) = await _databaseProviderService.GetOrCreateAsync<ChatUserInformation>(id)
-                .ConfigureAwait(false);
-            var shortMemory = await GetMemory(id).ConfigureAwait(false);
-            var longMemory = await GetMemory(id, ChatMemoryType.LongTerm).ConfigureAwait(false);
             var jObject = new JObject
             {
                 ["name"] = name,
                 ["message"] = message,
-                ["data"] = new JObject
-                {
-                    ["short_memory"] = shortMemory,
-                    ["long_memory"] = longMemory,
-                    ["good"] = userInfo.Good,
-                    ["time"] = time.ToString("yyyy-MM-dd HH:mm:ss zzz"),
-                },
             };
+            var data = new JObject
+            {
+                ["time"] = time.ToString("yyyy-MM-dd HH:mm:ss zzz"),
+            };
+            jObject["data"] = data;
+            if (extraData is not null)
+                data["extraData"] = extraData;
+            if (!id.HasValue) return new(ChatRole.User, jObject.ToString());
+
+            var (_, userInfo) = await _databaseProviderService.GetOrCreateAsync<ChatUserInformation>(id.Value)
+                .ConfigureAwait(false);
+            var shortMemory = await GetMemory(id.Value).ConfigureAwait(false);
+            var longMemory = await GetMemory(id.Value, ChatMemoryType.LongTerm).ConfigureAwait(false);
+            data["short_memory"] = shortMemory;
+            data["long_memory"] = longMemory;
+            data["good"] = userInfo.Good;
             return new(ChatRole.User, jObject.ToString());
         }
 
