@@ -200,14 +200,12 @@ namespace RitsukageBot.Services.Providers
                 return false;
             }
 
-            var inJson = false;
             var depth = 0;
             var jsonStringBuilder = new StringBuilder();
             foreach (var c in response)
             {
                 if (c == '{')
                 {
-                    inJson = true;
                     depth++;
                 }
                 else if (c == '}')
@@ -215,13 +213,12 @@ namespace RitsukageBot.Services.Providers
                     depth--;
                     if (depth == 0)
                     {
-                        inJson = false;
                         jsonStringBuilder.Append(c);
                         break;
                     }
                 }
 
-                if (inJson) jsonStringBuilder.Append(c);
+                jsonStringBuilder.Append(c);
             }
 
             if (depth != 0)

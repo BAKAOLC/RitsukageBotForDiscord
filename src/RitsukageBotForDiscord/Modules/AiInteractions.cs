@@ -223,6 +223,103 @@ namespace RitsukageBot.Modules
         }
 
         /// <summary>
+        ///     Show the good rank
+        /// </summary>
+        /// <returns></returns>
+        [SlashCommand("show_good_rank", "Show the good rank")]
+        public async Task ShowGoodRank()
+        {
+            await DeferAsync().ConfigureAwait(false);
+
+            var table = DatabaseProviderService.Table<ChatUserInformation>();
+            var count = await table.CountAsync().ConfigureAwait(false);
+            var timestamp = DateTimeOffset.UtcNow;
+
+            if (count < 20)
+            {
+                var users = await table.ToArrayAsync().ConfigureAwait(false);
+                var userInfo = users.Select(x =>
+                {
+                    var name = Context.Guild.GetUser(x.Id)?.Username ??
+                               Context.Client.GetUser(x.Id)?.Username ?? x.Id.ToString();
+                    return new UserGoodInfo(x.Id, name, x.Good);
+                }).ToArray();
+                userInfo = userInfo.OrderByDescending(x => x.Good)
+                    .ThenBy(x => x.Name)
+                    .ThenBy(x => x.Id)
+                    .ToArray();
+
+                var totalMessage = new StringBuilder();
+                for (var i = 0; i < userInfo.Length; i++)
+                {
+                    var user = userInfo[i];
+                    totalMessage.AppendLine($"{i + 1}. {user.Name} ({user.Id}) - {user.Good}");
+                }
+
+                var totalEmbed = new EmbedBuilder();
+                totalEmbed.WithTitle("Good Rank");
+                totalEmbed.WithDescription(totalMessage.ToString());
+                totalEmbed.WithColor(Color.Green);
+                totalEmbed.WithTimestamp(timestamp);
+                totalEmbed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
+
+                await FollowupAsync(embed: totalEmbed.Build()).ConfigureAwait(false);
+                return;
+            }
+
+            // 超过 20 个用户，找最高的10个和最低的10个，分两个 embed 显示
+            var highUsers = await table.OrderByDescending(x => x.Good)
+                .ThenBy(x => x.Id)
+                .Take(10)
+                .ToArrayAsync()
+                .ConfigureAwait(false);
+            var lowUsers = await table.OrderBy(x => x.Good)
+                .ThenBy(x => x.Id)
+                .Take(10)
+                .ToArrayAsync()
+                .ConfigureAwait(false);
+            var highUserInfo = highUsers.Select(x =>
+            {
+                var name = Context.Guild.GetUser(x.Id)?.Username ??
+                           Context.Client.GetUser(x.Id)?.Username ?? x.Id.ToString();
+                return new UserGoodInfo(x.Id, name, x.Good);
+            }).ToArray();
+            var lowUserInfo = lowUsers.Select(x =>
+            {
+                var name = Context.Guild.GetUser(x.Id)?.Username ??
+                           Context.Client.GetUser(x.Id)?.Username ?? x.Id.ToString();
+                return new UserGoodInfo(x.Id, name, x.Good);
+            }).ToArray();
+            var highMessage = new StringBuilder();
+            for (var i = 0; i < highUserInfo.Length; i++)
+            {
+                var user = highUserInfo[i];
+                highMessage.AppendLine($"{i + 1}. {user.Name} ({user.Id}) - {user.Good}");
+            }
+
+            var lowMessage = new StringBuilder();
+            for (var i = 0; i < lowUserInfo.Length; i++)
+            {
+                var user = lowUserInfo[i];
+                lowMessage.AppendLine($"{i + 1}. {user.Name} ({user.Id}) - {user.Good}");
+            }
+
+            var highEmbed = new EmbedBuilder();
+            highEmbed.WithTitle("Good Rank");
+            highEmbed.WithDescription(highMessage.ToString());
+            highEmbed.WithColor(Color.Green);
+            highEmbed.WithTimestamp(timestamp);
+            highEmbed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
+            var lowEmbed = new EmbedBuilder();
+            lowEmbed.WithTitle("Bad Rank");
+            lowEmbed.WithDescription(lowMessage.ToString());
+            lowEmbed.WithColor(Color.Red);
+            lowEmbed.WithTimestamp(timestamp);
+            lowEmbed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
+            await FollowupAsync(embeds: [highEmbed.Build(), lowEmbed.Build()]).ConfigureAwait(false);
+        }
+
+        /// <summary>
         ///     Query the balance of the AI
         ///     Currently, only supports for DeepSeek
         /// </summary>
@@ -699,6 +796,8 @@ namespace RitsukageBot.Modules
                 return Task.FromResult(AutocompletionResult.FromSuccess(results.Take(25)));
             }
         }
+
+        private record UserGoodInfo(ulong Id, string Name, int Good);
     }
 
     /// <summary>
