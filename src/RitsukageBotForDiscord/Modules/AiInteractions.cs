@@ -463,6 +463,7 @@ namespace RitsukageBot.Modules
             var isUpdated = false;
             var isError = false;
             var isTimeout = false;
+            Exception? exception = null;
             var lockObject = new Lock();
             {
                 var cancellationTokenSource1 = new CancellationTokenSource();
@@ -509,8 +510,9 @@ namespace RitsukageBot.Modules
                         isError = true;
                         cancellationTokenSource1.Cancel();
                         Logger.LogError(x.Exception,
-                            "Failed to generate response from {ModelId} in {Url} with role: {Role}",
+                            "An error occurred while getting a response from {ModelId} in {Url} with role: {Role}",
                             client.Metadata.ModelId, client.Metadata.ProviderUri, role);
+                        exception = x.Exception;
                     }, cancellationTokenSource2.Token);
             }
 
@@ -556,8 +558,14 @@ namespace RitsukageBot.Modules
             }
 
             if (isError)
+            {
+                if (exception is not null)
+                    return (false,
+                        $"An error occurred while getting a response from {client.Metadata.ModelId} in {client.Metadata.ProviderUri} with role: {role}\n{exception.Message})");
                 return (false,
-                    $"Failed to generate response from {client.Metadata.ModelId} in {client.Metadata.ProviderUri} with role: {role}");
+                    $"An error occurred while getting a response from {client.Metadata.ModelId} in {client.Metadata.ProviderUri} with role: {role}");
+            }
+
             if (isTimeout)
                 return (false,
                     $"It took too long to get a response from {client.Metadata.ModelId} in {client.Metadata.ProviderUri} with role: {role}");
