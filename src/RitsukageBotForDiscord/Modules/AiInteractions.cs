@@ -416,7 +416,14 @@ namespace RitsukageBot.Modules
                 var clients = ChatClientProviderService.GetChatClients();
                 for (var i = 0; i < retry; i++)
                 {
-                    client = clients[Random.Shared.Next(clients.Length)];
+                    if (clients.Length > 1)
+                    {
+                        var currentClient = client;
+                        var otherClients = clients.Where(x => x != currentClient).ToArray();
+                        if (otherClients.Length > 0)
+                            client = otherClients[Random.Shared.Next(otherClients.Length)];
+                    }
+
 
                     var retryMessage = $"{errorMessage}\nRetrying... ({i + 1}/{retry})";
                     var retryEmbed = new EmbedBuilder

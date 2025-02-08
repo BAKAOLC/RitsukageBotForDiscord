@@ -168,7 +168,15 @@ namespace RitsukageBot.Modules.Schedules
                     messageList.Remove(message);
                     message = CreateTimeMessageRequireMessage(targetTime, prompt);
                     messageList.Add(message);
-                    client = _chatClientProviderService.GetChatClientRandomly();
+                    var clients = _chatClientProviderService.GetChatClients();
+                    if (clients.Length > 1)
+                    {
+                        var currentClient = client;
+                        var otherClients = clients.Where(x => x != currentClient).ToArray();
+                        if (otherClients.Length > 0)
+                            client = otherClients[Random.Shared.Next(otherClients.Length)];
+                    }
+
                     continue;
                 }
 
