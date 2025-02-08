@@ -149,15 +149,11 @@ namespace RitsukageBot.Modules.Schedules
                         .ContinueWith(x =>
                         {
                             if (!x.IsFaulted) return;
+                            isError = true;
                             cancellationTokenSource1.Cancel();
                             _logger.LogError(x.Exception,
                                 "Error occurred while generating time message for {TargetTime} with {ModelId} from {Url} with role: {Role}",
                                 targetTime, chatClient.Metadata.ModelId, chatClient.Metadata.ProviderUri, role);
-                            var argumentOutOfRange = x.Exception?.InnerExceptions
-                                .OfType<ArgumentOutOfRangeException>()
-                                .FirstOrDefault();
-                            if (argumentOutOfRange != null) isCompleted = true;
-                            else isError = true;
                         }, cancellationTokenSource2.Token);
                 }
 
