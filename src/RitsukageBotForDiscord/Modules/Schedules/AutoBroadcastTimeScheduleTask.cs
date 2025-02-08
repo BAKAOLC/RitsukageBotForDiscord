@@ -119,6 +119,7 @@ namespace RitsukageBot.Modules.Schedules
                 {
                     var cancellationTokenSource1 = new CancellationTokenSource();
                     var cancellationTokenSource2 = new CancellationTokenSource();
+                    var chatClient = client;
                     _ = Task.Delay(TimeSpan.FromMinutes(1), cancellationTokenSource1.Token)
                         .ContinueWith(x =>
                         {
@@ -132,12 +133,8 @@ namespace RitsukageBot.Modules.Schedules
                         }, cancellationTokenSource1.Token);
                     _ = Task.Run(async () =>
                         {
-                            await foreach (var response in _chatClientProviderService.CompleteStreamingAsync(
-                                               messageList,
-                                               option => { option.Temperature = temperature; },
-                                               false,
-                                               client,
-                                               cancellationTokenSource2.Token))
+                            await foreach (var response in chatClient.CompleteStreamingAsync(messageList,
+                                               new() { Temperature = temperature }, cancellationTokenSource2.Token))
                                 lock (lockObject)
                                 {
                                     if (string.IsNullOrWhiteSpace(response.ToString()))
@@ -189,7 +186,6 @@ namespace RitsukageBot.Modules.Schedules
                 break;
             }
         }
-
 
         private static ChatMessage CreateTimeMessageRequireMessage(DateTimeOffset targetTime, string prompt)
         {

@@ -485,9 +485,8 @@ namespace RitsukageBot.Modules
                     }, cancellationTokenSource1.Token);
                 _ = Task.Run(async () =>
                     {
-                        await foreach (var response in ChatClientProviderService.CompleteStreamingAsync(messageList,
-                                           option => { option.Temperature = temperature; }, useTools, client,
-                                           cancellationTokenSource2.Token))
+                        await foreach (var response in client.CompleteStreamingAsync(messageList,
+                                           new() { Temperature = temperature }, cancellationTokenSource2.Token))
                         {
                             if (cancellationToken.IsCancellationRequested) return;
                             lock (lockObject)
