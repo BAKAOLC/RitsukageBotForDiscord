@@ -122,6 +122,11 @@ namespace RitsukageBot.Services.Providers
             return _chatClients.ToArray();
         }
 
+        internal EndpointConfig[] GetEndpointConfigs()
+        {
+            return _configuration.GetSection("AI:Service").Get<EndpointConfig[]>() ?? [];
+        }
+
         /// <summary>
         ///     Get role data
         /// </summary>

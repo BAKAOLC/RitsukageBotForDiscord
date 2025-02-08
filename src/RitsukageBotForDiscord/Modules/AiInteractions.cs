@@ -229,37 +229,13 @@ namespace RitsukageBot.Modules
         /// <returns></returns>
         [RequireOwner]
         [SlashCommand("balance", "Query the balance of the AI")]
-        public async Task QueryBalance()
+        internal async Task QueryBalance()
         {
             await DeferAsync(true).ConfigureAwait(false);
-            var endpoint = Configuration.GetValue<string>("AI:Endpoint");
-            if (string.IsNullOrWhiteSpace(endpoint))
-            {
-                var embed = new EmbedBuilder
-                {
-                    Title = "Error",
-                    Description = "The AI endpoint is not configured",
-                    Color = Color.Red,
-                };
-                await FollowupAsync(embed: embed.Build()).ConfigureAwait(false);
-                return;
-            }
 
-            var token = Configuration.GetValue<string>("AI:ApiKey");
-            if (string.IsNullOrWhiteSpace(token))
-            {
-                var embed = new EmbedBuilder
-                {
-                    Title = "Error",
-                    Description = "The AI API key is not configured",
-                    Color = Color.Red,
-                };
-                await FollowupAsync(embed: embed.Build()).ConfigureAwait(false);
-                return;
-            }
-
-            var uri = new Uri(endpoint);
-            if (uri.Host != "api.deepseek.com")
+            var configs = ChatClientProviderService.GetEndpointConfigs();
+            var deepSeekConfig = configs.FirstOrDefault(x => new Uri(x.Endpoint).Host == "api.deepseek.com");
+            if (deepSeekConfig is null)
             {
                 var embed = new EmbedBuilder
                 {
@@ -275,7 +251,7 @@ namespace RitsukageBot.Modules
             var client = HttpClientFactory.CreateClient();
             var request = new HttpRequestMessage(HttpMethod.Get, "https://api.deepseek.com/user/balance");
             request.Headers.Add("Accept", "application/json");
-            request.Headers.Add("Authorization", "Bearer " + token.Trim());
+            request.Headers.Add("Authorization", "Bearer " + deepSeekConfig.ApiKey.Trim());
             var response = await client.SendAsync(request).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
             var resultData = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
