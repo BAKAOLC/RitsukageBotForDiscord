@@ -238,8 +238,8 @@ namespace RitsukageBot.Services.Providers
                 return false;
             }
 
-            content = response[(jsonStringBuilder.Length + 1)..];
-            jsonHeader = jsonStringBuilder.ToString();
+            content = response[(jsonStringBuilder.Length + 1)..].Trim();
+            jsonHeader = jsonStringBuilder.ToString().Trim();
             return true;
         }
 
