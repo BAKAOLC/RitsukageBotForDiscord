@@ -374,7 +374,7 @@ namespace RitsukageBot.Services.Providers
             [NotNullWhen(true)] out string? jsonHeader)
         {
             response = response.Trim();
-            if (response is not ['{', ..] or ['[', ..])
+            if (response is not ['{', ..] && response is not ['[', ..])
             {
                 content = response;
                 jsonHeader = null;
@@ -441,8 +441,6 @@ namespace RitsukageBot.Services.Providers
 
             {
                 string thinkContent;
-                var hasJsonHeader = false;
-                string? jsonHeader = null;
                 var content = string.Empty;
 
                 var thinkEndIndex = response.IndexOf("</think>", StringComparison.Ordinal);
@@ -464,8 +462,8 @@ namespace RitsukageBot.Services.Providers
                     sb.AppendLine(line);
                 }
 
-                if (string.IsNullOrWhiteSpace(content)) return (hasJsonHeader, string.Empty, jsonHeader, sb.ToString());
-                hasJsonHeader = CheckJsonHeader(content, out content, out jsonHeader);
+                if (string.IsNullOrWhiteSpace(content)) return (false, string.Empty, null, sb.ToString());
+                var hasJsonHeader = CheckJsonHeader(content, out content, out var jsonHeader);
                 return (hasJsonHeader, content, jsonHeader, sb.ToString());
             }
         }
