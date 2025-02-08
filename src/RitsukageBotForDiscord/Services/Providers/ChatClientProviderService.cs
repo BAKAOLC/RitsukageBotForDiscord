@@ -200,20 +200,46 @@ namespace RitsukageBot.Services.Providers
                 return false;
             }
 
-            var firstLineEndIndex = response.IndexOf('\n');
-            if (firstLineEndIndex == -1)
-                firstLineEndIndex = response.IndexOf('\r');
-            if (firstLineEndIndex == -1)
+            var inJson = false;
+            var depth = 0;
+            var jsonStringBuilder = new StringBuilder();
+            foreach (var c in response)
             {
-                content = string.Empty;
-                jsonHeader = response;
-                return true;
+                if (c == '{')
+                {
+                    inJson = true;
+                    depth++;
+                }
+                else if (c == '}')
+                {
+                    depth--;
+                    if (depth == 0)
+                    {
+                        inJson = false;
+                        jsonStringBuilder.Append(c);
+                        break;
+                    }
+                }
+
+                if (inJson) jsonStringBuilder.Append(c);
             }
 
-            var firstLine = response[..firstLineEndIndex].Trim();
-            response = response[(firstLineEndIndex + 1)..].Trim();
-            content = response;
-            jsonHeader = firstLine;
+            if (depth != 0)
+            {
+                content = string.Empty;
+                jsonHeader = null;
+                return false;
+            }
+
+            if (jsonStringBuilder.Length == 0)
+            {
+                content = response;
+                jsonHeader = null;
+                return false;
+            }
+
+            content = response[(jsonStringBuilder.Length + 1)..];
+            jsonHeader = jsonStringBuilder.ToString();
             return true;
         }
 
