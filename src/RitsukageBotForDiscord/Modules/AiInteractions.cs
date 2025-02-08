@@ -248,11 +248,7 @@ namespace RitsukageBot.Modules
                 for (var i = 0; i < userInfo.Length; i++)
                 {
                     var user = userInfo[i];
-                    var sb = new StringBuilder();
-                    sb.Append($"{i + 1,2}. ");
-                    sb.Append($"{user.Name} ({user.Id})".PadRight(50));
-                    sb.Append(user.Good.ToString().PadLeft(8));
-                    lines[i] = sb.ToString();
+                    lines[i] = $"{i + 1,2}. <@!${user.Id}> `**{user.Good}**`";
                 }
 
                 var totalEmbed = new EmbedBuilder();
@@ -283,22 +279,14 @@ namespace RitsukageBot.Modules
             for (var i = 0; i < highUserInfo.Length; i++)
             {
                 var user = highUserInfo[i];
-                var sb = new StringBuilder();
-                sb.Append($"{i + 1,2}. ");
-                sb.Append($"{user.Name} ({user.Id})".PadRight(50));
-                sb.Append(user.Good.ToString().PadLeft(8));
-                highLines[i] = sb.ToString();
+                highLines[i] = $"{i + 1,2}. <@!${user.Id}> `**{user.Good}**`";
             }
 
             var lowLines = new string[lowUserInfo.Length];
             for (var i = 0; i < lowUserInfo.Length; i++)
             {
                 var user = lowUserInfo[i];
-                var sb = new StringBuilder();
-                sb.Append($"{i + 1,2}. ");
-                sb.Append($"{user.Name} ({user.Id})".PadRight(50));
-                sb.Append(user.Good.ToString().PadLeft(8));
-                lowLines[i] = sb.ToString();
+                lowLines[i] = $"{i + 1,2}. <@!${user.Id}> `**{user.Good}**`";
             }
 
             var highEmbed = new EmbedBuilder();
