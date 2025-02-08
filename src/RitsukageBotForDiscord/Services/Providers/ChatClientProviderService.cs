@@ -238,28 +238,22 @@ namespace RitsukageBot.Services.Providers
         /// <param name="userId"></param>
         /// <param name="type"></param>
         /// <returns></returns>
-        public async Task<JObject> GetMemory(ulong userId, ChatMemoryType type = ChatMemoryType.ShortTerm)
+        public async Task<JArray> GetMemory(ulong userId, ChatMemoryType type = ChatMemoryType.ShortTerm)
         {
             var table = _databaseProviderService.Table<ChatMemory>();
             var memory = await table.Where(x => x.UserId == userId && x.Type == type)
                 .OrderBy(x => x.Timestamp)
                 .ToArrayAsync().ConfigureAwait(false);
 
-            if (memory.Length == 0) return new();
+            if (memory.Length == 0) return [];
 
-            var data = new JObject();
+            var data = new JArray();
             foreach (var item in memory)
-                if (data.TryGetValue(item.Key, out var value))
+                data.Add(new JObject
                 {
-                    if (value is JArray { Count: > 0 } array)
-                        array.Add(item.Value);
-                    else
-                        data[item.Key] = new JArray { value, item.Value };
-                }
-                else
-                {
-                    data[item.Key] = item.Value;
-                }
+                    ["key"] = item.Key,
+                    ["value"] = item.Value,
+                });
 
             return data;
         }
@@ -436,7 +430,7 @@ namespace RitsukageBot.Services.Providers
             {
                 if (CheckJsonHeader(response, out var content, out var jsonHeader))
                     return (true, content, jsonHeader, null);
-                return (false, response, null, null);
+                return (false, content, null, null);
             }
 
             {
