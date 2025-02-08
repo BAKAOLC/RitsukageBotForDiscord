@@ -4,7 +4,6 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
 using RitsukageBot.Library.Data;
 using RitsukageBot.Library.Modules.Schedules;
 using RitsukageBot.Services.Providers;
@@ -104,7 +103,8 @@ namespace RitsukageBot.Modules.Schedules
             if (_chatClientProviderService.GetRoleData(out var roleData, out var temperature, role))
                 messageList.Add(roleData);
 
-            var message = CreateTimeMessageRequireMessage(targetTime, prompt);
+            var message = await CreateTimeMessageRequireMessage(targetTime, prompt).ConfigureAwait(false);
+            if (message is null) return;
             messageList.Add(message);
             _logger.LogInformation("Generating time message for {TargetTime} with role: {Role}", targetTime, role);
 
@@ -167,7 +167,8 @@ namespace RitsukageBot.Modules.Schedules
                         targetTime, client.Metadata.ModelId, client.Metadata.ProviderUri, role);
                     if (DateTimeOffset.Now > targetTime) break;
                     messageList.Remove(message);
-                    message = CreateTimeMessageRequireMessage(targetTime, prompt);
+                    message = await CreateTimeMessageRequireMessage(targetTime, prompt).ConfigureAwait(false);
+                    if (message is null) break;
                     messageList.Add(message);
                     var clients = _chatClientProviderService.GetChatClients();
                     if (clients.Length > 1)
@@ -200,19 +201,12 @@ namespace RitsukageBot.Modules.Schedules
             }
         }
 
-        private static ChatMessage CreateTimeMessageRequireMessage(DateTimeOffset targetTime, string prompt)
+        private Task<ChatMessage?> CreateTimeMessageRequireMessage(DateTimeOffset targetTime, string prompt)
         {
-            var jObject = new JObject
+            return _chatClientProviderService.BuildUserChatMessage("##SYSTEM##", null, targetTime, prompt, new()
             {
-                ["name"] = "##SYSTEM##",
-                ["message"] = prompt,
-                ["data"] = new JObject
-                {
-                    ["time"] = targetTime.ToString("yyyy-MM-dd HH:mm:ss zzz"),
-                    ["randomSeed"] = Random.Shared.Next(),
-                },
-            };
-            return new(ChatRole.User, jObject.ToString());
+                ["randomSeed"] = Random.Shared.Next(),
+            });
         }
     }
 }
