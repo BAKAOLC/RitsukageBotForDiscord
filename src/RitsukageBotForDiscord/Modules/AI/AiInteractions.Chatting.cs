@@ -34,7 +34,7 @@ namespace RitsukageBot.Modules.AI
             }
 
             Logger.LogInformation("User {UserId} sent a message to chat with AI: {Message}", Context.User.Id,
-                FormatJson(messageList.Last(x => x.Role == ChatRole.User).ToString()));
+                messageList.Last(x => x.Role == ChatRole.User).ToString());
 
             var component = new ComponentBuilder();
             component.WithButton("Cancel", $"{CustomId}:cancel_chat", ButtonStyle.Danger);

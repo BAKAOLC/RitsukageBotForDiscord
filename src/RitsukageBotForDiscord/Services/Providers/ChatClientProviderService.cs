@@ -5,7 +5,6 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RitsukageBot.Library.Data;
 using ChatClientBuilder = Microsoft.Extensions.AI.ChatClientBuilder;
@@ -416,7 +415,7 @@ namespace RitsukageBot.Services.Providers
             data["short_memory"] = shortMemory;
             data["long_memory"] = longMemory;
             data["good"] = userInfo.Good;
-            return new(ChatRole.User, JsonConvert.SerializeObject(data, Formatting.None));
+            return new(ChatRole.User, data.ToString());
         }
 
         /// <summary>

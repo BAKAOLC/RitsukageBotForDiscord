@@ -34,19 +34,6 @@ namespace RitsukageBot.Modules.AI
             return [..list];
         }
 
-        private static string FormatJson(string json)
-        {
-            try
-            {
-                var jObject = JObject.Parse(json);
-                return JsonConvert.SerializeObject(jObject, Formatting.Indented);
-            }
-            catch
-            {
-                return json;
-            }
-        }
-
         private record UserGoodInfo(ulong Id, string Name, int Good);
     }
 }
