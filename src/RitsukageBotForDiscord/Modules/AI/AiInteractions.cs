@@ -1,9 +1,7 @@
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
-using Google.Protobuf.WellKnownTypes;
 using Microsoft.Extensions.AI;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using RitsukageBot.Library.Data;
@@ -48,7 +46,7 @@ namespace RitsukageBot.Modules.AI
         public required IHttpClientFactory HttpClientFactory { get; set; }
 
         /// <summary>
-        ///    Google API
+        ///     Google API
         /// </summary>
         public required GoogleSearchProviderService GoogleSearchProviderService { get; set; }
 

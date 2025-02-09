@@ -24,7 +24,7 @@ namespace RitsukageBot.Modules.AI
             };
             var resultCompletion = await chatClient.CompleteAsync(messageList, new()
                 {
-                    Temperature = 0.0f,
+                    Temperature = 0.1f,
                 }, cancellationToken)
                 .ConfigureAwait(false);
 
