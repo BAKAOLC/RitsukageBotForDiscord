@@ -421,7 +421,7 @@ namespace RitsukageBot.Services.Providers
                 ["message"] = message,
                 ["data"] = data,
             };
-            return new(ChatRole.User, data.ToString());
+            return new(ChatRole.User, jObject.ToString());
         }
 
         /// <summary>
