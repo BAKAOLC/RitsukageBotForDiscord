@@ -24,7 +24,7 @@ using var host = Host.CreateDefaultBuilder()
     .ConfigureHostConfiguration(configure =>
     {
         configure.SetBasePath(Directory.GetCurrentDirectory());
-        configure.AddJsonFile("appsettings.json", true);
+        configure.AddJsonFile("appsettings.json", true, true);
     })
     .ConfigureLogging(builder =>
     {

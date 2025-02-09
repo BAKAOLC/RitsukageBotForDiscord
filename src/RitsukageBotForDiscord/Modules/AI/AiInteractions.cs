@@ -144,21 +144,24 @@ namespace RitsukageBot.Modules.AI
 
             var messageList = new List<ChatMessage> { roleData };
 
-            var assistantEmbed = new EmbedBuilder();
-            assistantEmbed.WithDescription("Preparing the chat with the AI... Please wait...");
-            await ModifyOriginalResponseAsync(x =>
+            if (ChatClientProvider.CheckAssistantEnabled("Preprocessing"))
             {
-                x.Content = null;
-                x.Embed = assistantEmbed.Build();
-            }).ConfigureAwait(false);
+                var assistantEmbed = new EmbedBuilder();
+                assistantEmbed.WithDescription("Preparing the chat with the AI... Please wait...");
+                await ModifyOriginalResponseAsync(x =>
+                {
+                    x.Content = null;
+                    x.Embed = assistantEmbed.Build();
+                }).ConfigureAwait(false);
 
-            var assistantMessage =
-                await TryPreprocessMessage(message, cancellationTokenSource.Token).ConfigureAwait(false);
+                var assistantMessage =
+                    await TryPreprocessMessage(message, cancellationTokenSource.Token).ConfigureAwait(false);
 
-            if (!string.IsNullOrWhiteSpace(assistantMessage))
-            {
-                Logger.LogInformation("Assistant message: {AssistantMessage}", assistantMessage);
-                roleData.Text += "\n\n" + ChatClientProvider.FormatAssistantMessage(assistantMessage);
+                if (!string.IsNullOrWhiteSpace(assistantMessage))
+                {
+                    Logger.LogInformation("Assistant message: {AssistantMessage}", assistantMessage);
+                    roleData.Text += "\n\n" + ChatClientProvider.FormatAssistantMessage(assistantMessage);
+                }
             }
 
             if (await ChatClientProvider.BuildUserChatMessage(Context.User.Username, Context.User.Id,

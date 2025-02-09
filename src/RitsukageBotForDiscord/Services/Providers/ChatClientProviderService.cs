@@ -193,7 +193,20 @@ namespace RitsukageBot.Services.Providers
         }
 
         /// <summary>
-        ///    Format assistant message
+        ///     Check if assistant is enabled
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public bool CheckAssistantEnabled(string type)
+        {
+            var assistantConfig = _configuration.GetSection($"AI:Assistant:{type}").Get<AssistantConfig>();
+            if (assistantConfig is not null) return assistantConfig.Enabled;
+            _logger.LogWarning("Assistant {Type} not found", type);
+            return false;
+        }
+
+        /// <summary>
+        ///     Format assistant message
         /// </summary>
         /// <param name="message"></param>
         /// <returns></returns>
