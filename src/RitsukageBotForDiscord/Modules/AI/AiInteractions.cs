@@ -437,6 +437,27 @@ namespace RitsukageBot.Modules.AI
         }
 
         /// <summary>
+        ///     Query the short memory of the AI
+        /// </summary>
+        /// <returns></returns>
+        [RequireOwner]
+        [SlashCommand("query_memory", "Query the short memory of the AI")]
+        public async Task QueryMemory(SocketUser? user = null, ChatMemoryType type = ChatMemoryType.ShortTerm)
+        {
+            await DeferAsync().ConfigureAwait(false);
+            user ??= Context.User;
+            var memory = await ChatClientProvider.GetMemory(user.Id, type).ConfigureAwait(false);
+            var embed = new EmbedBuilder();
+            embed.WithAuthor(user);
+            embed.WithTitle(type == ChatMemoryType.ShortTerm ? "Short Memory" : "Long Memory");
+            foreach (var memoryItem in memory)
+                embed.AddField(memoryItem["key"]!.Value<string>(), memoryItem["value"]!.Value<string>());
+            embed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
+            embed.WithCurrentTimestamp();
+            await FollowupAsync(embed: embed.Build()).ConfigureAwait(false);
+        }
+
+        /// <summary>
         ///     Automatically broadcast time
         /// </summary>
         /// <param name="active"></param>
