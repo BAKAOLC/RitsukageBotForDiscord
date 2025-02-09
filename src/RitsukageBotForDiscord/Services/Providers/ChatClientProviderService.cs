@@ -193,6 +193,17 @@ namespace RitsukageBot.Services.Providers
         }
 
         /// <summary>
+        ///    Format assistant message
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        public string FormatAssistantMessage(string message)
+        {
+            var format = _configuration.GetValue<string>("AI:AssistantPromptFormat");
+            return string.IsNullOrWhiteSpace(format) ? message : string.Format(format, message);
+        }
+
+        /// <summary>
         ///     Get prompt extensions
         /// </summary>
         /// <returns></returns>
