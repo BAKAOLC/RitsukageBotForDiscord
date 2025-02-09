@@ -11,25 +11,34 @@ namespace RitsukageBot.Modules.AI
     {
         private async Task<string> TryPreprocessMessage(string message, CancellationToken cancellationToken = default)
         {
-            if (!ChatClientProviderService.GetAssistant("Preprocessing", out var prompt, out var chatClient))
+            try
             {
-                Logger.LogWarning("Unable to get the assistant for preprocessing");
-                return string.Empty;
+                if (!ChatClientProviderService.GetAssistant("Preprocessing", out var prompt, out var chatClient))
+                {
+                    Logger.LogWarning("Unable to get the assistant for preprocessing");
+                    return string.Empty;
+                }
+
+                var messageList = new List<ChatMessage>
+                {
+                    prompt,
+                    new(ChatRole.User, message),
+                };
+                var resultCompletion = await chatClient.CompleteAsync(messageList, new()
+                    {
+                        Temperature = 0.1f,
+                    }, cancellationToken)
+                    .ConfigureAwait(false);
+
+                var resultMessage = resultCompletion.Message.ToString();
+                return await ProgressPreprocessActions(resultMessage).ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e, "Error while preprocessing the message");
             }
 
-            var messageList = new List<ChatMessage>
-            {
-                prompt,
-                new(ChatRole.User, message),
-            };
-            var resultCompletion = await chatClient.CompleteAsync(messageList, new()
-                {
-                    Temperature = 0.1f,
-                }, cancellationToken)
-                .ConfigureAwait(false);
-
-            var resultMessage = resultCompletion.Message.ToString();
-            return await ProgressPreprocessActions(resultMessage).ConfigureAwait(false);
+            return string.Empty;
         }
 
         private async Task<string> ProgressPreprocessActions(string json)

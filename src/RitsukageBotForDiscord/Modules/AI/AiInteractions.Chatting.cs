@@ -25,7 +25,11 @@ namespace RitsukageBot.Modules.AI
                     Description = "Please provide a message to chat with the AI",
                     Color = Color.Red,
                 };
-                await FollowupAsync(embed: embed.Build(), ephemeral: true).ConfigureAwait(false);
+                await ModifyOriginalResponseAsync(x =>
+                {
+                    x.Content = null;
+                    x.Embed = embed.Build();
+                }).ConfigureAwait(false);
                 return;
             }
 
@@ -40,7 +44,12 @@ namespace RitsukageBot.Modules.AI
             waitEmbed.WithDescription("Getting response from the AI...");
             waitEmbed.WithColor(Color.Orange);
 
-            await FollowupAsync(embed: waitEmbed.Build(), components: component.Build()).ConfigureAwait(false);
+            await ModifyOriginalResponseAsync(x =>
+            {
+                x.Content = null;
+                x.Embed = waitEmbed.Build();
+                x.Components = component.Build();
+            }).ConfigureAwait(false);
 
             var client = ChatClientProviderService.GetChatClientRandomly();
             var (isSuccess, errorMessage) =
