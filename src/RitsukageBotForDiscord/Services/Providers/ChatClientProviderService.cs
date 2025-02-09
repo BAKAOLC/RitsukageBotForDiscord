@@ -24,6 +24,7 @@ namespace RitsukageBot.Services.Providers
         private readonly DatabaseProviderService _databaseProviderService;
         private readonly bool _isEnabled;
         private readonly ILogger<ChatClientProviderService> _logger;
+        private readonly IServiceProvider _serviceProvider;
 
         /// <summary>
         ///     Constructor
@@ -31,6 +32,7 @@ namespace RitsukageBot.Services.Providers
         /// <param name="serviceProvider"></param>
         public ChatClientProviderService(IServiceProvider serviceProvider)
         {
+            _serviceProvider = serviceProvider;
             _configuration = serviceProvider.GetRequiredService<IConfiguration>();
             _logger = serviceProvider.GetRequiredService<ILogger<ChatClientProviderService>>();
             _databaseProviderService = serviceProvider.GetRequiredService<DatabaseProviderService>();
@@ -51,24 +53,46 @@ namespace RitsukageBot.Services.Providers
             }
 
             foreach (var service in services)
-            {
-                IChatClient innerChatClient;
-                if (string.IsNullOrWhiteSpace(service.ApiKey))
-                    innerChatClient = new OllamaChatClient(new Uri(service.Endpoint), service.ModelId);
-                else
-                    innerChatClient = new OpenAIChatClient(new(new(service.ApiKey), new()
-                    {
-                        Endpoint = new(service.Endpoint),
-                    }), service.ModelId);
+                try
+                {
+                    var client = CreateChatClient(service);
+                    _chatClients.Add(client);
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e, "Failed to create chat client for {Endpoint}", service.Endpoint);
+                }
 
-                var client = new ChatClientBuilder(innerChatClient)
-                    .UseDistributedCache(serviceProvider.GetRequiredService<IDistributedCache>())
-                    //.UseLogging(serviceProvider.GetRequiredService<ILoggerFactory>())
-                    .Build();
-                _chatClients.Add(client);
+            if (_chatClients.Count == 0)
+            {
+                _logger.LogError("Failed to create chat client, chat client is disabled");
+                _isEnabled = false;
+                return;
             }
 
             _logger.LogInformation("Chat client is enabled");
+        }
+
+        private IChatClient CreateChatClient(EndpointConfig config)
+        {
+            if (string.IsNullOrWhiteSpace(config.Endpoint))
+                throw new InvalidOperationException("Chat client endpoint is not set");
+            if (string.IsNullOrWhiteSpace(config.ModelId))
+                throw new InvalidOperationException("Chat client model id is not set");
+            IChatClient innerChatClient;
+            if (string.IsNullOrWhiteSpace(config.ApiKey))
+                innerChatClient = new OllamaChatClient(new Uri(config.Endpoint), config.ModelId);
+            else
+                innerChatClient = new OpenAIChatClient(new(new(config.ApiKey), new()
+                {
+                    Endpoint = new(config.Endpoint),
+                }), config.ModelId);
+
+            var client = new ChatClientBuilder(innerChatClient)
+                .UseDistributedCache(_serviceProvider.GetRequiredService<IDistributedCache>())
+                //.UseLogging(_serviceProvider.GetRequiredService<ILoggerFactory>())
+                .Build();
+            return client;
         }
 
         /// <summary>
@@ -121,6 +145,76 @@ namespace RitsukageBot.Services.Providers
             return _configuration.GetSection("AI:Service").Get<EndpointConfig[]>() ?? [];
         }
 
+
+        /// <summary>
+        ///     Get assistant
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="promptMessage"></param>
+        /// <param name="chatClient"></param>
+        /// <returns></returns>
+        public bool GetAssistant(string type, [NotNullWhen(true)] out ChatMessage? promptMessage,
+            [NotNullWhen(true)] out IChatClient? chatClient)
+        {
+            promptMessage = null;
+            chatClient = null;
+            var assistantConfig = _configuration.GetSection($"AI:Assistant:{type}").Get<AssistantConfig>();
+            if (assistantConfig is null)
+            {
+                _logger.LogWarning("Assistant {Type} not found", type);
+                return false;
+            }
+
+            if (!assistantConfig.Enabled)
+            {
+                _logger.LogWarning("Assistant {Type} is disabled", type);
+                return false;
+            }
+
+            try
+            {
+                chatClient = CreateChatClient(assistantConfig.Service);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Failed to create chat client for assistant {Type}", type);
+                return false;
+            }
+
+            if (GetPrompt(assistantConfig.PromptConfig, out var prompt))
+            {
+                promptMessage = new(ChatRole.System, prompt);
+                return true;
+            }
+
+            _logger.LogWarning("Assistant {Type} prompt is empty", type);
+            return false;
+        }
+
+        /// <summary>
+        ///     Check if assistant is enabled
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public bool CheckAssistantEnabled(string type)
+        {
+            var assistantConfig = _configuration.GetSection($"AI:Assistant:{type}").Get<AssistantConfig>();
+            if (assistantConfig is not null) return assistantConfig.Enabled;
+            _logger.LogWarning("Assistant {Type} not found", type);
+            return false;
+        }
+
+        /// <summary>
+        ///     Format assistant message
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        public string FormatAssistantMessage(string message)
+        {
+            var format = _configuration.GetValue<string>("AI:AssistantPromptFormat");
+            return string.IsNullOrWhiteSpace(format) ? message : string.Format(format, message);
+        }
+
         /// <summary>
         ///     Get prompt extensions
         /// </summary>
@@ -137,29 +231,7 @@ namespace RitsukageBot.Services.Providers
             var sb = new StringBuilder();
             foreach (var extension in extensions)
             {
-                var prompt = extension.Prompt;
-                if (string.IsNullOrWhiteSpace(prompt))
-                {
-                    if (string.IsNullOrWhiteSpace(extension.PromptFile))
-                    {
-                        _logger.LogWarning("Prompt extension has no prompt or prompt file");
-                        continue;
-                    }
-
-                    if (!File.Exists(extension.PromptFile))
-                    {
-                        _logger.LogWarning("Prompt extension prompt file does not exist");
-                        continue;
-                    }
-
-                    prompt = File.ReadAllText(extension.PromptFile);
-                    if (string.IsNullOrWhiteSpace(prompt))
-                    {
-                        _logger.LogWarning("Prompt extension prompt is empty");
-                        continue;
-                    }
-                }
-
+                if (!GetPrompt(extension, out var prompt)) continue;
                 sb.AppendLine(prompt).AppendLine();
             }
 
@@ -183,44 +255,27 @@ namespace RitsukageBot.Services.Providers
             }
 
             temperature = roleData.Temperature;
-            var prompt = roleData.Prompt;
-            if (string.IsNullOrWhiteSpace(prompt))
+            if (!GetPrompt(roleData, out var prompt))
             {
-                if (string.IsNullOrWhiteSpace(roleData.PromptFile))
-                {
-                    _logger.LogWarning("Role {Type} has no prompt or prompt file", type);
-                    return false;
-                }
-
-                if (!File.Exists(roleData.PromptFile))
-                {
-                    _logger.LogWarning("Role {Type} prompt file does not exist", type);
-                    return false;
-                }
-
-                prompt = File.ReadAllText(roleData.PromptFile);
-                if (string.IsNullOrWhiteSpace(prompt))
-                {
-                    _logger.LogWarning("Role {Type} prompt is empty", type);
-                    return false;
-                }
+                _logger.LogWarning("Role {Type} prompt is empty", type);
+                return false;
             }
 
             prompt = new StringBuilder(prompt).AppendLine().Append(GetPromptExtensions()).ToString().Trim();
-
-            var chatRoleString = _configuration.GetValue<string>("AI:PromptRole", "System");
-            var chatRole = chatRoleString.ToLower() switch
-            {
-                "system" => ChatRole.System,
-                "user" => ChatRole.User,
-                "assistant" => ChatRole.Assistant,
-                "tool" => ChatRole.Tool,
-#pragma warning disable CA2208
-                _ => throw new ArgumentOutOfRangeException(nameof(chatRoleString), "Invalid chat role"),
-#pragma warning restore CA2208
-            };
-            chatMessage = new(chatRole, prompt);
+            chatMessage = new(ChatRole.System, prompt);
             return true;
+        }
+
+        private static bool GetPrompt(PromptConfig config, [NotNullWhen(true)] out string? prompt)
+        {
+            prompt = config.Prompt.Trim();
+            if (!string.IsNullOrEmpty(prompt)) return true;
+            if (string.IsNullOrWhiteSpace(config.PromptFile)) return false;
+
+            if (!File.Exists(config.PromptFile)) return false;
+
+            prompt = File.ReadAllText(config.PromptFile).Trim();
+            return !string.IsNullOrEmpty(prompt);
         }
 
         /// <summary>
@@ -339,6 +394,8 @@ namespace RitsukageBot.Services.Providers
         public async Task<ChatMessage?> BuildUserChatMessage(string name, ulong? id, DateTimeOffset time,
             string message, JObject? extraData = null)
         {
+            if (string.IsNullOrWhiteSpace(name)) return null;
+            if (string.IsNullOrWhiteSpace(message)) return null;
             var jObject = new JObject
             {
                 ["name"] = name,
@@ -360,7 +417,7 @@ namespace RitsukageBot.Services.Providers
             data["short_memory"] = shortMemory;
             data["long_memory"] = longMemory;
             data["good"] = userInfo.Good;
-            return new(ChatRole.User, jObject.ToString());
+            return new(ChatRole.User, data.ToString());
         }
 
         /// <summary>
@@ -418,7 +475,9 @@ namespace RitsukageBot.Services.Providers
                 return false;
             }
 
-            content = response[(jsonStringBuilder.Length + 1)..].Trim();
+            content = jsonStringBuilder.Length < response.Length
+                ? response[(jsonStringBuilder.Length + 1)..]
+                : string.Empty;
             jsonHeader = jsonStringBuilder.ToString().Trim();
             return true;
         }
@@ -470,8 +529,14 @@ namespace RitsukageBot.Services.Providers
 
         internal record EndpointConfig(string Endpoint, string ModelId, string ApiKey = "");
 
-        internal record PromptExtensionConfig(string Prompt = "", string PromptFile = "");
+        internal record PromptConfig(string Prompt = "", string PromptFile = "");
 
-        internal record RoleConfig(string Prompt = "", string PromptFile = "", float Temperature = 0.6f);
+        internal record PromptExtensionConfig(string Prompt = "", string PromptFile = "")
+            : PromptConfig(Prompt, PromptFile);
+
+        internal record RoleConfig(string Prompt = "", string PromptFile = "", float Temperature = 0.6f)
+            : PromptConfig(Prompt, PromptFile);
+
+        internal record AssistantConfig(bool Enabled, EndpointConfig Service, PromptConfig PromptConfig);
     }
 }
