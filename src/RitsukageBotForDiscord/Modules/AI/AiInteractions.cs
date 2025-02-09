@@ -153,8 +153,13 @@ namespace RitsukageBot.Modules.AI
             if (!string.IsNullOrWhiteSpace(assistantMessage))
             {
                 Logger.LogInformation("Assistant message: {AssistantMessage}", assistantMessage);
-                messageList.Add(new(ChatRole.Assistant,
-                    $"此处为收集到的可能与消息相关的数据，你可以从中提取出有用的信息。\n它不一定有效，也不一定完整，你需要自己判断。\n\n{assistantMessage}"));
+                roleData.Text += $"""
+                                  【助手消息】
+                                  以下为收集到的可能与用户接下来的消息相关的数据，你可以从中提取出有用的信息。
+                                  数据仅供参考，它不一定有效，也不一定完整，你需要自己判断。
+
+                                  {assistantMessage}
+                                  """;
             }
 
             if (await ChatClientProvider.BuildUserChatMessage(Context.User.Username, Context.User.Id,
