@@ -145,7 +145,7 @@ namespace RitsukageBot.Modules.AI
             {
                 x.Content = null;
                 x.Embed = assistantEmbed.Build();
-            }).ConfigureAwait(false)
+            }).ConfigureAwait(false);
 
             var assistantMessage =
                 await TryPreprocessMessage(message, cancellationTokenSource.Token).ConfigureAwait(false);
