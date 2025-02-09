@@ -24,7 +24,7 @@ using var host = Host.CreateDefaultBuilder()
     .ConfigureHostConfiguration(configure =>
     {
         configure.SetBasePath(Directory.GetCurrentDirectory());
-        configure.AddJsonFile("appsettings.json", true, true);
+        configure.AddJsonFile("appsettings.json", true);
     })
     .ConfigureLogging(builder =>
     {
@@ -75,7 +75,6 @@ using var host = Host.CreateDefaultBuilder()
         services.AddSingleton<GitHubClientProviderService>();
         services.AddSingleton<ImageCacheProviderService>();
         services.AddSingleton<BiliKernelProviderService>();
-        services.AddSingleton<GoogleSearchProviderService>();
         services.AddSingleton<DiscordSocketConfig>(_ => new()
         {
             LogLevel = LogSeverity.Info,
