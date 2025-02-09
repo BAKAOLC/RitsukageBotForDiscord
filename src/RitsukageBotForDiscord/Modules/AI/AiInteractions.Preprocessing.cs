@@ -127,7 +127,7 @@ namespace RitsukageBot.Modules.AI
             if (string.IsNullOrWhiteSpace(param.Query))
                 throw new InvalidDataException("Invalid query for web search action");
             var result = await GoogleSearchProviderService.WebSearch(param.Query).ConfigureAwait(false);
-            var resultStrings = result.Take(5).Select(x => $"# {x.Title}\n{x.HtmlSnippet}\n\n{x.Link}");
+            var resultStrings = result.Take(5).Select(x => $"# {x.Title}\n{x.Snippet}\n\n{x.Link}");
             return $"[Google Search: \"{param.Query}\"]\n{string.Join("\n\n", resultStrings)}";
         }
 
