@@ -196,45 +196,7 @@ namespace RitsukageBot.Library.Bilibili.Convertors
         /// <returns></returns>
         public static EmbedBuilder BuildLiveInfo(LivePlayerView detail)
         {
-            var embed = new EmbedBuilder();
-            embed.WithTitle(detail.Information.Identifier.Title);
-
-            // cover
-            if (detail.Information.Identifier.Cover is not null)
-                embed.WithImageUrl(detail.Information.Identifier.Cover.SourceUri.ToString());
-
-            var description = detail.Information.GetExtensionIfNotNull<string>(LiveExtensionDataId.Description);
-            if (!string.IsNullOrWhiteSpace(description)) embed.WithDescription(description.Replace("&amp;", "&"));
-
-            // author
-            var authorBuilder = new EmbedAuthorBuilder();
-            authorBuilder.WithName(detail.Information.User.Name);
-            authorBuilder.WithUrl($"https://space.bilibili.com/{detail.Information.User.Id}");
-            if (detail.Information.User.Avatar != null)
-                authorBuilder.WithIconUrl(detail.Information.User.Avatar.SourceUri.ToString());
-            embed.WithAuthor(authorBuilder);
-
-            // tag
-            embed.AddField("Tag", detail.Tag.Name, true);
-
-            // viewer count
-            var viewerCount = detail.Information.GetExtensionIfNotNull<int>(LiveExtensionDataId.ViewerCount);
-            embed.AddField("Viewer Count", viewerCount.ToString(), true);
-
-            // is living
-            var isLiving = detail.Information.GetExtensionIfNotNull<bool>(LiveExtensionDataId.IsLiving);
-            embed.AddField("Is Living", isLiving ? "Yes" : "No", true);
-
-            // start time
-            if (isLiving)
-            {
-                var startTime = detail.Information.GetExtensionIfNotNull<DateTimeOffset>(LiveExtensionDataId.StartTime);
-                embed.WithTimestamp(startTime);
-            }
-
-            embed.WithUrl($"https://live.bilibili.com/{detail.Information.Identifier.Id}/");
-
-            return embed;
+            return BuildLiveInfo(detail.Information);
         }
 
         /// <summary>

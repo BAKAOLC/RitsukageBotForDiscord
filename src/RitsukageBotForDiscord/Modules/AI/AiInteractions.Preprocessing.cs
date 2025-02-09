@@ -1,6 +1,9 @@
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Richasy.BiliKernel.Bili.Media;
+using Richasy.BiliKernel.Bili.User;
+using RitsukageBot.Library.Bilibili.Convertors;
 using RitsukageBot.Services.Providers;
 using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
 using ChatRole = Microsoft.Extensions.AI.ChatRole;
@@ -70,20 +73,28 @@ namespace RitsukageBot.Modules.AI
                         {
                             case "web_search":
                             {
-                                var result = await WebSearch(data).ConfigureAwait(false);
+                                var result = await PreprocessWebSearch(data).ConfigureAwait(false);
                                 if (!string.IsNullOrEmpty(result))
                                     dataList.Add(result);
                                 break;
                             }
-                            case "bilibili_video_search":
                             case "bilibili_video_info":
-                            case "bilibili_user_info":
-                            case "bilibili_user_video":
-                            case "bilibili_live_info":
-                            case "bilibili_dynamic_info":
-                            case "bilibili_article_info":
                             {
-                                var result = CurrentlyUnsupported(actionType);
+                                var result = await PreprocessBilibiliVideoInfo(data).ConfigureAwait(false);
+                                if (!string.IsNullOrEmpty(result))
+                                    dataList.Add(result);
+                                break;
+                            }
+                            case "bilibili_user_info":
+                            {
+                                var result = await PreprocessBilibiliUserInfo(data).ConfigureAwait(false);
+                                if (!string.IsNullOrEmpty(result))
+                                    dataList.Add(result);
+                                break;
+                            }
+                            case "bilibili_live_info":
+                            {
+                                var result = await PreprocessBilibiliLiveInfo(data).ConfigureAwait(false);
                                 if (!string.IsNullOrEmpty(result))
                                     dataList.Add(result);
                                 break;
@@ -106,7 +117,7 @@ namespace RitsukageBot.Modules.AI
             return string.Empty;
         }
 
-        private async Task<string> WebSearch(JObject data)
+        private async Task<string> PreprocessWebSearch(JObject data)
         {
             if (data is null) throw new InvalidDataException("Invalid JSON data for web search action");
             if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
@@ -116,13 +127,47 @@ namespace RitsukageBot.Modules.AI
             if (string.IsNullOrWhiteSpace(param.Query))
                 throw new InvalidDataException("Invalid query for web search action");
             var result = await GoogleSearchProviderService.WebSearch(param.Query).ConfigureAwait(false);
-            var resultStrings = result.Take(5).Select(x => $"# {x.Title}\n{x.Link}\n{x.HtmlSnippet}");
+            var resultStrings = result.Take(5).Select(x => $"# {x.Title}\n{x.HtmlSnippet}\n\n{x.Link}");
             return $"[Google Search: \"{param.Query}\"]\n{string.Join("\n\n", resultStrings)}";
         }
 
-        private static string CurrentlyUnsupported(string actionType)
+        private async Task<string> PreprocessBilibiliVideoInfo(JObject data)
         {
-            return $"[{actionType}]\n当前暂不支持";
+            if (data is null) throw new InvalidDataException("Invalid JSON data for bilibili video info action");
+            if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
+                throw new InvalidDataException("Invalid JSON data for bilibili video info action");
+            var param = paramToken.ToObject<PreprocessActionParam.BilibiliVideoInfoActionParam>();
+            if (param is null) throw new InvalidDataException("Invalid JSON data for bilibili video info action");
+            var playerService = BiliKernelProviderService.GetRequiredService<IPlayerService>();
+            var info = await playerService.GetVideoPageDetailAsync(new(param.Id.ToString(), null, null))
+                .ConfigureAwait(false);
+            return $"[Bilibili Video Info: {param.Id}]\n{InformationStringBuilder.BuildVideoInfo(info)}";
+        }
+
+        private async Task<string> PreprocessBilibiliUserInfo(JObject data)
+        {
+            if (data is null) throw new InvalidDataException("Invalid JSON data for bilibili user info action");
+            if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
+                throw new InvalidDataException("Invalid JSON data for bilibili user info action");
+            var param = paramToken.ToObject<PreprocessActionParam.BilibiliUserInfoActionParam>();
+            if (param is null) throw new InvalidDataException("Invalid JSON data for bilibili user info action");
+            var userService = BiliKernelProviderService.GetRequiredService<IUserService>();
+            var info = await userService.GetUserInformationAsync(param.Id.ToString())
+                .ConfigureAwait(false);
+            return $"[Bilibili User Info: {param.Id}]\n{InformationStringBuilder.BuildUserInfo(info)}";
+        }
+
+        private async Task<string> PreprocessBilibiliLiveInfo(JObject data)
+        {
+            if (data is null) throw new InvalidDataException("Invalid JSON data for bilibili live info action");
+            if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
+                throw new InvalidDataException("Invalid JSON data for bilibili live info action");
+            var param = paramToken.ToObject<PreprocessActionParam.BilibiliLiveInfoActionParam>();
+            if (param is null) throw new InvalidDataException("Invalid JSON data for bilibili live info action");
+            var liveService = BiliKernelProviderService.GetRequiredService<IPlayerService>();
+            var info = await liveService.GetLivePageDetailAsync(new(param.Id.ToString(), null, null))
+                .ConfigureAwait(false);
+            return $"[Bilibili Live Info: {param.Id}]\n{InformationStringBuilder.BuildLiveInfo(info)}";
         }
 
         private static class PreprocessActionParam

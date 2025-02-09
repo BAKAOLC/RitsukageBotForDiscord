@@ -46,6 +46,11 @@ namespace RitsukageBot.Modules.AI
         public required IHttpClientFactory HttpClientFactory { get; set; }
 
         /// <summary>
+        ///     Bili kernel provider service
+        /// </summary>
+        public required BiliKernelProviderService BiliKernelProviderService { get; set; }
+
+        /// <summary>
         ///     Google API
         /// </summary>
         public required GoogleSearchProviderService GoogleSearchProviderService { get; set; }
