@@ -36,7 +36,6 @@ namespace RitsukageBot.Library.Bilibili.Convertors
                 return builder.ToString();
             }
 
-            if (detail.Profile.User.Avatar is not null) builder.AppendLine($"Avatar: {detail.Profile.User.Avatar}");
             builder.AppendLine($"UID: {detail.Profile.User.Id}");
             builder.AppendLine($"Name: {detail.Profile.User.Name}");
             builder.AppendLine($"Is Hardcore: {detail.Profile.IsHardcore}");
