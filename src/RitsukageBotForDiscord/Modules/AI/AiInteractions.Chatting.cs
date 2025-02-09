@@ -246,7 +246,7 @@ namespace RitsukageBot.Modules.AI
                     resultEmbeds = await ProgressActions(jsonHeader!).ConfigureAwait(false);
 
                 if (!embedProcessed && resultEmbeds is not null && resultEmbeds.Length > 0)
-                    await Task.Delay(2000, CancellationToken.None).ContinueWith(async x =>
+                    await Task.Delay(2000, CancellationToken.None).ContinueWith(async _ =>
                     {
                         await ModifyOriginalResponseAsync(x =>
                         {
@@ -452,7 +452,7 @@ namespace RitsukageBot.Modules.AI
                 userInputMessage = lastUserMessage.ToString();
             return !string.IsNullOrWhiteSpace(userInputMessage);
         }
-        
+
         private static class ActionParam
         {
             internal class GoodActionParam

@@ -9,10 +9,11 @@ namespace RitsukageBot.Services.Providers
     /// <summary>
     ///     Google search provider service
     /// </summary>
+    /// <param name="logger"></param>
+    /// <param name="configuration"></param>
     public class GoogleSearchProviderService(
-        IServiceProvider serviceProvider,
-        IConfiguration configuration,
-        ILogger<GoogleSearchProviderService> logger)
+        ILogger<GoogleSearchProviderService> logger,
+        IConfiguration configuration)
     {
         /// <summary>
         ///     Web search
@@ -26,6 +27,7 @@ namespace RitsukageBot.Services.Providers
             if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(searchEngineId))
                 throw new InvalidOperationException("Google API key or search engine ID is missing");
 
+            logger.LogInformation("Google search: {Query}", query);
             var request = new WebSearchRequest
             {
                 Key = key,
