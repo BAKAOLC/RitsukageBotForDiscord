@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using RitsukageBot.Services.Providers;
 using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
 using ChatRole = Microsoft.Extensions.AI.ChatRole;
 
@@ -13,7 +14,7 @@ namespace RitsukageBot.Modules.AI
         {
             try
             {
-                if (!ChatClientProviderService.GetAssistant("Preprocessing", out var prompt, out var chatClient))
+                if (!ChatClientProvider.GetAssistant("Preprocessing", out var prompt, out var chatClient))
                 {
                     Logger.LogWarning("Unable to get the assistant for preprocessing");
                     return string.Empty;
@@ -31,7 +32,12 @@ namespace RitsukageBot.Modules.AI
                     .ConfigureAwait(false);
 
                 var resultMessage = resultCompletion.Message.ToString();
-                return await ProgressPreprocessActions(resultMessage).ConfigureAwait(false);
+                var (hasJsonHeader, _, jsonHeader, thinkContent) =
+                    ChatClientProviderService.FormatResponse(resultMessage);
+                if (!string.IsNullOrWhiteSpace(thinkContent))
+                    Logger.LogInformation("Think content: {ThinkContent}", thinkContent);
+                if (hasJsonHeader) return await ProgressPreprocessActions(jsonHeader!).ConfigureAwait(false);
+                return string.Empty;
             }
             catch (Exception e)
             {

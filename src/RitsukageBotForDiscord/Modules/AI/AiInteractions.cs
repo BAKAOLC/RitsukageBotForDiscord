@@ -33,7 +33,7 @@ namespace RitsukageBot.Modules.AI
         /// <summary>
         ///     Chat client provider service
         /// </summary>
-        public required ChatClientProviderService ChatClientProviderService { get; set; }
+        public required ChatClientProviderService ChatClientProvider { get; set; }
 
         /// <summary>
         ///     Database provider service
@@ -106,7 +106,7 @@ namespace RitsukageBot.Modules.AI
                 await FollowupAsync(embed: embed.Build(), ephemeral: true).ConfigureAwait(false);
             }
 
-            if (!ChatClientProviderService.GetRoleData(out var roleData, out var temperature, role))
+            if (!ChatClientProvider.GetRoleData(out var roleData, out var temperature, role))
             {
                 var embed = new EmbedBuilder
                 {
@@ -157,7 +157,7 @@ namespace RitsukageBot.Modules.AI
                     $"此处为收集到的可能与消息相关的数据，你可以从中提取出有用的信息。\n它不一定有效，也不一定完整，你需要自己判断。\n\n{assistantMessage}"));
             }
 
-            if (await ChatClientProviderService.BuildUserChatMessage(Context.User.Username, Context.User.Id,
+            if (await ChatClientProvider.BuildUserChatMessage(Context.User.Username, Context.User.Id,
                     Context.Interaction.CreatedAt, message).ConfigureAwait(false)
                 is not { } userMessage)
             {
@@ -333,7 +333,7 @@ namespace RitsukageBot.Modules.AI
         {
             await DeferAsync(true).ConfigureAwait(false);
 
-            var configs = ChatClientProviderService.GetEndpointConfigs();
+            var configs = ChatClientProvider.GetEndpointConfigs();
             var deepSeekConfig = configs.FirstOrDefault(x => new Uri(x.Endpoint).Host == "api.deepseek.com");
             if (deepSeekConfig is null)
             {

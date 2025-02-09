@@ -51,7 +51,7 @@ namespace RitsukageBot.Modules.AI
                 x.Components = component.Build();
             }).ConfigureAwait(false);
 
-            var client = ChatClientProviderService.GetChatClientRandomly();
+            var client = ChatClientProvider.GetChatClientRandomly();
             var (isSuccess, errorMessage) =
                 await TryGettingResponse(messageList, role, client, temperature, cancellationToken: cancellationToken)
                     .ConfigureAwait(false);
@@ -60,7 +60,7 @@ namespace RitsukageBot.Modules.AI
 
             if (retry > 0 && !cancellationToken.IsCancellationRequested)
             {
-                var clients = ChatClientProviderService.GetChatClients();
+                var clients = ChatClientProvider.GetChatClients();
                 for (var i = 0; i < retry; i++)
                 {
                     if (clients.Length > 1)
@@ -113,7 +113,7 @@ namespace RitsukageBot.Modules.AI
             IChatClient? client = null, float temperature = 1.0f,
             long timeout = 60000, CancellationToken cancellationToken = default)
         {
-            client ??= ChatClientProviderService.GetChatClientRandomly();
+            client ??= ChatClientProvider.GetChatClientRandomly();
             var sb = new StringBuilder();
             var haveContent = false;
             var checkedEmbed = false;
@@ -372,7 +372,7 @@ namespace RitsukageBot.Modules.AI
                 return [errorEmbed];
             }
 
-            await ChatClientProviderService.RefreshShortMemory(Context.User.Id).ConfigureAwait(false);
+            await ChatClientProvider.RefreshShortMemory(Context.User.Id).ConfigureAwait(false);
             return result.ToArray();
         }
 
@@ -421,7 +421,7 @@ namespace RitsukageBot.Modules.AI
             if (param is null) throw new InvalidDataException("Invalid JSON data for add_short_memory action");
             if (string.IsNullOrWhiteSpace(param.Key) || string.IsNullOrWhiteSpace(param.Value))
                 throw new InvalidDataException("Invalid JSON data for add_short_memory action");
-            await ChatClientProviderService
+            await ChatClientProvider
                 .InsertMemory(Context.User.Id, ChatMemoryType.ShortTerm, param.Key, param.Value)
                 .ConfigureAwait(false);
         }
@@ -435,7 +435,7 @@ namespace RitsukageBot.Modules.AI
             if (param is null) throw new InvalidDataException("Invalid JSON data for add_long_memory action");
             if (string.IsNullOrWhiteSpace(param.Key) || string.IsNullOrWhiteSpace(param.Value))
                 throw new InvalidDataException("Invalid JSON data for add_long_memory action");
-            await ChatClientProviderService
+            await ChatClientProvider
                 .InsertMemory(Context.User.Id, ChatMemoryType.LongTerm, param.Key, param.Value)
                 .ConfigureAwait(false);
         }
@@ -449,7 +449,7 @@ namespace RitsukageBot.Modules.AI
             if (param is null) throw new InvalidDataException("Invalid JSON data for remove_long_memory action");
             if (string.IsNullOrWhiteSpace(param.Key))
                 throw new InvalidDataException("Invalid JSON data for remove_long_memory action");
-            await ChatClientProviderService.RemoveMemory(Context.User.Id, ChatMemoryType.LongTerm, param.Key)
+            await ChatClientProvider.RemoveMemory(Context.User.Id, ChatMemoryType.LongTerm, param.Key)
                 .ConfigureAwait(false);
         }
 
