@@ -396,27 +396,31 @@ namespace RitsukageBot.Services.Providers
         {
             if (string.IsNullOrWhiteSpace(name)) return null;
             if (string.IsNullOrWhiteSpace(message)) return null;
-            var jObject = new JObject
-            {
-                ["name"] = name,
-                ["message"] = message,
-            };
             var data = new JObject
             {
                 ["time"] = time.ToString("yyyy-MM-dd HH:mm:ss zzz"),
             };
-            jObject["data"] = data;
+
+            if (id.HasValue)
+            {
+                var (_, userInfo) = await _databaseProviderService.GetOrCreateAsync<ChatUserInformation>(id.Value)
+                    .ConfigureAwait(false);
+                var shortMemory = await GetMemory(id.Value).ConfigureAwait(false);
+                var longMemory = await GetMemory(id.Value, ChatMemoryType.LongTerm).ConfigureAwait(false);
+                data["short_memory"] = shortMemory;
+                data["long_memory"] = longMemory;
+                data["good"] = userInfo.Good;
+            }
+
             if (extraData is not null)
                 data["extraData"] = extraData;
-            if (!id.HasValue) return new(ChatRole.User, jObject.ToString());
 
-            var (_, userInfo) = await _databaseProviderService.GetOrCreateAsync<ChatUserInformation>(id.Value)
-                .ConfigureAwait(false);
-            var shortMemory = await GetMemory(id.Value).ConfigureAwait(false);
-            var longMemory = await GetMemory(id.Value, ChatMemoryType.LongTerm).ConfigureAwait(false);
-            data["short_memory"] = shortMemory;
-            data["long_memory"] = longMemory;
-            data["good"] = userInfo.Good;
+            var jObject = new JObject
+            {
+                ["name"] = name,
+                ["message"] = message,
+                ["data"] = data,
+            };
             return new(ChatRole.User, data.ToString());
         }
 
