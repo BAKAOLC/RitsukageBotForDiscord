@@ -308,8 +308,7 @@ namespace RitsukageBot.Library.Bilibili.Convertors
 
             var wordCount = detail.GetExtensionIfNotNull<int>(ArticleExtensionDataId.WordCount);
             if (wordCount > 0) embed.AddField("Word Count", wordCount.ToString(), true);
-
-
+            
             var partition = detail.GetExtensionIfNotNull<string>(ArticleExtensionDataId.Partition);
             if (!string.IsNullOrWhiteSpace(partition)) embed.AddField("Partition", partition, true);
 
