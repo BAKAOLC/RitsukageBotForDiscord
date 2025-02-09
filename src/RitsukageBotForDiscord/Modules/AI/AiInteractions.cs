@@ -1,6 +1,7 @@
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -47,9 +48,9 @@ namespace RitsukageBot.Modules.AI
         public required IHttpClientFactory HttpClientFactory { get; set; }
 
         /// <summary>
-        ///     Configuration
+        ///    Google API
         /// </summary>
-        public required IConfiguration Configuration { get; set; }
+        public required GoogleSearchProviderService GoogleSearchProviderService { get; set; }
 
         /// <summary>
         ///     Shutdown the chat
@@ -139,6 +140,14 @@ namespace RitsukageBot.Modules.AI
             }
 
             var messageList = new List<ChatMessage> { roleData };
+
+            var assistantMessage =
+                await TryPreprocessMessage(message, cancellationTokenSource.Token).ConfigureAwait(false);
+
+            if (!string.IsNullOrWhiteSpace(assistantMessage))
+                messageList.Add(new(ChatRole.Assistant,
+                    $"此处为收集到的可能与消息相关的数据，你可以从中提取出有用的信息。\n它不一定有效，也不一定完整，你需要自己判断。\n\n{assistantMessage}"));
+
             if (await ChatClientProviderService.BuildUserChatMessage(Context.User.Username, Context.User.Id,
                     Context.Interaction.CreatedAt, message).ConfigureAwait(false)
                 is not { } userMessage)
