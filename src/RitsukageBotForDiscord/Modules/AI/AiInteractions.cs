@@ -164,6 +164,8 @@ namespace RitsukageBot.Modules.AI
                 var assistantMessage =
                     await TryPreprocessMessage(message, cancellationTokenSource.Token).ConfigureAwait(false);
 
+                if (cancellationTokenSource.IsCancellationRequested) return;
+
                 if (!string.IsNullOrWhiteSpace(assistantMessage))
                 {
                     Logger.LogInformation("Assistant message: {AssistantMessage}", assistantMessage);
@@ -171,6 +173,7 @@ namespace RitsukageBot.Modules.AI
                 }
             }
 
+            if (cancellationTokenSource.IsCancellationRequested) return;
             if (await ChatClientProvider.BuildUserChatMessage(Context.User.Username, Context.User.Id,
                     Context.Interaction.CreatedAt, message).ConfigureAwait(false)
                 is not { } userMessage)
@@ -191,6 +194,7 @@ namespace RitsukageBot.Modules.AI
 
             messageList.Add(userMessage);
 
+            if (cancellationTokenSource.IsCancellationRequested) return;
             await BeginChatAsync(messageList, role, 3, temperature, showBtn, cancellationTokenSource.Token)
                 .ConfigureAwait(false);
             lock (LockObject)
