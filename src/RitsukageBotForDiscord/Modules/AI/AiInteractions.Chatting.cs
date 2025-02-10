@@ -51,7 +51,7 @@ namespace RitsukageBot.Modules.AI
                 x.Components = component.Build();
             }).ConfigureAwait(false);
 
-            var client = ChatClientProvider.GetChatClientRandomly();
+            var client = ChatClientProvider.GetFirstChatClient();
             var (isSuccess, errorMessage) =
                 await TryGettingResponse(messageList, role, client, temperature, cancellationToken: cancellationToken)
                     .ConfigureAwait(false);
@@ -113,7 +113,7 @@ namespace RitsukageBot.Modules.AI
             IChatClient? client = null, float temperature = 1.0f,
             long timeout = 60000, CancellationToken cancellationToken = default)
         {
-            client ??= ChatClientProvider.GetChatClientRandomly();
+            client ??= ChatClientProvider.GetFirstChatClient();
             var sb = new StringBuilder();
             var haveContent = false;
             var checkedEmbed = false;
@@ -323,9 +323,8 @@ namespace RitsukageBot.Modules.AI
                 var actionArrayData = JArray.Parse(jsonHeader);
                 Logger.LogInformation("Processing the JSON header: {JsonHeader}", jsonHeader);
                 var showMemoryChange = ChatClientProvider.GetConfig<bool>("ShowMemoryChange");
-                foreach (var actionData in actionArrayData)
+                foreach (var data in actionArrayData.OfType<JObject>())
                 {
-                    if (actionData is not JObject data) continue;
                     try
                     {
                         var actionType = data.Value<string>("action");
@@ -389,8 +388,8 @@ namespace RitsukageBot.Modules.AI
             if (data is null) throw new InvalidDataException("Invalid JSON data for good action");
             if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
                 throw new InvalidDataException("Invalid JSON data for good action");
-            var param = paramToken.ToObject<ActionParam.GoodActionParam>();
-            if (param is null) throw new InvalidDataException("Invalid JSON data for good action");
+            var param = paramToken.ToObject<ActionParam.GoodActionParam>()
+                        ?? throw new InvalidDataException("Invalid JSON data for good action");
             if (param.Value == 0) return null;
 
             var (_, userRecord) = await DatabaseProviderService

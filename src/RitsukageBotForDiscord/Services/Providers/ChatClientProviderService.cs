@@ -117,6 +117,20 @@ namespace RitsukageBot.Services.Providers
         }
 
         /// <summary>
+        ///     Get first chat client or random chat client based on configuration
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        public IChatClient GetFirstChatClient()
+        {
+            if (_chatClients.Count == 0 || !_isEnabled)
+                throw new InvalidOperationException("Chat client is not enabled");
+
+            var random = _configuration.GetValue<bool>("AI:FirstServiceRandom");
+            return random ? _chatClients[Random.Shared.Next(_chatClients.Count)] : _chatClients[0];
+        }
+
+        /// <summary>
         ///     Get chat client
         /// </summary>
         /// <returns></returns>
