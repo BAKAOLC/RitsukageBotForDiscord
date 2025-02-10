@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using NeoSmart.Caching.Sqlite;
 using NLog.Extensions.Logging;
 using RitsukageBot.Library.Networking;
+using RitsukageBot.Library.OpenApi;
 using RitsukageBot.Library.Utils;
 using RitsukageBot.Services.HostedServices;
 using RitsukageBot.Services.Providers;
@@ -117,5 +118,6 @@ logger.LogInformation("Assembly User-Agent: {UserAgent}", UserAgent.AssemblyUser
 logger.LogInformation("Network default User-Agent: {UserAgent}", UserAgent.Default);
 
 NetworkUtility.SetHttpClientFactory(host.Services.GetRequiredService<IHttpClientFactory>());
+OpenApi.SetCacheProvider(host.Services.GetRequiredService<IFusionCache>());
 
 await host.RunAsync(HostCancellationToken.Token).ConfigureAwait(false);

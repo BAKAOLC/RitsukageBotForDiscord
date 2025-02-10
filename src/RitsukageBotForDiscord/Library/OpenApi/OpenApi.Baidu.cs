@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RitsukageBot.Library.Utils;
 
@@ -15,6 +16,14 @@ namespace RitsukageBot.Library.OpenApi
         public static async Task<BaiduCalendarDay[]> GetCalendarAsync(DateTimeOffset date,
             HttpClient? httpClient = null)
         {
+            var cacheKey = $"Baidu_Calendar_{date.ToLocalTime():yyyy_MM}";
+            if (_cacheProvider is not null)
+            {
+                var recordInfo = await _cacheProvider.GetOrDefaultAsync<string>(cacheKey).ConfigureAwait(false);
+                if (recordInfo is not null)
+                    return JsonConvert.DeserializeObject<BaiduCalendarDay[]>(recordInfo)!;
+            }
+
             httpClient ??= NetworkUtility.GetHttpClient();
             var dateStr = date.ToLocalTime().ToString("yyyy年M月");
             var response = await httpClient.GetAsync(
@@ -34,7 +43,16 @@ namespace RitsukageBot.Library.OpenApi
                 || data is not JObject dataData || !dataData.TryGetValue("almanac", out var almanac))
                 return [];
             var calendar = almanac.ToObject<BaiduCalendarDay[]>();
-            return calendar is not { Length: > 0 } ? [] : calendar;
+            var resultData = calendar is not { Length: > 0 } ? [] : calendar;
+
+            if (_cacheProvider is not null)
+                await _cacheProvider.SetAsync(cacheKey, JsonConvert.SerializeObject(resultData), new()
+                {
+                    Duration = TimeSpan.FromDays(1),
+                    FailSafeMaxDuration = TimeSpan.FromDays(3),
+                }).ConfigureAwait(false);
+
+            return resultData;
         }
     }
 }

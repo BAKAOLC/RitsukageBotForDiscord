@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RitsukageBot.Library.Data;
 using RitsukageBot.Library.Modules.Schedules;
+using RitsukageBot.Library.OpenApi;
 using RitsukageBot.Services.Providers;
 using ZiggyCreatures.Caching.Fusion;
 
@@ -201,12 +202,31 @@ namespace RitsukageBot.Modules.Schedules
             }
         }
 
-        private Task<ChatMessage?> CreateTimeMessageRequireMessage(DateTimeOffset targetTime, string prompt)
+        private async Task<ChatMessage?> CreateTimeMessageRequireMessage(DateTimeOffset targetTime, string prompt)
         {
-            return _chatClientProviderService.BuildUserChatMessage("##SYSTEM##", null, targetTime, prompt, new()
+            var time = targetTime.ToOffset(TimeSpan.FromHours(8));
+            var year = time.Year.ToString();
+            var month = time.Month.ToString();
+            var day = time.Day.ToString();
+            var days = await OpenApi.GetCalendarAsync(time).ConfigureAwait(false);
+            var today = days.FirstOrDefault(x => x.Year == year && x.Month == month && x.Day == day);
+            var hoilday = today?.FestivalInfoList is { Length: > 0 }
+                ? string.Join(", ", today.FestivalInfoList.Select(x => x.Name))
+                : "今日无节日";
+            var todayString = today is not null
+                ? $"""
+                   北京时间：{time.Year}-{time.Month}-{time.Day} 星期{today.CnDay} {time.Hour}:{time.Minute}
+                   农历：{today.LunarYear}年{today.LMonth}月{today.LDate}日
+                   节日：{hoilday}
+                   宜：{today.Suit}
+                   忌：{today.Avoid}
+                   """
+                : string.Empty;
+            return await _chatClientProviderService.BuildUserChatMessage("##SYSTEM##", null, targetTime, prompt, new()
             {
                 ["randomSeed"] = Random.Shared.Next(),
-            });
+                ["calendar"] = todayString,
+            }).ConfigureAwait(false);
         }
     }
 }
