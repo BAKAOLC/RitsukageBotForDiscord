@@ -1,6 +1,9 @@
+using System.Text;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Richasy.BiliKernel.Bili.Media;
+using Richasy.BiliKernel.Bili.User;
 using RitsukageBot.Library.Bilibili.Convertors;
 using RitsukageBot.Library.OpenApi;
 using RitsukageBot.Services.Providers;

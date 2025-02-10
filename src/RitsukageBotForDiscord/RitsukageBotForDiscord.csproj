@@ -135,4 +135,16 @@
 		<None Remove="static\SourceHanSansSC-Normal.otf" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Reference Include="Richasy.BiliKernel.Abstractions">
+	    <HintPath>..\bili-kernel\src\BiliKernel.Core\bin\Debug\netstandard2.0\Richasy.BiliKernel.Abstractions.dll</HintPath>
+	  </Reference>
+	  <Reference Include="Richasy.BiliKernel.Core">
+	    <HintPath>..\bili-kernel\src\Authorizers\Authorizers.Tv\bin\Debug\netstandard2.0\Richasy.BiliKernel.Core.dll</HintPath>
+	  </Reference>
+	  <Reference Include="Richasy.BiliKernel.Grpc">
+	    <HintPath>..\bili-kernel\src\BiliKernel.Core\bin\Debug\netstandard2.0\Richasy.BiliKernel.Grpc.dll</HintPath>
+	  </Reference>
+	</ItemGroup>
+
 </Project>
