@@ -1,5 +1,4 @@
 using Bilibili.App.Dynamic.V2;
-using Richasy.BiliKernel;
 using Richasy.BiliKernel.Authenticator;
 using Richasy.BiliKernel.Bili.Authorization;
 using Richasy.BiliKernel.Http;
