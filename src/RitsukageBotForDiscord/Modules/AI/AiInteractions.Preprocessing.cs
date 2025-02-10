@@ -4,6 +4,7 @@ using Newtonsoft.Json.Linq;
 using Richasy.BiliKernel.Bili.Media;
 using Richasy.BiliKernel.Bili.User;
 using RitsukageBot.Library.Bilibili.Convertors;
+using RitsukageBot.Library.OpenApi;
 using RitsukageBot.Services.Providers;
 using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
 using ChatRole = Microsoft.Extensions.AI.ChatRole;
@@ -78,6 +79,13 @@ namespace RitsukageBot.Modules.AI
                                     dataList.Add(result);
                                 break;
                             }
+                            case "date_base_info":
+                            {
+                                var result = await PreprocessDateBaseInfo(data).ConfigureAwait(false);
+                                if (!string.IsNullOrEmpty(result))
+                                    dataList.Add(result);
+                                break;
+                            }
                             case "bilibili_video_info":
                             {
                                 var result = await PreprocessBilibiliVideoInfo(data).ConfigureAwait(false);
@@ -131,6 +139,43 @@ namespace RitsukageBot.Modules.AI
             return $"[Google Search: \"{param.Query}\"]\n{string.Join("\n\n", resultStrings)}";
         }
 
+        private async Task<string> PreprocessDateBaseInfo(JObject data)
+        {
+            if (data is null) throw new InvalidDataException("Invalid JSON data for date base info action");
+            if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
+                throw new InvalidDataException("Invalid JSON data for date base info action");
+            var param = paramToken.ToObject<PreprocessActionParam.DateBaseInfoActionParam>()
+                        ?? throw new InvalidDataException("Invalid JSON data for date base info action");
+            var year = param.Date.Year.ToString();
+            var month = param.Date.Month.ToString();
+            var day = param.Date.Day.ToString();
+            var time = new DateTimeOffset(param.Date, TimeSpan.FromHours(8));
+            var days = await OpenApi.GetCalendarAsync(time).ConfigureAwait(false);
+            var today = days.FirstOrDefault(x => x.Year == year && x.Month == month && x.Day == day);
+            var holiday = today?.FestivalInfoList is { Length: > 0 }
+                ? string.Join(", ", today.FestivalInfoList.Select(x => x.Name))
+                : "今日无节日";
+            var workday = today?.Status switch
+            {
+                BaiduCalendarDayStatus.Holiday => "假期",
+                BaiduCalendarDayStatus.Normal when today.CnDay is "六" or "日" => "假期",
+                BaiduCalendarDayStatus.Workday => "工作日",
+                BaiduCalendarDayStatus.Normal => "工作日",
+                _ => "未知",
+            };
+            var todayString = today is not null
+                ? $"""
+                   北京时间：{time.Year}-{time.Month}-{time.Day} 星期{today.CnDay} {time.Hour}:{time.Minute}
+                   农历：{today.LunarYear}年{today.LMonth}月{today.LDate}日
+                   节日：{holiday}
+                   今天是{workday}
+                   宜：{today.Suit}
+                   忌：{today.Avoid}
+                   """
+                : "未找到相关信息";
+            return $"[Date Base Info: {param.Date}]\n{todayString}";
+        }
+
         private async Task<string> PreprocessBilibiliVideoInfo(JObject data)
         {
             if (data is null) throw new InvalidDataException("Invalid JSON data for bilibili video info action");
@@ -175,6 +220,11 @@ namespace RitsukageBot.Modules.AI
             internal class WebSearchActionParam
             {
                 [JsonProperty("query")] public string Query { get; set; } = string.Empty;
+            }
+
+            internal class DateBaseInfoActionParam
+            {
+                [JsonProperty("date")] public DateTime Date { get; set; }
             }
 
             internal class BilibiliVideoSearchActionParam
