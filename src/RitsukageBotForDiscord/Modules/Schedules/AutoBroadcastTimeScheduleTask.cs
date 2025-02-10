@@ -135,7 +135,7 @@ namespace RitsukageBot.Modules.Schedules
                     _ = Task.Run(async () =>
                         {
                             await foreach (var response in chatClient.CompleteStreamingAsync(messageList,
-                                               new() { Temperature = temperature }, cancellationTokenSource2.Token))
+                                               new() { Temperature = temperature, MaxOutputTokens = 8192 }, cancellationTokenSource2.Token))
                                 lock (lockObject)
                                 {
                                     if (string.IsNullOrWhiteSpace(response.ToString()))
