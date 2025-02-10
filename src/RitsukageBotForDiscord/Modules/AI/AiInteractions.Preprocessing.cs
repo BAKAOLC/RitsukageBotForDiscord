@@ -122,8 +122,8 @@ namespace RitsukageBot.Modules.AI
             if (data is null) throw new InvalidDataException("Invalid JSON data for web search action");
             if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
                 throw new InvalidDataException("Invalid JSON data for web search action");
-            var param = paramToken.ToObject<PreprocessActionParam.WebSearchActionParam>();
-            if (param is null) throw new InvalidDataException("Invalid JSON data for web search action");
+            var param = paramToken.ToObject<PreprocessActionParam.WebSearchActionParam>()
+                        ?? throw new InvalidDataException("Invalid JSON data for web search action");
             if (string.IsNullOrWhiteSpace(param.Query))
                 throw new InvalidDataException("Invalid query for web search action");
             var result = await GoogleSearchProviderService.WebSearch(param.Query).ConfigureAwait(false);
@@ -136,8 +136,8 @@ namespace RitsukageBot.Modules.AI
             if (data is null) throw new InvalidDataException("Invalid JSON data for bilibili video info action");
             if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
                 throw new InvalidDataException("Invalid JSON data for bilibili video info action");
-            var param = paramToken.ToObject<PreprocessActionParam.BilibiliVideoInfoActionParam>();
-            if (param is null) throw new InvalidDataException("Invalid JSON data for bilibili video info action");
+            var param = paramToken.ToObject<PreprocessActionParam.BilibiliVideoInfoActionParam>()
+                        ?? throw new InvalidDataException("Invalid JSON data for bilibili video info action");
             var playerService = BiliKernelProviderService.GetRequiredService<IPlayerService>();
             var info = await playerService.GetVideoPageDetailAsync(new(param.Id.ToString(), null, null))
                 .ConfigureAwait(false);
@@ -149,8 +149,8 @@ namespace RitsukageBot.Modules.AI
             if (data is null) throw new InvalidDataException("Invalid JSON data for bilibili user info action");
             if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
                 throw new InvalidDataException("Invalid JSON data for bilibili user info action");
-            var param = paramToken.ToObject<PreprocessActionParam.BilibiliUserInfoActionParam>();
-            if (param is null) throw new InvalidDataException("Invalid JSON data for bilibili user info action");
+            var param = paramToken.ToObject<PreprocessActionParam.BilibiliUserInfoActionParam>()
+                        ?? throw new InvalidDataException("Invalid JSON data for bilibili user info action");
             var userService = BiliKernelProviderService.GetRequiredService<IUserService>();
             var info = await userService.GetUserInformationAsync(param.Id.ToString())
                 .ConfigureAwait(false);
@@ -162,8 +162,8 @@ namespace RitsukageBot.Modules.AI
             if (data is null) throw new InvalidDataException("Invalid JSON data for bilibili live info action");
             if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
                 throw new InvalidDataException("Invalid JSON data for bilibili live info action");
-            var param = paramToken.ToObject<PreprocessActionParam.BilibiliLiveInfoActionParam>();
-            if (param is null) throw new InvalidDataException("Invalid JSON data for bilibili live info action");
+            var param = paramToken.ToObject<PreprocessActionParam.BilibiliLiveInfoActionParam>()
+                        ?? throw new InvalidDataException("Invalid JSON data for bilibili live info action");
             var liveService = BiliKernelProviderService.GetRequiredService<IPlayerService>();
             var info = await liveService.GetLivePageDetailAsync(new(param.Id.ToString(), null, null))
                 .ConfigureAwait(false);

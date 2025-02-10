@@ -88,7 +88,7 @@ namespace RitsukageBot.Library.Utils
             if (string.IsNullOrEmpty(value))
                 return string.Empty;
 
-            var encoded = HttpUtility.UrlEncode(value);
+            var encoded = HttpUtility.UrlPathEncode(value);
             return toUpper ? encoded.ToUpper() : encoded;
         }
 

@@ -443,7 +443,7 @@ namespace RitsukageBot.Modules.AI
         /// </summary>
         /// <returns></returns>
         [RequireOwner]
-        [SlashCommand("query_memory", "Query the short memory of the AI")]
+        [SlashCommand("query_memory", "Query the memory of the AI")]
         public async Task QueryMemory(SocketUser? user = null, ChatMemoryType type = ChatMemoryType.ShortTerm)
         {
             await DeferAsync().ConfigureAwait(false);

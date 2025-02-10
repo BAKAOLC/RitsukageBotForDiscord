@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Text;
 using Discord;
 using Discord.Commands;
 using Discord.Interactions;
@@ -19,6 +20,8 @@ using ZiggyCreatures.Caching.Fusion.Serialization.NewtonsoftJson;
 using RunMode = Discord.Commands.RunMode;
 
 Console.Title = "Ritsukage Bot";
+
+Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
 using var host = Host.CreateDefaultBuilder()
     .ConfigureHostConfiguration(configure =>

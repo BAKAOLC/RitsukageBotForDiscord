@@ -1,7 +1,9 @@
+using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
 using RitsukageBot.Library.Custom.Structs.Times;
+using RitsukageBot.Library.OpenApi;
 
 namespace RitsukageBot.Modules
 {
@@ -15,6 +17,11 @@ namespace RitsukageBot.Modules
         ///     Custom ID
         /// </summary>
         public const string CustomId = "time_interaction";
+
+        /// <summary>
+        ///     Http client factory
+        /// </summary>
+        public required IHttpClientFactory HttpClientFactory { get; set; }
 
         /// <summary>
         ///     Logger
@@ -98,6 +105,42 @@ namespace RitsukageBot.Modules
                 _ => "考完啦，放松一下吧",
             };
             await FollowupAsync(message).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        ///     Get calendar
+        /// </summary>
+        [SlashCommand("today", "Get calendar")]
+        public async Task GetCalendar()
+        {
+            await DeferAsync().ConfigureAwait(false);
+
+            var date = DateTimeOffset.Now.ToLocalTime();
+            var year = date.Year.ToString();
+            var month = date.Month.ToString();
+            var day = date.Day.ToString();
+            var days = await OpenApi.GetCalendarAsync(date).ConfigureAwait(false);
+            var today = days.FirstOrDefault(x => x.Year == year && x.Month == month && x.Day == day);
+            if (today is null)
+            {
+                var errorEmbed = new EmbedBuilder();
+                errorEmbed.WithTitle("Error");
+                errorEmbed.WithDescription("Failed to get calendar");
+                errorEmbed.WithColor(Color.Red);
+                await FollowupAsync(embed: errorEmbed.Build()).ConfigureAwait(false);
+                return;
+            }
+
+            var embed = new EmbedBuilder();
+            embed.WithTitle($"{today.ODate.LocalDateTime:yyyy-MM-dd} 星期{today.CnDay}");
+            embed.WithDescription($"{today.LunarYear}年{today.LMonth}月{today.LDate}日");
+            embed.AddField("宜", today.Suit);
+            embed.AddField("忌", today.Avoid);
+            if (today.FestivalInfoList is { Length: > 0 })
+                embed.AddField("节日",
+                    string.Join(", ", today.FestivalInfoList.Select(x => $"[{x.Name}]({x.BaikeUrl})")));
+
+            await FollowupAsync(embed: embed.Build()).ConfigureAwait(false);
         }
     }
 }

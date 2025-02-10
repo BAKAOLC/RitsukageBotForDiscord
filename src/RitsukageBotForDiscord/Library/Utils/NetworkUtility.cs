@@ -6,6 +6,7 @@ namespace RitsukageBot.Library.Utils
     public static class NetworkUtility
     {
         private static IHttpClientFactory? _httpClientFactory;
+        private static HttpClient? _httpClient;
 
         /// <summary>
         ///     Set the HTTP client factory.
@@ -23,8 +24,8 @@ namespace RitsukageBot.Library.Utils
         /// <exception cref="InvalidOperationException"></exception>
         public static HttpClient GetHttpClient()
         {
-            return _httpClientFactory?.CreateClient() ??
-                   throw new InvalidOperationException("HTTP client factory is not set.");
+            return _httpClient ??= _httpClientFactory?.CreateClient() ??
+                                   throw new InvalidOperationException("HTTP client factory is not set.");
         }
 
         /// <summary>

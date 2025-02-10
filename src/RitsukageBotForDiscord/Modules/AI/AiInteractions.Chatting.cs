@@ -313,6 +313,7 @@ namespace RitsukageBot.Modules.AI
             return (true, null);
         }
 
+        // ReSharper disable once CyclomaticComplexity
         private async Task<EmbedBuilder[]> ProgressActions(string jsonHeader)
         {
             if (string.IsNullOrWhiteSpace(jsonHeader)) return [];
@@ -321,6 +322,7 @@ namespace RitsukageBot.Modules.AI
             {
                 var actionArrayData = JArray.Parse(jsonHeader);
                 Logger.LogInformation("Processing the JSON header: {JsonHeader}", jsonHeader);
+                var showMemoryChange = ChatClientProvider.GetConfig<bool>("ShowMemoryChange");
                 foreach (var actionData in actionArrayData)
                 {
                     if (actionData is not JObject data) continue;
@@ -344,17 +346,23 @@ namespace RitsukageBot.Modules.AI
                             }
                             case "add_short_memory":
                             {
-                                await AddShortMemory(data).ConfigureAwait(false);
+                                var embed = await AddShortMemory(data).ConfigureAwait(false);
+                                if (embed is not null && showMemoryChange)
+                                    result.Add(embed);
                                 break;
                             }
                             case "add_long_memory":
                             {
-                                await AddLongMemory(data).ConfigureAwait(false);
+                                var embed = await AddLongMemory(data).ConfigureAwait(false);
+                                if (embed is not null && showMemoryChange)
+                                    result.Add(embed);
                                 break;
                             }
                             case "remove_long_memory":
                             {
-                                await RemoveLongMemory(data).ConfigureAwait(false);
+                                var embed = await RemoveLongMemory(data).ConfigureAwait(false);
+                                if (embed is not null && showMemoryChange)
+                                    result.Add(embed);
                                 break;
                             }
                         }
@@ -373,7 +381,7 @@ namespace RitsukageBot.Modules.AI
             }
 
             await ChatClientProvider.RefreshShortMemory(Context.User.Id).ConfigureAwait(false);
-            return result.ToArray();
+            return [.. result];
         }
 
         private async Task<EmbedBuilder?> ModifyGood(JObject data)
@@ -412,45 +420,57 @@ namespace RitsukageBot.Modules.AI
             return embedBuilder;
         }
 
-        private async Task AddShortMemory(JObject data)
+        private async Task<EmbedBuilder?> AddShortMemory(JObject data)
         {
             if (data is null) throw new InvalidDataException("Invalid JSON data for add_short_memory action");
             if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
                 throw new InvalidDataException("Invalid JSON data for add_short_memory action");
-            var param = paramToken.ToObject<ActionParam.ShortMemoryActionParam>();
-            if (param is null) throw new InvalidDataException("Invalid JSON data for add_short_memory action");
+            var param = paramToken.ToObject<ActionParam.ShortMemoryActionParam>()
+                        ?? throw new InvalidDataException("Invalid JSON data for add_short_memory action");
             if (string.IsNullOrWhiteSpace(param.Key) || string.IsNullOrWhiteSpace(param.Value))
                 throw new InvalidDataException("Invalid JSON data for add_short_memory action");
             await ChatClientProvider
                 .InsertMemory(Context.User.Id, ChatMemoryType.ShortTerm, param.Key, param.Value)
                 .ConfigureAwait(false);
+            var embed = new EmbedBuilder();
+            embed.WithColor(Color.DarkGreen);
+            embed.WithDescription($"Added short-term memory: {param.Key} = {param.Value}");
+            return embed;
         }
 
-        private async Task AddLongMemory(JObject data)
+        private async Task<EmbedBuilder?> AddLongMemory(JObject data)
         {
             if (data is null) throw new InvalidDataException("Invalid JSON data for add_long_memory action");
             if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
                 throw new InvalidDataException("Invalid JSON data for add_long_memory action");
-            var param = paramToken.ToObject<ActionParam.LongMemoryActionParam>();
-            if (param is null) throw new InvalidDataException("Invalid JSON data for add_long_memory action");
+            var param = paramToken.ToObject<ActionParam.LongMemoryActionParam>()
+                        ?? throw new InvalidDataException("Invalid JSON data for add_long_memory action");
             if (string.IsNullOrWhiteSpace(param.Key) || string.IsNullOrWhiteSpace(param.Value))
                 throw new InvalidDataException("Invalid JSON data for add_long_memory action");
             await ChatClientProvider
                 .InsertMemory(Context.User.Id, ChatMemoryType.LongTerm, param.Key, param.Value)
                 .ConfigureAwait(false);
+            var embed = new EmbedBuilder();
+            embed.WithColor(Color.DarkGreen);
+            embed.WithDescription($"Added long-term memory: {param.Key} = {param.Value}");
+            return embed;
         }
 
-        private async Task RemoveLongMemory(JObject data)
+        private async Task<EmbedBuilder?> RemoveLongMemory(JObject data)
         {
             if (data is null) throw new InvalidDataException("Invalid JSON data for remove_long_memory action");
             if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
                 throw new InvalidDataException("Invalid JSON data for remove_long_memory action");
-            var param = paramToken.ToObject<ActionParam.RemoveLongMemoryActionParam>();
-            if (param is null) throw new InvalidDataException("Invalid JSON data for remove_long_memory action");
+            var param = paramToken.ToObject<ActionParam.RemoveLongMemoryActionParam>()
+                        ?? throw new InvalidDataException("Invalid JSON data for remove_long_memory action");
             if (string.IsNullOrWhiteSpace(param.Key))
                 throw new InvalidDataException("Invalid JSON data for remove_long_memory action");
             await ChatClientProvider.RemoveMemory(Context.User.Id, ChatMemoryType.LongTerm, param.Key)
                 .ConfigureAwait(false);
+            var embed = new EmbedBuilder();
+            embed.WithColor(Color.DarkRed);
+            embed.WithDescription($"Removed long-term memory: {param.Key}");
+            return embed;
         }
 
         private static bool CheckUserInputMessage(IList<ChatMessage> messageList)

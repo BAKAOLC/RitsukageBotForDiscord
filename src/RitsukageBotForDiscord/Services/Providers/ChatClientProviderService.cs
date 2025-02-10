@@ -145,6 +145,16 @@ namespace RitsukageBot.Services.Providers
             return _configuration.GetSection("AI:Service").Get<EndpointConfig[]>() ?? [];
         }
 
+        /// <summary>
+        ///     Get config value
+        /// </summary>
+        /// <param name="key"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public T? GetConfig<T>(string key)
+        {
+            return _configuration.GetSection($"AI:Config:{key}").Get<T>();
+        }
 
         /// <summary>
         ///     Get assistant
