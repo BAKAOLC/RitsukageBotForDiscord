@@ -127,6 +127,7 @@ namespace RitsukageBot.Modules.AI
 
             var cancellationTokenSource = new CancellationTokenSource();
             bool valid;
+            var showBtn = true;
             lock (LockObject)
             {
                 valid = IsProcessing.TryAdd(Context.User.Id, cancellationTokenSource);
@@ -154,7 +155,11 @@ namespace RitsukageBot.Modules.AI
                 {
                     x.Content = null;
                     x.Embed = assistantEmbed.Build();
+                    x.Components = new ComponentBuilder()
+                        .WithButton("Cancel", $"{CustomId}:cancel_chat", ButtonStyle.Danger).Build();
                 }).ConfigureAwait(false);
+
+                showBtn = false;
 
                 var assistantMessage =
                     await TryPreprocessMessage(message, cancellationTokenSource.Token).ConfigureAwait(false);
@@ -186,7 +191,7 @@ namespace RitsukageBot.Modules.AI
 
             messageList.Add(userMessage);
 
-            await BeginChatAsync(messageList, role, 3, temperature, cancellationTokenSource.Token)
+            await BeginChatAsync(messageList, role, 3, temperature, showBtn, cancellationTokenSource.Token)
                 .ConfigureAwait(false);
             lock (LockObject)
             {

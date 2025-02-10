@@ -15,7 +15,7 @@ namespace RitsukageBot.Modules.AI
     public partial class AiInteractions
     {
         private async Task BeginChatAsync(IList<ChatMessage> messageList, string role,
-            int retry = 0, float temperature = 1.0f, CancellationToken cancellationToken = default)
+            int retry = 0, float temperature = 1.0f, bool showBtn = true, CancellationToken cancellationToken = default)
         {
             if (!CheckUserInputMessage(messageList))
             {
@@ -36,9 +36,6 @@ namespace RitsukageBot.Modules.AI
             Logger.LogInformation("User {UserId} sent a message to chat with AI: {Message}", Context.User.Id,
                 FormatJson(messageList.Last(x => x.Role == ChatRole.User).ToString()));
 
-            var component = new ComponentBuilder();
-            component.WithButton("Cancel", $"{CustomId}:cancel_chat", ButtonStyle.Danger);
-
             var waitEmbed = new EmbedBuilder();
             waitEmbed.WithTitle("Chatting with AI");
             waitEmbed.WithDescription("Getting response from the AI...");
@@ -48,7 +45,9 @@ namespace RitsukageBot.Modules.AI
             {
                 x.Content = null;
                 x.Embed = waitEmbed.Build();
-                x.Components = component.Build();
+                if (showBtn)
+                    x.Components = new ComponentBuilder()
+                        .WithButton("Cancel", $"{CustomId}:cancel_chat", ButtonStyle.Danger).Build();
             }).ConfigureAwait(false);
 
             var client = ChatClientProvider.GetFirstChatClient();
@@ -144,7 +143,8 @@ namespace RitsukageBot.Modules.AI
                 _ = Task.Run(async () =>
                     {
                         await foreach (var response in client.CompleteStreamingAsync(messageList,
-                                           new() { Temperature = temperature, MaxOutputTokens = 8192}, cancellationTokenSource2.Token))
+                                           new() { Temperature = temperature, MaxOutputTokens = 8192 },
+                                           cancellationTokenSource2.Token))
                         {
                             if (cancellationToken.IsCancellationRequested) return;
                             lock (lockObject)
