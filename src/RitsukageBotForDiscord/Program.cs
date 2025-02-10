@@ -25,10 +25,12 @@ Console.Title = "Ritsukage Bot";
 Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
 using var host = Host.CreateDefaultBuilder()
-    .ConfigureHostConfiguration(configure =>
+    .ConfigureAppConfiguration(configure =>
     {
         configure.SetBasePath(Directory.GetCurrentDirectory());
         configure.AddJsonFile("appsettings.json", true, true);
+        configure.AddJsonFile("appsettings.runtime.json", true, true);
+        configure.AddEnvironmentVariables();
     })
     .ConfigureLogging(builder =>
     {

@@ -156,18 +156,6 @@ namespace RitsukageBot.Services.HostedServices
             ZipFile.ExtractToDirectory("update.zip", "update", true);
             File.Delete("update.zip");
 
-            logger.LogDebug("Moving appsettings.json...");
-            var appSettingsPath = Path.Combine("update", "appsettings.json");
-            if (File.Exists(appSettingsPath))
-                try
-                {
-                    File.Move(appSettingsPath, Path.Combine("update", "appsettings.new.json"));
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "Failed to move appsettings.json");
-                }
-
             logger.LogDebug("Generating update script...");
             var scriptPath = await GenerateUpdateScriptAsync().ConfigureAwait(false);
             logger.LogDebug("Executing update script...");

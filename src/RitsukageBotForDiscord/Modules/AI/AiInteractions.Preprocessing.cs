@@ -1,3 +1,4 @@
+using System.Text;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -92,6 +93,13 @@ namespace RitsukageBot.Modules.AI
                                     dataList.Add(result);
                                 break;
                             }
+                            case "range_date_base_info":
+                            {
+                                var result = await PreprocessRangeDateBaseInfo(data).ConfigureAwait(false);
+                                if (!string.IsNullOrEmpty(result))
+                                    dataList.Add(result);
+                                break;
+                            }
                             case "bilibili_video_info":
                             {
                                 var result = await PreprocessBilibiliVideoInfo(data).ConfigureAwait(false);
@@ -145,7 +153,7 @@ namespace RitsukageBot.Modules.AI
             return $"[Google Search: \"{param.Query}\"]\n{string.Join("\n\n", resultStrings)}";
         }
 
-        private async Task<string> PreprocessDateBaseInfo(JObject data)
+        private static async Task<string> PreprocessDateBaseInfo(JObject data)
         {
             if (data is null) throw new InvalidDataException("Invalid JSON data for date base info action");
             if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
@@ -180,6 +188,53 @@ namespace RitsukageBot.Modules.AI
                    """
                 : "未找到相关信息";
             return $"[Date Base Info: {param.Date}]\n{todayString}";
+        }
+
+        private static async Task<string> PreprocessRangeDateBaseInfo(JObject data)
+        {
+            if (data is null) throw new InvalidDataException("Invalid JSON data for range date base info action");
+            if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
+                throw new InvalidDataException("Invalid JSON data for range  date base info action");
+            var param = paramToken.ToObject<PreprocessActionParam.RangeDateBaseInfoActionParam>()
+                        ?? throw new InvalidDataException("Invalid JSON data for range date base info action");
+            var days = new List<BaiduCalendarDay>();
+            var from = new DateTimeOffset(param.From, TimeSpan.FromHours(8));
+            var end = new DateTimeOffset(param.To, TimeSpan.FromHours(8));
+            var query = from;
+            while (query <= end)
+            {
+                var dayInfo = await OpenApi.GetCalendarAsync(query).ConfigureAwait(false);
+                days.AddRange(dayInfo);
+                query = query.AddMonths(1);
+            }
+
+            days = [.. days.Distinct().OrderBy(x => x.ODate).Where(x => x.ODate >= from && x.ODate <= end)];
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"[Range Date Base Info: {param.From} - {param.To}]");
+            sb.AppendLine("日期 | 星期 | 农历 | 工作日 | 节日");
+            sb.AppendLine("--- | --- | --- | --- | ---");
+            foreach (var day in days)
+            {
+                var workday = day.Status switch
+                {
+                    BaiduCalendarDayStatus.Holiday => "假期",
+                    BaiduCalendarDayStatus.Normal when day.CnDay is "六" or "日" => "假期",
+                    BaiduCalendarDayStatus.Workday => "工作日",
+                    BaiduCalendarDayStatus.Normal => "工作日",
+                    _ => "未知",
+                };
+                if (day.FestivalInfoList is { Length: > 0 })
+                    sb.AppendLine(
+                        $"{day.ODate:yyyy-MM-dd} | {day.CnDay} | {day.LunarYear}年{day.LMonth}月{day.LDate}日 | {workday} | {string.Join(", ", day.FestivalInfoList.Select(x => x.Name))}");
+                else
+                    sb.AppendLine(
+                        $"{day.ODate:yyyy-MM-dd} | {day.CnDay} | {day.LunarYear}年{day.LMonth}月{day.LDate}日 | {workday} | 无");
+            }
+
+            sb.AppendLine("---");
+            sb.Append($"共计{days.Count}天");
+            return sb.ToString();
         }
 
         private async Task<string> PreprocessBilibiliVideoInfo(JObject data)
@@ -231,6 +286,12 @@ namespace RitsukageBot.Modules.AI
             internal class DateBaseInfoActionParam
             {
                 [JsonProperty("date")] public DateTime Date { get; set; }
+            }
+
+            internal class RangeDateBaseInfoActionParam
+            {
+                [JsonProperty("from")] public DateTime From { get; set; }
+                [JsonProperty("to")] public DateTime To { get; set; }
             }
 
             internal class BilibiliVideoSearchActionParam
