@@ -24,10 +24,16 @@ namespace RitsukageBot.Modules.AI
                     return string.Empty;
                 }
 
+                var jsonData = new JObject
+                {
+                    ["time"] = Context.Interaction.CreatedAt,
+                    ["message"] = message,
+                };
+
                 var messageList = new List<ChatMessage>
                 {
                     prompt,
-                    new(ChatRole.User, message),
+                    new(ChatRole.User, jsonData.ToString()),
                 };
                 var resultCompletion = await chatClient.CompleteAsync(messageList, new()
                     {
