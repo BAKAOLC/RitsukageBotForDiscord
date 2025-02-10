@@ -55,7 +55,7 @@ namespace RitsukageBot.Library.OpenApi
         [property: JsonProperty("lunarYear")] string LunarYear,
         [property: JsonProperty("month")] string Month,
         [property: JsonProperty("oDate")] DateTimeOffset ODate,
-        [property: JsonProperty("status")] string Status,
+        [property: JsonProperty("status")] BaiduCalendarDayStatus Status,
         [property: JsonProperty("suit")] string Suit,
         [property: JsonProperty("timestamp")] string Timestamp,
         [property: JsonProperty("value")] string Value,
@@ -79,4 +79,25 @@ namespace RitsukageBot.Library.OpenApi
         [property: JsonProperty("baikeUrl")] string BaikeUrl,
         [property: JsonProperty("name")] string Name
     );
+
+    /// <summary>
+    ///     Baidu calendar day status
+    /// </summary>
+    public enum BaiduCalendarDayStatus
+    {
+        /// <summary>
+        ///     Normal
+        /// </summary>
+        Normal,
+
+        /// <summary>
+        ///     Holiday
+        /// </summary>
+        Holiday,
+
+        /// <summary>
+        ///     Workday
+        /// </summary>
+        Workday,
+    }
 }

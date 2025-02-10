@@ -133,7 +133,19 @@ namespace RitsukageBot.Modules
 
             var embed = new EmbedBuilder();
             embed.WithTitle($"{today.ODate.LocalDateTime:yyyy-MM-dd} 星期{today.CnDay}");
-            embed.WithDescription($"{today.LunarYear}年{today.LMonth}月{today.LDate}日");
+            switch (today.Status)
+            {
+                case BaiduCalendarDayStatus.Holiday:
+                case BaiduCalendarDayStatus.Normal when today.CnDay is "六" or "日":
+                    embed.WithDescription("假期");
+                    break;
+                case BaiduCalendarDayStatus.Workday:
+                case BaiduCalendarDayStatus.Normal:
+                    embed.WithDescription("工作日");
+                    break;
+            }
+
+            embed.AddField("农历", $"{today.LunarYear}年{today.LMonth}月{today.LDate}日");
             embed.AddField("宜", today.Suit);
             embed.AddField("忌", today.Avoid);
             if (today.FestivalInfoList is { Length: > 0 })

@@ -210,14 +210,23 @@ namespace RitsukageBot.Modules.Schedules
             var day = time.Day.ToString();
             var days = await OpenApi.GetCalendarAsync(time).ConfigureAwait(false);
             var today = days.FirstOrDefault(x => x.Year == year && x.Month == month && x.Day == day);
-            var hoilday = today?.FestivalInfoList is { Length: > 0 }
+            var holiday = today?.FestivalInfoList is { Length: > 0 }
                 ? string.Join(", ", today.FestivalInfoList.Select(x => x.Name))
                 : "今日无节日";
+            var workday = today?.Status switch
+            {
+                BaiduCalendarDayStatus.Holiday => "假期",
+                BaiduCalendarDayStatus.Normal when today.CnDay is "六" or "日" => "假期",
+                BaiduCalendarDayStatus.Workday => "工作日",
+                BaiduCalendarDayStatus.Normal => "工作日",
+                _ => "未知",
+            };
             var todayString = today is not null
                 ? $"""
                    北京时间：{time.Year}-{time.Month}-{time.Day} 星期{today.CnDay} {time.Hour}:{time.Minute}
                    农历：{today.LunarYear}年{today.LMonth}月{today.LDate}日
-                   节日：{hoilday}
+                   节日：{holiday}
+                   今天是{workday}
                    宜：{today.Suit}
                    忌：{today.Avoid}
                    """
