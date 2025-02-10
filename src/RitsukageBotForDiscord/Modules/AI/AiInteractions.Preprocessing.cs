@@ -1,11 +1,7 @@
-using System.Text;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Richasy.BiliKernel.Bili.Media;
-using Richasy.BiliKernel.Bili.User;
 using RitsukageBot.Library.Bilibili.Convertors;
-using RitsukageBot.Library.Data;
 using RitsukageBot.Library.OpenApi;
 using RitsukageBot.Services.Providers;
 using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
@@ -30,7 +26,6 @@ namespace RitsukageBot.Modules.AI
                 {
                     ["time"] = Context.Interaction.CreatedAt,
                     ["message"] = message,
-                    ["long_memory"] = await ChatClientProvider.GetMemory(ChatMemoryType.LongTerm).ConfigureAwait(false),
                 };
 
                 var messageList = new List<ChatMessage>
@@ -98,13 +93,6 @@ namespace RitsukageBot.Modules.AI
                             case "range_date_base_info":
                             {
                                 var result = await PreprocessRangeDateBaseInfo(data).ConfigureAwait(false);
-                                if (!string.IsNullOrEmpty(result))
-                                    dataList.Add(result);
-                                break;
-                            }
-                            case "query_memory":
-                            {
-                                var result = await PreprocessQueryMemory(data).ConfigureAwait(false);
                                 if (!string.IsNullOrEmpty(result))
                                     dataList.Add(result);
                                 break;
@@ -246,17 +234,6 @@ namespace RitsukageBot.Modules.AI
             return sb.ToString();
         }
 
-        private async Task<string> PreprocessQueryMemory(JObject data)
-        {
-            if (data is null) throw new InvalidDataException("Invalid JSON data for query memory action");
-            if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
-                throw new InvalidDataException("Invalid JSON data for query memory action");
-            var param = paramToken.ToObject<PreprocessActionParam.QueryMemoryActionParam>()
-                        ?? throw new InvalidDataException("Invalid JSON data for query memory action");
-            var memory = await ChatClientProvider.GetMemory(userId: param.Id);
-            return $"[Query Short-Term Memory: {param.Id}]\n{memory}";
-        }
-
         private async Task<string> PreprocessBilibiliVideoInfo(JObject data)
         {
             if (data is null) throw new InvalidDataException("Invalid JSON data for bilibili video info action");
@@ -312,11 +289,6 @@ namespace RitsukageBot.Modules.AI
             {
                 [JsonProperty("from")] public DateTime From { get; set; }
                 [JsonProperty("to")] public DateTime To { get; set; }
-            }
-
-            internal class QueryMemoryActionParam
-            {
-                [JsonProperty("id")] public ulong Id { get; set; }
             }
 
             internal class BilibiliVideoSearchActionParam

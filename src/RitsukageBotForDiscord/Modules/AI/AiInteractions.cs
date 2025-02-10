@@ -451,7 +451,7 @@ namespace RitsukageBot.Modules.AI
         {
             await DeferAsync().ConfigureAwait(false);
             user ??= Context.User;
-            var memory = await ChatClientProvider.GetMemory(type, user.Id).ConfigureAwait(false);
+            var memory = await ChatClientProvider.GetMemory(user.Id, type).ConfigureAwait(false);
             var embed = new EmbedBuilder();
             embed.WithAuthor(user);
             embed.WithTitle(type == ChatMemoryType.ShortTerm ? "Short Memory" : "Long Memory");

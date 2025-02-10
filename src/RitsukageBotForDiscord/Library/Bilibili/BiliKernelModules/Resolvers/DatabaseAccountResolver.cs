@@ -144,13 +144,13 @@ namespace RitsukageBot.Library.Bilibili.BiliKernelModules.Resolvers
 
     [JsonSourceGenerationOptions(WriteIndented = false)]
     [JsonSerializable(typeof(Dictionary<string, string>))]
-    internal class CookieSerializeContext : JsonSerializerContext
+    internal partial class CookieSerializeContext : JsonSerializerContext
     {
     }
 
     [JsonSourceGenerationOptions(WriteIndented = false)]
     [JsonSerializable(typeof(BiliToken))]
-    internal sealed class TokenSerializeContext : JsonSerializerContext
+    internal sealed partial class TokenSerializeContext : JsonSerializerContext
     {
     }
 }
