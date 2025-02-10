@@ -50,6 +50,10 @@ namespace RitsukageBot.Modules.AI
                 if (hasJsonHeader) return await ProgressPreprocessActions(jsonHeader!).ConfigureAwait(false);
                 return string.Empty;
             }
+            catch (OperationCanceledException)
+            {
+                Logger.LogWarning("Preprocessing operation has been canceled");
+            }
             catch (Exception e)
             {
                 Logger.LogError(e, "Error while preprocessing the message");
