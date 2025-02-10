@@ -1,3 +1,4 @@
+using Discord;
 using RitsukageBot.Library.Data;
 
 namespace RitsukageBot.Modules.AI
@@ -5,6 +6,19 @@ namespace RitsukageBot.Modules.AI
     // ReSharper disable once MismatchedFileName
     public partial class AiInteractions
     {
+        private async Task<bool> CheckEnabled()
+        {
+            if (ChatClientProvider.IsEnabled())
+                return true;
+
+            var embed = new EmbedBuilder();
+            embed.WithTitle("Error");
+            embed.WithDescription("AI chat is disabled.");
+            embed.WithColor(Color.Red);
+            await FollowupAsync(embed: embed.Build(), ephemeral: true).ConfigureAwait(false);
+            return false;
+        }
+
         private async Task<DiscordChannelConfiguration> GetConfigAsync(ulong channelId)
         {
             var (_, config) = await DatabaseProviderService.GetOrCreateAsync<DiscordChannelConfiguration>(channelId)

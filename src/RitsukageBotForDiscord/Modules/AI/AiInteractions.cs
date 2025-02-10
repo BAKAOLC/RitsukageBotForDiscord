@@ -81,6 +81,8 @@ namespace RitsukageBot.Modules.AI
         {
             await DeferAsync().ConfigureAwait(false);
 
+            if (!await CheckEnabled().ConfigureAwait(false)) return;
+
             bool isChatting;
             lock (LockObject)
             {
