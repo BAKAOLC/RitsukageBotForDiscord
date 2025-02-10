@@ -314,15 +314,21 @@ namespace RitsukageBot.Services.Providers
         /// <summary>
         ///     Get memory
         /// </summary>
-        /// <param name="userId"></param>
         /// <param name="type"></param>
+        /// <param name="userId"></param>
         /// <returns></returns>
-        public async Task<JArray> GetMemory(ulong userId, ChatMemoryType type = ChatMemoryType.ShortTerm)
+        public async Task<JArray> GetMemory(ChatMemoryType type = ChatMemoryType.ShortTerm, ulong userId = 0)
         {
             var table = _databaseProviderService.Table<ChatMemory>();
-            var memory = await table.Where(x => x.UserId == userId && x.Type == type)
-                .OrderBy(x => x.Timestamp)
-                .ToArrayAsync().ConfigureAwait(false);
+            ChatMemory[]? memory = null;
+            if (userId == 0)
+                memory = await table.Where(x => x.Type == type)
+                    .OrderBy(x => x.Timestamp)
+                    .ToArrayAsync().ConfigureAwait(false);
+            else
+                memory = await table.Where(x => x.UserId == userId && x.Type == type)
+                    .OrderBy(x => x.Timestamp)
+                    .ToArrayAsync().ConfigureAwait(false);
 
             if (memory.Length == 0) return [];
 
@@ -330,6 +336,7 @@ namespace RitsukageBot.Services.Providers
             foreach (var item in memory)
                 data.Add(new JObject
                 {
+                    ["user"] = item.UserId,
                     ["key"] = item.Key,
                     ["value"] = item.Value,
                 });
@@ -429,8 +436,8 @@ namespace RitsukageBot.Services.Providers
             {
                 var (_, userInfo) = await _databaseProviderService.GetOrCreateAsync<ChatUserInformation>(id.Value)
                     .ConfigureAwait(false);
-                var shortMemory = await GetMemory(id.Value).ConfigureAwait(false);
-                var longMemory = await GetMemory(id.Value, ChatMemoryType.LongTerm).ConfigureAwait(false);
+                var shortMemory = await GetMemory().ConfigureAwait(false);
+                var longMemory = await GetMemory(ChatMemoryType.LongTerm).ConfigureAwait(false);
                 data["short_memory"] = shortMemory;
                 data["long_memory"] = longMemory;
                 data["good"] = userInfo.Good;
@@ -442,6 +449,7 @@ namespace RitsukageBot.Services.Providers
             var jObject = new JObject
             {
                 ["name"] = name,
+                ["discord_id"] = id,
                 ["message"] = message,
                 ["data"] = data,
             };
