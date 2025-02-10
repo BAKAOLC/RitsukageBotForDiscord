@@ -100,6 +100,13 @@ namespace RitsukageBot.Modules.AI
                                     dataList.Add(result);
                                 break;
                             }
+                            case "query_memory":
+                            {
+                                var result = await PreprocessQueryMemory(data).ConfigureAwait(false);
+                                if (!string.IsNullOrEmpty(result))
+                                    dataList.Add(result);
+                                break;
+                            }
                             case "bilibili_video_info":
                             {
                                 var result = await PreprocessBilibiliVideoInfo(data).ConfigureAwait(false);
@@ -179,7 +186,7 @@ namespace RitsukageBot.Modules.AI
             };
             var todayString = today is not null
                 ? $"""
-                   北京时间：{time.Year}-{time.Month}-{time.Day} 星期{today.CnDay} {time.Hour}:{time.Minute}
+                   北京时间：{time:yyyy-MM-dd} 星期{today.CnDay}
                    农历：{today.LunarYear}年{today.LMonth}月{today.LDate}日
                    节日：{holiday}
                    今天是{workday}
@@ -187,7 +194,7 @@ namespace RitsukageBot.Modules.AI
                    忌：{today.Avoid}
                    """
                 : "未找到相关信息";
-            return $"[Date Base Info: {param.Date}]\n{todayString}";
+            return $"[Date Base Info: {param.Date:yyyy-MM-dd}]\n{todayString}";
         }
 
         private static async Task<string> PreprocessRangeDateBaseInfo(JObject data)
@@ -235,6 +242,17 @@ namespace RitsukageBot.Modules.AI
             sb.AppendLine("---");
             sb.Append($"共计{days.Count}天");
             return sb.ToString();
+        }
+
+        private async Task<string> PreprocessQueryMemory(JObject data)
+        {
+            if (data is null) throw new InvalidDataException("Invalid JSON data for query memory action");
+            if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
+                throw new InvalidDataException("Invalid JSON data for query memory action");
+            var param = paramToken.ToObject<PreprocessActionParam.QueryMemoryActionParam>()
+                        ?? throw new InvalidDataException("Invalid JSON data for query memory action");
+            var memory = await ChatClientProvider.GetMemory(userId: param.Id);
+            return $"[Query Short-Term Memory: {param.Id}]\n{memory}";
         }
 
         private async Task<string> PreprocessBilibiliVideoInfo(JObject data)
@@ -292,6 +310,11 @@ namespace RitsukageBot.Modules.AI
             {
                 [JsonProperty("from")] public DateTime From { get; set; }
                 [JsonProperty("to")] public DateTime To { get; set; }
+            }
+
+            internal class QueryMemoryActionParam
+            {
+                [JsonProperty("id")] public ulong Id { get; set; }
             }
 
             internal class BilibiliVideoSearchActionParam

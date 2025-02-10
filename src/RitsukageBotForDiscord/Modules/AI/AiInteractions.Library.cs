@@ -1,4 +1,6 @@
 using Discord;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using RitsukageBot.Library.Data;
 
 namespace RitsukageBot.Modules.AI
@@ -17,6 +19,11 @@ namespace RitsukageBot.Modules.AI
             embed.WithColor(Color.Red);
             await FollowupAsync(embed: embed.Build(), ephemeral: true).ConfigureAwait(false);
             return false;
+        }
+
+        private string FormatJson(string json)
+        {
+            return JToken.Parse(json).ToString(Formatting.Indented);
         }
 
         private async Task<DiscordChannelConfiguration> GetConfigAsync(ulong channelId)

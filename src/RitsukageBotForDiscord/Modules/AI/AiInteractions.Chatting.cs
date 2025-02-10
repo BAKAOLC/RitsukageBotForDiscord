@@ -34,7 +34,7 @@ namespace RitsukageBot.Modules.AI
             }
 
             Logger.LogInformation("User {UserId} sent a message to chat with AI: {Message}", Context.User.Id,
-                messageList.Last(x => x.Role == ChatRole.User).ToString());
+                FormatJson(messageList.Last(x => x.Role == ChatRole.User).ToString()));
 
             var component = new ComponentBuilder();
             component.WithButton("Cancel", $"{CustomId}:cancel_chat", ButtonStyle.Danger);
@@ -324,7 +324,6 @@ namespace RitsukageBot.Modules.AI
                 Logger.LogInformation("Processing the JSON header: {JsonHeader}", jsonHeader);
                 var showMemoryChange = ChatClientProvider.GetConfig<bool>("ShowMemoryChange");
                 foreach (var data in actionArrayData.OfType<JObject>())
-                {
                     try
                     {
                         var actionType = data.Value<string>("action");
@@ -370,7 +369,6 @@ namespace RitsukageBot.Modules.AI
                     {
                         Logger.LogError(ex, "Error while processing the JSON action: {Json}", data.ToString());
                     }
-                }
             }
             catch (Exception ex)
             {

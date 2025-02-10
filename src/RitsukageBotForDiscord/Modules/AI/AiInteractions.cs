@@ -421,10 +421,13 @@ namespace RitsukageBot.Modules.AI
                     embeds.Add(embed);
                 }
 
-                await FollowupAsync(embeds: embeds.Select(x
-                    => x.WithFooter("DeepSeek", "https://avatars.githubusercontent.com/u/148330874")
-                        .WithTimestamp(time)
-                        .Build()).ToArray()).ConfigureAwait(false);
+                await FollowupAsync(embeds:
+                [
+                    .. embeds.Select(x
+                        => x.WithFooter("DeepSeek", "https://avatars.githubusercontent.com/u/148330874")
+                            .WithTimestamp(time)
+                            .Build()),
+                ]).ConfigureAwait(false);
             }
             else
             {

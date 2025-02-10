@@ -5,6 +5,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RitsukageBot.Library.Data;
 using ChatClientBuilder = Microsoft.Extensions.AI.ChatClientBuilder;
@@ -316,32 +317,77 @@ namespace RitsukageBot.Services.Providers
         /// </summary>
         /// <param name="type"></param>
         /// <param name="userId"></param>
+        /// <param name="limit"></param>
+        /// <param name="excludeUserId"></param>
         /// <returns></returns>
-        public async Task<JArray> GetMemory(ChatMemoryType type = ChatMemoryType.ShortTerm, ulong userId = 0)
+        public async Task<JObject> GetMemory(ChatMemoryType type = ChatMemoryType.ShortTerm, ulong userId = 0,
+            int limit = 0, bool excludeUserId = false)
         {
             var table = _databaseProviderService.Table<ChatMemory>();
-            ChatMemory[]? memory = null;
+            ChatMemory[]? memory;
             if (userId == 0)
-                memory = await table.Where(x => x.Type == type)
+            {
+                if (limit > 0)
+                    memory = await table.Where(x => x.Type == type)
+                        .OrderByDescending(x => x.Timestamp)
+                        .Take(limit)
+                        .OrderBy(x => x.Timestamp)
+                        .ToArrayAsync().ConfigureAwait(false);
+                else
+                    memory = await table.Where(x => x.Type == type)
+                        .OrderBy(x => x.Timestamp)
+                        .ToArrayAsync().ConfigureAwait(false);
+            }
+            else if (excludeUserId)
+            {
+                if (limit > 0)
+                    memory = await table.Where(x => x.UserId != userId && x.Type == type)
+                        .OrderByDescending(x => x.Timestamp)
+                        .Take(limit)
+                        .OrderBy(x => x.Timestamp)
+                        .ToArrayAsync().ConfigureAwait(false);
+                else
+                    memory = await table.Where(x => x.UserId != userId && x.Type == type)
+                        .OrderBy(x => x.Timestamp)
+                        .ToArrayAsync().ConfigureAwait(false);
+            }
+            else if (limit > 0)
+            {
+                memory = await table.Where(x => x.UserId == userId && x.Type == type)
+                    .OrderByDescending(x => x.Timestamp)
+                    .Take(limit)
                     .OrderBy(x => x.Timestamp)
                     .ToArrayAsync().ConfigureAwait(false);
+            }
             else
+            {
                 memory = await table.Where(x => x.UserId == userId && x.Type == type)
                     .OrderBy(x => x.Timestamp)
                     .ToArrayAsync().ConfigureAwait(false);
+            }
+
+            if (limit > 0 && memory.Length > limit)
+                memory = [.. memory.Take(limit)];
 
             if (memory.Length == 0) return [];
 
-            var data = new JArray();
+            var userMemory = new Dictionary<ulong, List<JObject>>();
             foreach (var item in memory)
-                data.Add(new JObject
+            {
+                if (!userMemory.TryGetValue(item.UserId, out var list))
                 {
-                    ["user"] = item.UserId,
+                    list = [];
+                    userMemory[item.UserId] = list;
+                }
+
+                list.Add(new()
+                {
                     ["key"] = item.Key,
                     ["value"] = item.Value,
                 });
+            }
 
-            return data;
+            return JObject.FromObject(userMemory);
         }
 
         /// <summary>
@@ -436,7 +482,7 @@ namespace RitsukageBot.Services.Providers
             {
                 var (_, userInfo) = await _databaseProviderService.GetOrCreateAsync<ChatUserInformation>(id.Value)
                     .ConfigureAwait(false);
-                var shortMemory = await GetMemory().ConfigureAwait(false);
+                var shortMemory = await GetMemory(userId: id.Value).ConfigureAwait(false);
                 var longMemory = await GetMemory(ChatMemoryType.LongTerm).ConfigureAwait(false);
                 data["short_memory"] = shortMemory;
                 data["long_memory"] = longMemory;
@@ -453,7 +499,7 @@ namespace RitsukageBot.Services.Providers
                 ["message"] = message,
                 ["data"] = data,
             };
-            return new(ChatRole.User, jObject.ToString());
+            return new(ChatRole.User, jObject.ToString(Formatting.None));
         }
 
         /// <summary>
