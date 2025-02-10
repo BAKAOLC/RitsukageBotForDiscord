@@ -5,6 +5,7 @@ using Newtonsoft.Json.Linq;
 using Richasy.BiliKernel.Bili.Media;
 using Richasy.BiliKernel.Bili.User;
 using RitsukageBot.Library.Bilibili.Convertors;
+using RitsukageBot.Library.Data;
 using RitsukageBot.Library.OpenApi;
 using RitsukageBot.Services.Providers;
 using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
@@ -29,6 +30,7 @@ namespace RitsukageBot.Modules.AI
                 {
                     ["time"] = Context.Interaction.CreatedAt,
                     ["message"] = message,
+                    ["long_memory"] = await ChatClientProvider.GetMemory(ChatMemoryType.LongTerm).ConfigureAwait(false),
                 };
 
                 var messageList = new List<ChatMessage>
