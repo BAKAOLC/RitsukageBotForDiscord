@@ -480,7 +480,7 @@ namespace RitsukageBot.Modules.AI
         /// <returns></returns>
         [RequireOwner]
         [SlashCommand("remove_memory", "Remove the memory of the AI")]
-        public async Task RemoveMemory(SocketUser user, string key, ChatMemoryType type = ChatMemoryType.ShortTerm)
+        public async Task RemoveMemory(SocketUser user, string key, ChatMemoryType type = ChatMemoryType.LongTerm)
         {
             await DeferAsync().ConfigureAwait(false);
             var keys = key.Split('|', StringSplitOptions.RemoveEmptyEntries);
