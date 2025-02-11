@@ -387,14 +387,14 @@ namespace RitsukageBot.Services.Providers
                 var (_, userInfo) = await _databaseProviderService.GetOrCreateAsync<ChatUserInformation>(id.Value)
                     .ConfigureAwait(false);
                 var shortMemory = await GetMemory(id.Value).ConfigureAwait(false);
-                var longMemory = await GetMemory(id.Value, ChatMemoryType.LongTerm).ConfigureAwait(false);
+                var innerLongMemory = await GetMemory(id.Value, ChatMemoryType.LongTerm).ConfigureAwait(false);
+                var longMemory = new JObject();
                 var chatHistory = new JObject();
-                foreach (var (key, value) in longMemory)
+                foreach (var (key, value) in innerLongMemory)
                     if (key.StartsWith("chat_history_"))
-                    {
                         chatHistory[key] = value;
-                        longMemory.Remove(key);
-                    }
+                    else
+                        longMemory[key] = value;
 
                 data["short_memory"] = shortMemory;
                 data["long_memory"] = longMemory;
