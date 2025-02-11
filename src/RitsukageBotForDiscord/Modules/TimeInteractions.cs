@@ -116,11 +116,8 @@ namespace RitsukageBot.Modules
             await DeferAsync().ConfigureAwait(false);
 
             var date = DateTimeOffset.Now.ToLocalTime();
-            var year = date.Year.ToString();
-            var month = date.Month.ToString();
-            var day = date.Day.ToString();
             var days = await OpenApi.GetCalendarAsync(date).ConfigureAwait(false);
-            var today = days.FirstOrDefault(x => x.Year == year && x.Month == month && x.Day == day);
+            var today = days.FirstOrDefault(x => x.ODate.ToLocalTime().Date == date.Date);
             if (today is null)
             {
                 var errorEmbed = new EmbedBuilder();

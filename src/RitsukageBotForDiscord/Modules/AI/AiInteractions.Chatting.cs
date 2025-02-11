@@ -379,6 +379,7 @@ namespace RitsukageBot.Modules.AI
                                 break;
                             }
                             case "remove_long_memory":
+                            case "remove_chat_history":
                             {
                                 var embed = await RemoveLongMemory(data).ConfigureAwait(false);
                                 if (embed is not null && showMemoryChange)

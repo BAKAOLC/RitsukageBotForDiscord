@@ -388,8 +388,17 @@ namespace RitsukageBot.Services.Providers
                     .ConfigureAwait(false);
                 var shortMemory = await GetMemory(id.Value).ConfigureAwait(false);
                 var longMemory = await GetMemory(id.Value, ChatMemoryType.LongTerm).ConfigureAwait(false);
+                var chatHistory = new JObject();
+                foreach (var (key, value) in longMemory)
+                    if (key.StartsWith("chat_history_"))
+                    {
+                        chatHistory[key] = value;
+                        longMemory.Remove(key);
+                    }
+
                 data["short_memory"] = shortMemory;
                 data["long_memory"] = longMemory;
+                data["chat_history"] = chatHistory;
                 data["good"] = userInfo.Good;
             }
 
