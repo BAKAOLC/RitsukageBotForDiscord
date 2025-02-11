@@ -312,7 +312,28 @@ namespace RitsukageBot.Modules.AI
                 x.Embeds = resultEmbeds?.Select(embed => embed.Build()).ToArray();
             }).ConfigureAwait(false);
 
+            var userMessage = messageList.Last(x => x.Role == ChatRole.User).ToString();
+            var userMessageData = JObject.Parse(userMessage);
+            var userMessageObject = userMessageData.ToObject<UserMessage>();
+            if (userMessageObject is not null)
+                await InsertChatHistory(Context.Interaction.CreatedAt, userMessageObject.Message, content)
+                    .ConfigureAwait(false);
+
             return (true, null);
+        }
+
+        private async Task InsertChatHistory(DateTimeOffset time, string message, string reply)
+        {
+            if (string.IsNullOrWhiteSpace(message) || string.IsNullOrWhiteSpace(reply)) return;
+            time = time.ToUniversalTime();
+            var key = $"chat_history_{time:yyyy-MM-ddTHH:mm:ssZ}";
+            var value = new JObject
+            {
+                ["message"] = message,
+                ["reply"] = reply,
+            }.ToString(Formatting.None);
+            await ChatClientProvider.InsertMemory(Context.User.Id, ChatMemoryType.LongTerm, key, value)
+                .ConfigureAwait(false);
         }
 
         // ReSharper disable once CyclomaticComplexity
@@ -506,6 +527,12 @@ namespace RitsukageBot.Modules.AI
             if (lastUserMessage is not null)
                 userInputMessage = lastUserMessage.ToString();
             return !string.IsNullOrWhiteSpace(userInputMessage);
+        }
+
+        private class UserMessage
+        {
+            [JsonProperty("name")] public string Name { get; set; } = string.Empty;
+            [JsonProperty("message")] public string Message { get; set; } = string.Empty;
         }
 
         private static class ActionParam
