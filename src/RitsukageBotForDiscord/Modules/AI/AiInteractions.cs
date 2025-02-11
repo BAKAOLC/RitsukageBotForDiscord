@@ -458,8 +458,16 @@ namespace RitsukageBot.Modules.AI
         public async Task QueryMemory(SocketUser user, ChatMemoryType type = ChatMemoryType.ShortTerm)
         {
             await DeferAsync().ConfigureAwait(false);
-            user ??= Context.User;
             var memory = await ChatClientProvider.GetMemory(user.Id, type).ConfigureAwait(false);
+            if (type == ChatMemoryType.LongTerm)
+            {
+                var longMemory = new JObject();
+                foreach (var (key, value) in memory)
+                    if (!key.StartsWith("chat_history_"))
+                        longMemory[key] = value;
+                memory = longMemory;
+            }
+
             var embed = new EmbedBuilder();
             embed.WithAuthor(user);
             embed.WithTitle(type == ChatMemoryType.ShortTerm ? "Short Memory" : "Long Memory");
