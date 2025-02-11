@@ -51,7 +51,8 @@ namespace RitsukageBot.Modules.AI
 
             var endpointConfig = ChatClientProvider.GetFirstChatEndpoint();
             var (isSuccess, errorMessage) =
-                await TryGettingResponse(messageList, role, endpointConfig, temperature, cancellationToken: cancellationToken)
+                await TryGettingResponse(messageList, role, endpointConfig, temperature,
+                        cancellationToken: cancellationToken)
                     .ConfigureAwait(false);
             if (isSuccess) return;
             if (cancellationToken.IsCancellationRequested) return;
@@ -83,7 +84,8 @@ namespace RitsukageBot.Modules.AI
                         x.Embed = retryEmbed.Build();
                     }).ConfigureAwait(false);
                     (isSuccess, errorMessage) =
-                        await TryGettingResponse(messageList, role, endpointConfig, cancellationToken: cancellationToken)
+                        await TryGettingResponse(messageList, role, endpointConfig,
+                                cancellationToken: cancellationToken)
                             .ConfigureAwait(false);
                     if (isSuccess) return;
                     if (cancellationToken.IsCancellationRequested) return;
@@ -424,14 +426,23 @@ namespace RitsukageBot.Modules.AI
                 throw new InvalidDataException("Invalid JSON data for add_short_memory action");
             var param = paramToken.ToObject<ActionParam.ShortMemoryActionParam>()
                         ?? throw new InvalidDataException("Invalid JSON data for add_short_memory action");
-            if (string.IsNullOrWhiteSpace(param.Key) || string.IsNullOrWhiteSpace(param.Value))
+            if (param.Data.Count == 0)
                 throw new InvalidDataException("Invalid JSON data for add_short_memory action");
-            await ChatClientProvider
-                .InsertMemory(Context.User.Id, ChatMemoryType.ShortTerm, param.Key, param.Value)
-                .ConfigureAwait(false);
+
+            var sb = new StringBuilder();
+            foreach (var (key, value) in param.Data)
+            {
+                if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(value?.ToString()))
+                    continue;
+                await ChatClientProvider
+                    .InsertMemory(Context.User.Id, ChatMemoryType.ShortTerm, key, value.ToString())
+                    .ConfigureAwait(false);
+                sb.Append($"{key} = {value}\n");
+            }
+
             var embed = new EmbedBuilder();
             embed.WithColor(Color.DarkGreen);
-            embed.WithDescription($"Added short-term memory: {param.Key} = {param.Value}");
+            embed.WithDescription($"Added short-term memory: \n{sb}");
             return embed;
         }
 
@@ -442,14 +453,23 @@ namespace RitsukageBot.Modules.AI
                 throw new InvalidDataException("Invalid JSON data for add_long_memory action");
             var param = paramToken.ToObject<ActionParam.LongMemoryActionParam>()
                         ?? throw new InvalidDataException("Invalid JSON data for add_long_memory action");
-            if (string.IsNullOrWhiteSpace(param.Key) || string.IsNullOrWhiteSpace(param.Value))
+            if (param.Data.Count == 0)
                 throw new InvalidDataException("Invalid JSON data for add_long_memory action");
-            await ChatClientProvider
-                .InsertMemory(Context.User.Id, ChatMemoryType.LongTerm, param.Key, param.Value)
-                .ConfigureAwait(false);
+
+            var sb = new StringBuilder();
+            foreach (var (key, value) in param.Data)
+            {
+                if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(value?.ToString()))
+                    continue;
+                await ChatClientProvider
+                    .InsertMemory(Context.User.Id, ChatMemoryType.LongTerm, key, value.ToString())
+                    .ConfigureAwait(false);
+                sb.Append($"{key} = {value}\n");
+            }
+
             var embed = new EmbedBuilder();
             embed.WithColor(Color.DarkGreen);
-            embed.WithDescription($"Added long-term memory: {param.Key} = {param.Value}");
+            embed.WithDescription($"Added long-term memory: \n{sb}");
             return embed;
         }
 
@@ -460,13 +480,22 @@ namespace RitsukageBot.Modules.AI
                 throw new InvalidDataException("Invalid JSON data for remove_long_memory action");
             var param = paramToken.ToObject<ActionParam.RemoveLongMemoryActionParam>()
                         ?? throw new InvalidDataException("Invalid JSON data for remove_long_memory action");
-            if (string.IsNullOrWhiteSpace(param.Key))
+            if (param.Keys.Length == 0)
                 throw new InvalidDataException("Invalid JSON data for remove_long_memory action");
-            await ChatClientProvider.RemoveMemory(Context.User.Id, ChatMemoryType.LongTerm, param.Key)
-                .ConfigureAwait(false);
+
+            var sb = new StringBuilder();
+            foreach (var key in param.Keys)
+            {
+                if (string.IsNullOrWhiteSpace(key))
+                    continue;
+                await ChatClientProvider.RemoveMemory(Context.User.Id, ChatMemoryType.LongTerm, key)
+                    .ConfigureAwait(false);
+                sb.Append($"{key}\n");
+            }
+
             var embed = new EmbedBuilder();
             embed.WithColor(Color.DarkRed);
-            embed.WithDescription($"Removed long-term memory: {param.Key}");
+            embed.WithDescription($"Removed long-term memory: \n{sb}");
             return embed;
         }
 
@@ -490,21 +519,17 @@ namespace RitsukageBot.Modules.AI
 
             internal class ShortMemoryActionParam
             {
-                [JsonProperty("key")] public string Key { get; set; } = string.Empty;
-
-                [JsonProperty("value")] public string Value { get; set; } = string.Empty;
+                [JsonProperty("data")] public JObject Data { get; set; } = [];
             }
 
             internal class LongMemoryActionParam
             {
-                [JsonProperty("key")] public string Key { get; set; } = string.Empty;
-
-                [JsonProperty("value")] public string Value { get; set; } = string.Empty;
+                [JsonProperty("data")] public JObject Data { get; set; } = [];
             }
 
             internal class RemoveLongMemoryActionParam
             {
-                [JsonProperty("key")] public string Key { get; set; } = string.Empty;
+                [JsonProperty("keys")] public string[] Keys { get; set; } = [];
             }
         }
     }
