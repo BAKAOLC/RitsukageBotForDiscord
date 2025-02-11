@@ -475,22 +475,52 @@ namespace RitsukageBot.Modules.AI
         ///     Remove the memory of the AI
         /// </summary>
         /// <param name="user"></param>
-        /// <param name="key"></param>
         /// <param name="type"></param>
+        /// <param name="key"></param>
         /// <returns></returns>
         [RequireOwner]
         [SlashCommand("remove_memory", "Remove the memory of the AI")]
-        public async Task RemoveMemory(SocketUser user, string key, ChatMemoryType type = ChatMemoryType.ShortTerm)
+        public async Task RemoveMemory(SocketUser user, ChatMemoryType type = ChatMemoryType.ShortTerm,
+            params string[] key)
         {
             await DeferAsync().ConfigureAwait(false);
-            await ChatClientProvider.RemoveMemory(user.Id, type, key);
+            foreach (var k in key)
+                await ChatClientProvider.RemoveMemory(user.Id, type, k);
             var embed = new EmbedBuilder();
             embed.WithAuthor(user);
             embed.WithTitle("Remove Memory");
-            embed.WithDescription($"The memory `{key}` has been removed");
+            embed.WithDescription($"The memory has been removed: \n{string.Join('\n', key)}");
             embed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
             embed.WithCurrentTimestamp();
-            embed.WithColor(Color.Green);
+            embed.WithColor(Color.DarkRed);
+            await FollowupAsync(embed: embed.Build()).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        ///     Clear the context of the AI
+        /// </summary>
+        /// <returns></returns>
+        [SlashCommand("clear_context", "Clear the context of the AI")]
+        public async Task ClearContext()
+        {
+            await DeferAsync().ConfigureAwait(false);
+            var memory = await ChatClientProvider.GetMemory(Context.User.Id, ChatMemoryType.LongTerm)
+                .ConfigureAwait(false);
+            var keys = new List<string>();
+            foreach (var key in memory)
+                if (key.Key.StartsWith("chat_history_"))
+                {
+                    await ChatClientProvider.RemoveMemory(Context.User.Id, ChatMemoryType.LongTerm, key.Key);
+                    keys.Add(key.Key);
+                }
+
+            var embed = new EmbedBuilder();
+            embed.WithAuthor(Context.User);
+            embed.WithTitle("Clear Context");
+            embed.WithDescription($"Clear long-term memory context: \n{string.Join('\n', keys)}");
+            embed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
+            embed.WithCurrentTimestamp();
+            embed.WithColor(Color.DarkRed);
             await FollowupAsync(embed: embed.Build()).ConfigureAwait(false);
         }
 
