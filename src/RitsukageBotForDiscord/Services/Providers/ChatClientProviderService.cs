@@ -447,7 +447,7 @@ namespace RitsukageBot.Services.Providers
             }
 
             content = jsonStringBuilder.Length < response.Length
-                ? response[(jsonStringBuilder.Length + 1)..]
+                ? response[(jsonStringBuilder.Length + 1)..].Trim()
                 : string.Empty;
             jsonHeader = jsonStringBuilder.ToString().Trim();
             return true;
@@ -464,9 +464,8 @@ namespace RitsukageBot.Services.Providers
 
             if (!response.StartsWith("<think>"))
             {
-                if (CheckJsonHeader(response, out var content, out var jsonHeader))
-                    return (true, content, jsonHeader, null);
-                return (false, content, null, null);
+                var hasJsonHeader = CheckJsonHeader(response, out var content, out var jsonHeader);
+                return (hasJsonHeader, content, jsonHeader, null);
             }
 
             {
@@ -476,12 +475,12 @@ namespace RitsukageBot.Services.Providers
                 var thinkEndIndex = response.IndexOf("</think>", StringComparison.Ordinal);
                 if (thinkEndIndex != -1)
                 {
-                    thinkContent = response[7..thinkEndIndex];
-                    content = response[(thinkEndIndex + 8)..];
+                    thinkContent = response[7..thinkEndIndex].Trim();
+                    content = response[(thinkEndIndex + 8)..].Trim();
                 }
                 else
                 {
-                    thinkContent = response[7..];
+                    thinkContent = response[7..].Trim();
                 }
 
                 var lines = thinkContent.Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries);
@@ -492,7 +491,7 @@ namespace RitsukageBot.Services.Providers
                     sb.AppendLine(line);
                 }
 
-                if (string.IsNullOrWhiteSpace(content)) return (false, string.Empty, null, sb.ToString());
+                if (string.IsNullOrEmpty(content)) return (false, string.Empty, null, sb.ToString());
                 var hasJsonHeader = CheckJsonHeader(content, out content, out var jsonHeader);
                 return (hasJsonHeader, content, jsonHeader, sb.ToString());
             }
