@@ -4,6 +4,8 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using RitsukageBot.Library.Data;
 using RitsukageBot.Library.Modules.Schedules;
 using RitsukageBot.Library.OpenApi;
@@ -106,6 +108,7 @@ namespace RitsukageBot.Modules.Schedules
 
             var message = await CreateTimeMessageRequireMessage(targetTime, prompt).ConfigureAwait(false);
             if (message is null) return;
+            _logger.LogInformation("Generating time message with message: {Message}", FormatJson(message.ToString()));
             messageList.Add(message);
             _logger.LogInformation("Generating time message for {TargetTime} with role: {Role}", targetTime, role);
 
@@ -207,37 +210,45 @@ namespace RitsukageBot.Modules.Schedules
         private async Task<ChatMessage?> CreateTimeMessageRequireMessage(DateTimeOffset targetTime, string prompt)
         {
             var time = targetTime.ToOffset(TimeSpan.FromHours(8));
-            var year = time.Year.ToString();
-            var month = time.Month.ToString();
-            var day = time.Day.ToString();
             var days = await OpenApi.GetCalendarAsync(time).ConfigureAwait(false);
-            var today = days.FirstOrDefault(x => x.Year == year && x.Month == month && x.Day == day);
-            var holiday = today?.FestivalInfoList is { Length: > 0 }
-                ? string.Join(", ", today.FestivalInfoList.Select(x => x.Name))
-                : "今日无节日";
-            var workday = today?.Status switch
+            var minDay = time.Date.AddDays(-1);
+            var maxDay = time.Date.AddDays(7);
+            days = days.Where(x => x.ODate >= minDay && x.ODate <= maxDay).ToArray();
+            var calendar = new JArray();
+            foreach (var day in days)
             {
-                BaiduCalendarDayStatus.Holiday => "假期",
-                BaiduCalendarDayStatus.Normal when today.CnDay is "六" or "日" => "假期",
-                BaiduCalendarDayStatus.Workday => "工作日",
-                BaiduCalendarDayStatus.Normal => "工作日",
-                _ => "未知",
-            };
-            var todayString = today is not null
-                ? $"""
-                   北京时间：{time.Year}-{time.Month}-{time.Day} 星期{today.CnDay} {time.Hour}:{time.Minute}
-                   农历：{today.LunarYear}年{today.LMonth}月{today.LDate}日
-                   节日：{holiday}
-                   今天是{workday}
-                   宜：{today.Suit}
-                   忌：{today.Avoid}
-                   """
-                : string.Empty;
+                var workday = day.Status switch
+                {
+                    BaiduCalendarDayStatus.Holiday => "假期",
+                    BaiduCalendarDayStatus.Normal when day.CnDay is "六" or "日" => "假期",
+                    BaiduCalendarDayStatus.Workday => "工作日",
+                    BaiduCalendarDayStatus.Normal => "工作日",
+                    _ => "未知",
+                };
+                var offsetOfToday = day.ODate - time.Date;
+                var dayObject = new JObject
+                {
+                    ["date"] = day.ODate.ToString("yyyy-MM-dd"),
+                    ["lunar"] = $"{day.LunarYear}年{day.LMonth}月{day.LDate}日",
+                    ["weekday"] = day.CnDay,
+                    ["needWork"] = workday,
+                    ["offsetOfToday"] = $"{offsetOfToday.Days}天",
+                };
+                if (day.FestivalInfoList is { Length: > 0 })
+                    dayObject["holiday"] = string.Join(", ", day.FestivalInfoList.Select(x => x.Name));
+                calendar.Add(dayObject);
+            }
+
             return await _chatClientProviderService.BuildUserChatMessage("##SYSTEM##", null, targetTime, prompt, new()
             {
                 ["randomSeed"] = Random.Shared.Next(),
-                ["calendar"] = todayString,
+                ["calendar"] = calendar,
             }).ConfigureAwait(false);
+        }
+
+        private static string FormatJson(string json)
+        {
+            return JToken.Parse(json).ToString(Formatting.Indented);
         }
     }
 }

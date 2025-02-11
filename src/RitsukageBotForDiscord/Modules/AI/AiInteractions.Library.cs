@@ -21,7 +21,7 @@ namespace RitsukageBot.Modules.AI
             return false;
         }
 
-        private string FormatJson(string json)
+        private static string FormatJson(string json)
         {
             return JToken.Parse(json).ToString(Formatting.Indented);
         }
