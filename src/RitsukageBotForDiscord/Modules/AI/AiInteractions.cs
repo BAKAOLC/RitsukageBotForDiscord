@@ -465,7 +465,7 @@ namespace RitsukageBot.Modules.AI
             embed.WithAuthor(user);
             embed.WithTitle(type == ChatMemoryType.ShortTerm ? "Short Memory" : "Long Memory");
             foreach (var memoryItem in memory)
-                embed.AddField(memoryItem["key"]!.Value<string>(), memoryItem["value"]!.Value<string>());
+                embed.AddField(memoryItem.Key, memoryItem.Value);
             embed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
             embed.WithCurrentTimestamp();
             await FollowupAsync(embed: embed.Build()).ConfigureAwait(false);

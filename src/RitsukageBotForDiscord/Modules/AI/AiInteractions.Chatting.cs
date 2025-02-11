@@ -7,7 +7,6 @@ using RitsukageBot.Library.Data;
 using RitsukageBot.Services.Providers;
 using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
 using ChatRole = Microsoft.Extensions.AI.ChatRole;
-using IChatClient = Microsoft.Extensions.AI.IChatClient;
 
 namespace RitsukageBot.Modules.AI
 {
@@ -50,24 +49,24 @@ namespace RitsukageBot.Modules.AI
                         .WithButton("Cancel", $"{CustomId}:cancel_chat", ButtonStyle.Danger).Build();
             }).ConfigureAwait(false);
 
-            var client = ChatClientProvider.GetFirstChatClient();
+            var endpointConfig = ChatClientProvider.GetFirstChatEndpoint();
             var (isSuccess, errorMessage) =
-                await TryGettingResponse(messageList, role, client, temperature, cancellationToken: cancellationToken)
+                await TryGettingResponse(messageList, role, endpointConfig, temperature, cancellationToken: cancellationToken)
                     .ConfigureAwait(false);
             if (isSuccess) return;
             if (cancellationToken.IsCancellationRequested) return;
 
             if (retry > 0 && !cancellationToken.IsCancellationRequested)
             {
-                var clients = ChatClientProvider.GetChatClients();
+                var clients = ChatClientProvider.GetEndpointConfigs();
                 for (var i = 0; i < retry; i++)
                 {
                     if (clients.Length > 1)
                     {
-                        var currentClient = client;
-                        var otherClients = clients.Where(x => x != currentClient).ToArray();
+                        var currentEndpoint = endpointConfig;
+                        var otherClients = clients.Where(x => x != currentEndpoint).ToArray();
                         if (otherClients.Length > 0)
-                            client = otherClients[Random.Shared.Next(otherClients.Length)];
+                            endpointConfig = otherClients[Random.Shared.Next(otherClients.Length)];
                     }
 
 
@@ -84,7 +83,7 @@ namespace RitsukageBot.Modules.AI
                         x.Embed = retryEmbed.Build();
                     }).ConfigureAwait(false);
                     (isSuccess, errorMessage) =
-                        await TryGettingResponse(messageList, role, client, cancellationToken: cancellationToken)
+                        await TryGettingResponse(messageList, role, endpointConfig, cancellationToken: cancellationToken)
                             .ConfigureAwait(false);
                     if (isSuccess) return;
                     if (cancellationToken.IsCancellationRequested) return;
@@ -109,10 +108,11 @@ namespace RitsukageBot.Modules.AI
 
         // ReSharper disable once CyclomaticComplexity
         private async Task<(bool, string?)> TryGettingResponse(IList<ChatMessage> messageList, string role,
-            IChatClient? client = null, float temperature = 1.0f,
+            ChatClientProviderService.EndpointConfig? endpointConfig = null, float temperature = 1.0f,
             long timeout = 60000, CancellationToken cancellationToken = default)
         {
-            client ??= ChatClientProvider.GetFirstChatClient();
+            endpointConfig ??= ChatClientProvider.GetChatEndpointRandomly();
+            var chatClient = ChatClientProvider.GetChatClient(endpointConfig);
             var sb = new StringBuilder();
             var haveContent = false;
             var checkedEmbed = false;
@@ -137,12 +137,12 @@ namespace RitsukageBot.Modules.AI
                             isTimeout = true;
                             Logger.LogWarning(
                                 "It took too long to get a response from {ModelId} in {Url} with role: {Role}",
-                                client.Metadata.ModelId, client.Metadata.ProviderUri, role);
+                                endpointConfig.ModelId, endpointConfig.Endpoint, role);
                         }
                     }, cancellationTokenSource1.Token);
                 _ = Task.Run(async () =>
                     {
-                        await foreach (var response in client.CompleteStreamingAsync(messageList,
+                        await foreach (var response in chatClient.CompleteStreamingAsync(messageList,
                                            new() { Temperature = temperature, MaxOutputTokens = 8192 },
                                            cancellationTokenSource2.Token))
                         {
@@ -170,7 +170,7 @@ namespace RitsukageBot.Modules.AI
                         cancellationTokenSource1.Cancel();
                         Logger.LogError(x.Exception,
                             "An error occurred while getting a response from {ModelId} in {Url} with role: {Role}",
-                            client.Metadata.ModelId, client.Metadata.ProviderUri, role);
+                            endpointConfig.ModelId, endpointConfig.Endpoint, role);
                     }, cancellationTokenSource2.Token);
             }
 
@@ -203,7 +203,7 @@ namespace RitsukageBot.Modules.AI
                     if (!string.IsNullOrWhiteSpace(content))
                     {
                         content =
-                            $"|| Generated by {client.Metadata.ModelId} with role: {role} ||\n{content}";
+                            $"|| Generated by {endpointConfig.GetName()} with role: {role} ||\n{content}";
                         var updateContent = content;
                         if (!embedProcessed && resultEmbeds is not null && resultEmbeds.Length > 0)
                         {
@@ -274,27 +274,27 @@ namespace RitsukageBot.Modules.AI
                 exception = ex;
                 Logger.LogError(ex,
                     "An error occurred while getting a response from {ModelId} in {Url} with role: {Role}",
-                    client.Metadata.ModelId, client.Metadata.ProviderUri, role);
+                    endpointConfig.ModelId, endpointConfig.Endpoint, role);
             }
 
             if (isError)
             {
                 if (exception is not null)
                     return (false,
-                        $"An error occurred while getting a response from {client.Metadata.ModelId} in {client.Metadata.ProviderUri} with role: {role}\n{exception.Message})");
+                        $"An error occurred while getting a response from {endpointConfig.GetName()} with role: {role}\n{exception.Message})");
                 return (false,
-                    $"An error occurred while getting a response from {client.Metadata.ModelId} in {client.Metadata.ProviderUri} with role: {role}");
+                    $"An error occurred while getting a response from {endpointConfig.GetName()} with role: {role}");
             }
 
             if (isTimeout)
                 return (false,
-                    $"It took too long to get a response from {client.Metadata.ModelId} in {client.Metadata.ProviderUri} with role: {role}");
+                    $"It took too long to get a response from {endpointConfig.GetName()} with role: {role}");
 
             (hasJsonHeader, content, jsonHeader, var thinkContent) =
                 ChatClientProviderService.FormatResponse(sb.ToString());
             if (!string.IsNullOrWhiteSpace(thinkContent))
                 Logger.LogInformation("Think content for with {ModelId} from {Url} in role: {Role}:\n{ThinkContent}",
-                    client.Metadata.ModelId, client.Metadata.ProviderUri, role, thinkContent);
+                    endpointConfig.ModelId, endpointConfig.Endpoint, role, thinkContent);
 
             if (!actionProcessed && hasJsonHeader)
                 resultEmbeds = await ProgressActions(jsonHeader!).ConfigureAwait(false);
@@ -302,7 +302,7 @@ namespace RitsukageBot.Modules.AI
             if (cancellationToken.IsCancellationRequested) return (false, "The chat with AI was canceled");
 
             if (string.IsNullOrWhiteSpace(content)) return (true, null);
-            content = $"|| Generated by {client.Metadata.ModelId} with role: {role} ||\n{content}";
+            content = $"|| Generated by {endpointConfig.GetName()} with role: {role} ||\n{content}";
             await ModifyOriginalResponseAsync(x =>
             {
                 x.Content = content;

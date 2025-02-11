@@ -18,61 +18,18 @@ namespace RitsukageBot.Services.Providers
     /// <summary>
     ///     Service to provide the chat client
     /// </summary>
-    public class ChatClientProviderService
+    /// <param name="serviceProvider"></param>
+    public class ChatClientProviderService(IServiceProvider serviceProvider)
     {
-        private readonly List<IChatClient> _chatClients = [];
-        private readonly IConfiguration _configuration;
-        private readonly DatabaseProviderService _databaseProviderService;
-        private readonly bool _isEnabled;
-        private readonly ILogger<ChatClientProviderService> _logger;
-        private readonly IServiceProvider _serviceProvider;
+        private readonly IConfiguration _configuration = serviceProvider.GetRequiredService<IConfiguration>();
 
-        /// <summary>
-        ///     Constructor
-        /// </summary>
-        /// <param name="serviceProvider"></param>
-        public ChatClientProviderService(IServiceProvider serviceProvider)
-        {
-            _serviceProvider = serviceProvider;
-            _configuration = serviceProvider.GetRequiredService<IConfiguration>();
-            _logger = serviceProvider.GetRequiredService<ILogger<ChatClientProviderService>>();
-            _databaseProviderService = serviceProvider.GetRequiredService<DatabaseProviderService>();
-            var configuration = serviceProvider.GetRequiredService<IConfiguration>();
-            _isEnabled = configuration.GetValue<bool>("AI:Enabled");
-            if (!_isEnabled)
-            {
-                _logger.LogInformation("Chat client is disabled");
-                return;
-            }
+        private readonly DatabaseProviderService _databaseProviderService =
+            serviceProvider.GetRequiredService<DatabaseProviderService>();
 
-            var services = configuration.GetSection("AI:Service").Get<EndpointConfig[]>()
-                ?.Where(x => !string.IsNullOrWhiteSpace(x.Endpoint) && !string.IsNullOrWhiteSpace(x.ModelId)).ToArray();
-            if (services is null || services.Length == 0)
-            {
-                _logger.LogError("Chat client endpoint is not set, chat client is disabled");
-                return;
-            }
+        private readonly ILogger<ChatClientProviderService> _logger =
+            serviceProvider.GetRequiredService<ILogger<ChatClientProviderService>>();
 
-            foreach (var service in services)
-                try
-                {
-                    var client = CreateChatClient(service);
-                    _chatClients.Add(client);
-                }
-                catch (Exception e)
-                {
-                    _logger.LogError(e, "Failed to create chat client for {Endpoint}", service.Endpoint);
-                }
-
-            if (_chatClients.Count == 0)
-            {
-                _logger.LogError("Failed to create chat client, chat client is disabled");
-                _isEnabled = false;
-                return;
-            }
-
-            _logger.LogInformation("Chat client is enabled");
-        }
+        private readonly IServiceProvider _serviceProvider = serviceProvider;
 
         private IChatClient CreateChatClient(EndpointConfig config)
         {
@@ -102,33 +59,32 @@ namespace RitsukageBot.Services.Providers
         /// <returns></returns>
         public bool IsEnabled()
         {
-            return _isEnabled;
+            var enabled = _configuration.GetValue<bool>("AI:Enabled");
+            return enabled;
         }
 
         /// <summary>
         ///     Get chat client
         /// </summary>
+        /// <param name="config"></param>
         /// <returns></returns>
-        /// <exception cref="InvalidOperationException"></exception>
-        public IChatClient GetChatClient()
+        public IChatClient GetChatClient(EndpointConfig config)
         {
-            if (_chatClients.Count == 0 || !_isEnabled)
-                throw new InvalidOperationException("Chat client is not enabled");
-            return _chatClients[0];
+            return CreateChatClient(config);
         }
 
         /// <summary>
-        ///     Get first chat client or random chat client based on configuration
+        ///     Get first chat endpoint
         /// </summary>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
-        public IChatClient GetFirstChatClient()
+        public EndpointConfig GetFirstChatEndpoint()
         {
-            if (_chatClients.Count == 0 || !_isEnabled)
-                throw new InvalidOperationException("Chat client is not enabled");
-
             var random = _configuration.GetValue<bool>("AI:FirstServiceRandom");
-            return random ? _chatClients[Random.Shared.Next(_chatClients.Count)] : _chatClients[0];
+            var configs = GetEndpointConfigs();
+            if (configs.Length == 0)
+                throw new InvalidDataException("No endpoint is configured");
+            return configs[random ? Random.Shared.Next(configs.Length) : 0];
         }
 
         /// <summary>
@@ -136,23 +92,12 @@ namespace RitsukageBot.Services.Providers
         /// </summary>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
-        public IChatClient GetChatClientRandomly()
+        public EndpointConfig GetChatEndpointRandomly()
         {
-            if (_chatClients.Count == 0 || !_isEnabled)
-                throw new InvalidOperationException("Chat client is not enabled");
-            return _chatClients[Random.Shared.Next(_chatClients.Count)];
-        }
-
-        /// <summary>
-        ///     Get chat client
-        /// </summary>
-        /// <returns></returns>
-        /// <exception cref="InvalidOperationException"></exception>
-        public IChatClient[] GetChatClients()
-        {
-            if (_chatClients.Count == 0 || !_isEnabled)
-                throw new InvalidOperationException("Chat client is not enabled");
-            return _chatClients.ToArray();
+            var configs = GetEndpointConfigs();
+            if (configs.Length == 0)
+                throw new InvalidDataException("No endpoint is configured");
+            return configs[Random.Shared.Next(configs.Length)];
         }
 
         internal EndpointConfig[] GetEndpointConfigs()
@@ -318,7 +263,7 @@ namespace RitsukageBot.Services.Providers
         /// <param name="userId"></param>
         /// <param name="type"></param>
         /// <returns></returns>
-        public async Task<JArray> GetMemory(ulong userId, ChatMemoryType type = ChatMemoryType.ShortTerm)
+        public async Task<JObject> GetMemory(ulong userId, ChatMemoryType type = ChatMemoryType.ShortTerm)
         {
             var table = _databaseProviderService.Table<ChatMemory>();
             var memory = await table.Where(x => x.UserId == userId && x.Type == type)
@@ -327,13 +272,10 @@ namespace RitsukageBot.Services.Providers
 
             if (memory.Length == 0) return [];
 
-            var data = new JArray();
-            foreach (var item in memory)
-                data.Add(new JObject
-                {
-                    ["key"] = item.Key,
-                    ["value"] = item.Value,
-                });
+            memory = memory.GroupBy(x => x.Key).Select(x => x.Last()).ToArray();
+
+            var data = new JObject();
+            foreach (var item in memory) data[item.Key] = item.Value;
 
             return data;
         }
@@ -556,16 +498,61 @@ namespace RitsukageBot.Services.Providers
             }
         }
 
-        internal record EndpointConfig(string Endpoint, string ModelId, string ApiKey = "");
+        /// <summary>
+        ///     Endpoint configuration
+        /// </summary>
+        /// <param name="Endpoint"></param>
+        /// <param name="ModelId"></param>
+        /// <param name="ApiKey"></param>
+        /// <param name="Name"></param>
+        public record EndpointConfig(string Endpoint, string ModelId, string ApiKey = "", string Name = "");
 
-        internal record PromptConfig(string Prompt = "", string PromptFile = "");
+        /// <summary>
+        ///     Prompt configuration
+        /// </summary>
+        /// <param name="Prompt"></param>
+        /// <param name="PromptFile"></param>
+        public record PromptConfig(string Prompt = "", string PromptFile = "");
 
-        internal record PromptExtensionConfig(string Prompt = "", string PromptFile = "")
+        /// <summary>
+        ///     Prompt extension configuration
+        /// </summary>
+        /// <param name="Prompt"></param>
+        /// <param name="PromptFile"></param>
+        public record PromptExtensionConfig(string Prompt = "", string PromptFile = "")
             : PromptConfig(Prompt, PromptFile);
 
-        internal record RoleConfig(string Prompt = "", string PromptFile = "", float Temperature = 0.6f)
+        /// <summary>
+        ///     Role configuration
+        /// </summary>
+        /// <param name="Prompt"></param>
+        /// <param name="PromptFile"></param>
+        /// <param name="Temperature"></param>
+        public record RoleConfig(string Prompt = "", string PromptFile = "", float Temperature = 0.6f)
             : PromptConfig(Prompt, PromptFile);
 
-        internal record AssistantConfig(bool Enabled, EndpointConfig Service, PromptConfig PromptConfig);
+        /// <summary>
+        ///     Assistant configuration
+        /// </summary>
+        /// <param name="Enabled"></param>
+        /// <param name="Service"></param>
+        /// <param name="PromptConfig"></param>
+        public record AssistantConfig(bool Enabled, EndpointConfig Service, PromptConfig PromptConfig);
+    }
+
+    /// <summary>
+    ///     Chat client provider service extensions
+    /// </summary>
+    public static class ChatClientProviderServiceExtensions
+    {
+        /// <summary>
+        ///     Get name
+        /// </summary>
+        /// <param name="config"></param>
+        /// <returns></returns>
+        public static string GetName(this ChatClientProviderService.EndpointConfig config)
+        {
+            return string.IsNullOrWhiteSpace(config.Name) ? $"{config.ModelId}" : config.Name;
+        }
     }
 }
