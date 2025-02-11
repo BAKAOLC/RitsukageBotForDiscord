@@ -475,21 +475,21 @@ namespace RitsukageBot.Modules.AI
         ///     Remove the memory of the AI
         /// </summary>
         /// <param name="user"></param>
-        /// <param name="type"></param>
         /// <param name="key"></param>
+        /// <param name="type"></param>
         /// <returns></returns>
         [RequireOwner]
         [SlashCommand("remove_memory", "Remove the memory of the AI")]
-        public async Task RemoveMemory(SocketUser user, ChatMemoryType type = ChatMemoryType.ShortTerm,
-            params string[] key)
+        public async Task RemoveMemory(SocketUser user, string key, ChatMemoryType type = ChatMemoryType.ShortTerm)
         {
             await DeferAsync().ConfigureAwait(false);
-            foreach (var k in key)
+            var keys = key.Split('|', StringSplitOptions.RemoveEmptyEntries);
+            foreach (var k in keys)
                 await ChatClientProvider.RemoveMemory(user.Id, type, k);
             var embed = new EmbedBuilder();
             embed.WithAuthor(user);
             embed.WithTitle("Remove Memory");
-            embed.WithDescription($"The memory has been removed: \n{string.Join('\n', key)}");
+            embed.WithDescription($"The memory has been removed: \n{string.Join('\n', keys)}");
             embed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
             embed.WithCurrentTimestamp();
             embed.WithColor(Color.DarkRed);
