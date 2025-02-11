@@ -525,6 +525,34 @@ namespace RitsukageBot.Modules.AI
         }
 
         /// <summary>
+        ///     Remove all memories of the AI
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        [RequireOwner]
+        [SlashCommand("remove_all_memories", "Remove all memories of the AI")]
+        public async Task RemoveAllMemories(SocketUser user)
+        {
+            await DeferAsync().ConfigureAwait(false);
+
+            var shortCount = await ChatClientProvider.ClearMemory(user.Id, ChatMemoryType.ShortTerm)
+                .ConfigureAwait(false);
+            var longCount = await ChatClientProvider.ClearMemory(user.Id, ChatMemoryType.LongTerm)
+                .ConfigureAwait(false);
+
+            var embed = new EmbedBuilder();
+            embed.WithAuthor(user);
+            embed.WithTitle("Remove All Memories");
+            embed.WithDescription("The memories have been removed.");
+            embed.AddField("Short Term", shortCount.ToString());
+            embed.AddField("Long Term", longCount.ToString());
+            embed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
+            embed.WithCurrentTimestamp();
+            embed.WithColor(Color.DarkRed);
+            await FollowupAsync(embed: embed.Build()).ConfigureAwait(false);
+        }
+
+        /// <summary>
         ///     Automatically broadcast time
         /// </summary>
         /// <param name="active"></param>

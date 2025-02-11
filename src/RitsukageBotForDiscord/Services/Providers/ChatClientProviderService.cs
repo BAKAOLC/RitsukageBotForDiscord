@@ -325,6 +325,20 @@ namespace RitsukageBot.Services.Providers
         }
 
         /// <summary>
+        ///     Clear memory
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public async Task<int> ClearMemory(ulong userId, ChatMemoryType type)
+        {
+            var count = await _databaseProviderService.Table<ChatMemory>()
+                .Where(x => x.UserId == userId && x.Type == type)
+                .DeleteAsync().ConfigureAwait(false);
+            return count;
+        }
+
+        /// <summary>
         ///     Refresh short memory
         /// </summary>
         /// <param name="userId"></param>
