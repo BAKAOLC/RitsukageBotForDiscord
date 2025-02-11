@@ -238,10 +238,9 @@ namespace RitsukageBot.Modules.AI
         /// <returns></returns>
         [RequireOwner]
         [SlashCommand("modify_goods", "Modify the user's goods")]
-        public async Task ModifyUserGoods(int good = 0, SocketUser? user = null)
+        public async Task ModifyUserGoods(SocketUser user, int good)
         {
             await DeferAsync().ConfigureAwait(false);
-            user ??= Context.User;
             var (_, userInfo) = await DatabaseProviderService.GetOrCreateAsync<ChatUserInformation>(user.Id)
                 .ConfigureAwait(false);
             var embed = new EmbedBuilder();
@@ -456,7 +455,7 @@ namespace RitsukageBot.Modules.AI
         /// <returns></returns>
         [RequireOwner]
         [SlashCommand("query_memory", "Query the memory of the AI")]
-        public async Task QueryMemory(SocketUser? user = null, ChatMemoryType type = ChatMemoryType.ShortTerm)
+        public async Task QueryMemory(SocketUser user, ChatMemoryType type = ChatMemoryType.ShortTerm)
         {
             await DeferAsync().ConfigureAwait(false);
             user ??= Context.User;
@@ -464,10 +463,34 @@ namespace RitsukageBot.Modules.AI
             var embed = new EmbedBuilder();
             embed.WithAuthor(user);
             embed.WithTitle(type == ChatMemoryType.ShortTerm ? "Short Memory" : "Long Memory");
-            foreach (var memoryItem in memory)
-                embed.AddField(memoryItem.Key, memoryItem.Value);
+            var memoryTexts = new List<string>();
+            foreach (var memoryItem in memory) memoryTexts.Add($"{memoryItem.Key}: {memoryItem.Value}");
+            embed.WithDescription($"```\n{string.Join('\n', memoryTexts)}\n```");
             embed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
             embed.WithCurrentTimestamp();
+            await FollowupAsync(embed: embed.Build()).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        ///     Remove the memory of the AI
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="key"></param>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        [RequireOwner]
+        [SlashCommand("remove_memory", "Remove the memory of the AI")]
+        public async Task RemoveMemory(SocketUser user, string key, ChatMemoryType type = ChatMemoryType.ShortTerm)
+        {
+            await DeferAsync().ConfigureAwait(false);
+            await ChatClientProvider.RemoveMemory(user.Id, type, key);
+            var embed = new EmbedBuilder();
+            embed.WithAuthor(user);
+            embed.WithTitle("Remove Memory");
+            embed.WithDescription($"The memory `{key}` has been removed");
+            embed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
+            embed.WithCurrentTimestamp();
+            embed.WithColor(Color.Green);
             await FollowupAsync(embed: embed.Build()).ConfigureAwait(false);
         }
 
