@@ -333,9 +333,13 @@ namespace RitsukageBot.Services.Providers
         /// <returns></returns>
         public async Task<int> ClearMemory(ulong userId, ChatMemoryType type)
         {
+            var recordMemory = await GetMemory(userId, type).ConfigureAwait(false);
             var count = await _databaseProviderService.Table<ChatMemory>()
                 .Where(x => x.UserId == userId && x.Type == type)
                 .DeleteAsync().ConfigureAwait(false);
+            foreach (var (key, value) in recordMemory)
+                _logger.LogInformation("Removed {Type} memory for {UserId} with key {Key}: {Value}", type, userId, key,
+                    value);
             return count;
         }
 

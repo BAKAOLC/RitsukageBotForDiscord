@@ -558,6 +558,38 @@ namespace RitsukageBot.Modules.AI
         }
 
         /// <summary>
+        ///     Clear the context of the AI with short memory
+        /// </summary>
+        /// <returns></returns>
+        [SlashCommand("clear_context_with_short_memory", "Clear the context of the AI with short memory")]
+        public async Task ClearContextWithShortMemory()
+        {
+            await DeferAsync().ConfigureAwait(false);
+            var memory = await ChatClientProvider.GetMemory(Context.User.Id, ChatMemoryType.LongTerm)
+                .ConfigureAwait(false);
+            var keys = new List<string>();
+            foreach (var key in memory)
+                if (key.Key.StartsWith("chat_history_"))
+                {
+                    await ChatClientProvider.RemoveMemory(Context.User.Id, ChatMemoryType.LongTerm, key.Key)
+                        .ConfigureAwait(false);
+                    keys.Add(key.Key);
+                }
+
+            await ChatClientProvider.ClearMemory(Context.User.Id, ChatMemoryType.ShortTerm).ConfigureAwait(false);
+
+            var embed = new EmbedBuilder();
+            embed.WithAuthor(Context.User);
+            embed.WithTitle("Clear Context");
+            embed.WithDescription(
+                $"Cleared all short-term memories\nClear long-term memory context: \n{string.Join('\n', keys)}");
+            embed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
+            embed.WithCurrentTimestamp();
+            embed.WithColor(Color.DarkRed);
+            await FollowupAsync(embed: embed.Build()).ConfigureAwait(false);
+        }
+
+        /// <summary>
         ///     Remove all memories of the AI
         /// </summary>
         /// <param name="user"></param>
