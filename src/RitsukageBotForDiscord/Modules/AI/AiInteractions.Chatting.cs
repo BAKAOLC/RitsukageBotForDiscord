@@ -344,6 +344,7 @@ namespace RitsukageBot.Modules.AI
             {
                 var actionArrayData = JArray.Parse(jsonHeader);
                 Logger.LogInformation("Processing the JSON header: {JsonHeader}", jsonHeader);
+                var showGoodChange = ChatClientProvider.GetConfig<bool>("ShowGoodChange");
                 var showMemoryChange = ChatClientProvider.GetConfig<bool>("ShowMemoryChange");
                 foreach (var data in actionArrayData.OfType<JObject>())
                     try
@@ -360,7 +361,7 @@ namespace RitsukageBot.Modules.AI
                             case "good":
                             {
                                 var embed = await ModifyGood(data).ConfigureAwait(false);
-                                if (embed is not null)
+                                if (embed is not null && showGoodChange)
                                     result.Add(embed);
                                 break;
                             }
