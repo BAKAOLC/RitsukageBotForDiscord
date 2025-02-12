@@ -477,6 +477,9 @@ namespace RitsukageBot.Services.Providers
             content = jsonStringBuilder.Length < response.Length
                 ? response[(jsonStringBuilder.Length + 1)..].Trim()
                 : string.Empty;
+
+            var contentIndex = content.IndexOf("##content##", StringComparison.Ordinal);
+            if (contentIndex != -1) content = content[(contentIndex + 11)..].Trim();
             jsonHeader = jsonStringBuilder.ToString().Trim();
             return true;
         }
