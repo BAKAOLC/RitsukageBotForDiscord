@@ -6,6 +6,7 @@ using Richasy.BiliKernel.Bili.Media;
 using Richasy.BiliKernel.Bili.User;
 using RitsukageBot.Library.Bilibili.Convertors;
 using RitsukageBot.Library.OpenApi;
+using RitsukageBot.Library.Utils;
 using RitsukageBot.Services.Providers;
 using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
 using ChatRole = Microsoft.Extensions.AI.ChatRole;
@@ -164,12 +165,9 @@ namespace RitsukageBot.Modules.AI
                 throw new InvalidDataException("Invalid JSON data for date base info action");
             var param = paramToken.ToObject<PreprocessActionParam.DateBaseInfoActionParam>()
                         ?? throw new InvalidDataException("Invalid JSON data for date base info action");
-            var year = param.Date.Year.ToString();
-            var month = param.Date.Month.ToString();
-            var day = param.Date.Day.ToString();
-            var time = new DateTimeOffset(param.Date, TimeSpan.FromHours(8));
+            var time = param.Date.AsSettingsOffset();
             var days = await OpenApi.GetCalendarAsync(time).ConfigureAwait(false);
-            var today = days.FirstOrDefault(x => x.Year == year && x.Month == month && x.Day == day);
+            var today = days.FirstOrDefault(x => x.ODate.ConvertToSettingsOffset() == time);
             var holiday = today?.FestivalInfoList is { Length: > 0 }
                 ? string.Join(", ", today.FestivalInfoList.Select(x => x.Name))
                 : "今日无节日";
@@ -202,8 +200,8 @@ namespace RitsukageBot.Modules.AI
             var param = paramToken.ToObject<PreprocessActionParam.RangeDateBaseInfoActionParam>()
                         ?? throw new InvalidDataException("Invalid JSON data for range date base info action");
             var days = new List<BaiduCalendarDay>();
-            var from = new DateTimeOffset(param.From, TimeSpan.FromHours(8));
-            var end = new DateTimeOffset(param.To, TimeSpan.FromHours(8));
+            var from = param.From.AsSettingsOffset();
+            var end = param.To.AsSettingsOffset();
             var query = from;
             while (query <= end)
             {

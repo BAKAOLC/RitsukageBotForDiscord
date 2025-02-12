@@ -9,6 +9,7 @@ using Newtonsoft.Json.Linq;
 using RitsukageBot.Library.Data;
 using RitsukageBot.Library.Modules.Schedules;
 using RitsukageBot.Library.OpenApi;
+using RitsukageBot.Library.Utils;
 using RitsukageBot.Services.Providers;
 using ZiggyCreatures.Caching.Fusion;
 
@@ -209,7 +210,7 @@ namespace RitsukageBot.Modules.Schedules
 
         private async Task<ChatMessage?> CreateTimeMessageRequireMessage(DateTimeOffset targetTime, string prompt)
         {
-            var time = targetTime.ToOffset(TimeSpan.FromHours(8));
+            var time = targetTime.ConvertToSettingsOffset();
             var days = await OpenApi.GetCalendarAsync(time).ConfigureAwait(false);
             var minDay = time.Date.AddDays(-1);
             var maxDay = time.Date.AddDays(7);
@@ -226,13 +227,23 @@ namespace RitsukageBot.Modules.Schedules
                     _ => "未知",
                 };
                 var offsetOfToday = day.ODate - time.Date;
+                var offsetOfTodayString = offsetOfToday.Days switch
+                {
+                    -2 => "前天",
+                    -1 => "昨天",
+                    0 => "今天",
+                    1 => "明天",
+                    2 => "后天",
+                    < -2 => $"{-offsetOfToday.Days}天前",
+                    _ => $"{offsetOfToday.Days}天后",
+                };
                 var dayObject = new JObject
                 {
                     ["date"] = day.ODate.ToString("yyyy-MM-dd"),
                     ["lunar"] = $"{day.LunarYear}年{day.LMonth}月{day.LDate}日",
                     ["weekday"] = day.CnDay,
                     ["needWork"] = workday,
-                    ["offsetOfToday"] = $"{offsetOfToday.Days}天",
+                    ["offsetOfToday"] = offsetOfTodayString,
                 };
                 if (day.FestivalInfoList is { Length: > 0 })
                     dayObject["holiday"] = string.Join(", ", day.FestivalInfoList.Select(x => x.Name));

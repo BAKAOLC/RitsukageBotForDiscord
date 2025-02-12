@@ -278,10 +278,12 @@ namespace RitsukageBot.Modules.AI
             {
                 var users = await table.ToArrayAsync().ConfigureAwait(false);
                 var userInfo = await GetUserGoodInfoAsync(users).ConfigureAwait(false);
-                userInfo = userInfo.OrderByDescending(x => x.Good)
-                    .ThenBy(x => x.Name)
-                    .ThenBy(x => x.Id)
-                    .ToArray();
+                userInfo =
+                [
+                    .. userInfo.OrderByDescending(x => x.Good)
+                        .ThenBy(x => x.Name)
+                        .ThenBy(x => x.Id),
+                ];
 
                 var lines = new string[userInfo.Length];
                 for (var i = 0; i < userInfo.Length; i++)

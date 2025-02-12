@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RitsukageBot.Library.Data;
+using RitsukageBot.Library.Utils;
 using ChatClientBuilder = Microsoft.Extensions.AI.ChatClientBuilder;
 using IChatClient = Microsoft.Extensions.AI.IChatClient;
 using OllamaChatClient = Microsoft.Extensions.AI.OllamaChatClient;
@@ -379,7 +380,7 @@ namespace RitsukageBot.Services.Providers
             if (string.IsNullOrWhiteSpace(message)) return null;
             var data = new JObject
             {
-                ["time"] = time.ToString("yyyy-MM-dd HH:mm:ss zzz"),
+                ["time"] = time.ToTimeString(),
             };
 
             if (id.HasValue)

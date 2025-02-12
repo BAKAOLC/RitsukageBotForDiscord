@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RitsukageBot.Library.Data;
+using RitsukageBot.Library.Utils;
 using RitsukageBot.Services.Providers;
 using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
 using ChatRole = Microsoft.Extensions.AI.ChatRole;
@@ -324,8 +325,7 @@ namespace RitsukageBot.Modules.AI
         private async Task InsertChatHistory(DateTimeOffset time, string message, string reply)
         {
             if (string.IsNullOrWhiteSpace(message) || string.IsNullOrWhiteSpace(reply)) return;
-            time = time.ToUniversalTime();
-            var key = $"chat_history_{time:yyyy-MM-ddTHH:mm:ssZ}";
+            var key = $"chat_history_{time.ConvertToSettingsOffset().ToTimeStringWithoutSpace()}";
             var value = new JObject
             {
                 ["message"] = message,

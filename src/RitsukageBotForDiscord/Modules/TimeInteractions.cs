@@ -4,6 +4,7 @@ using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
 using RitsukageBot.Library.Custom.Structs.Times;
 using RitsukageBot.Library.OpenApi;
+using RitsukageBot.Library.Utils;
 
 namespace RitsukageBot.Modules
 {
@@ -35,7 +36,7 @@ namespace RitsukageBot.Modules
         public async Task CurrentTimeAsync()
         {
             await DeferAsync(true).ConfigureAwait(false);
-            var now = DateTimeOffset.Now;
+            var now = TimeUtility.Now;
             await FollowupAsync($"Host Time: {now:yyyy-MM-dd HH:mm:ss zzz}").ConfigureAwait(false);
         }
 

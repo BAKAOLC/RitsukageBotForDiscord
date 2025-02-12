@@ -3,6 +3,7 @@ using Richasy.BiliKernel.Models.Article;
 using Richasy.BiliKernel.Models.Media;
 using Richasy.BiliKernel.Models.Moment;
 using Richasy.BiliKernel.Models.User;
+using RitsukageBot.Library.Utils;
 
 namespace RitsukageBot.Library.Bilibili.Convertors
 {
@@ -199,7 +200,7 @@ namespace RitsukageBot.Library.Bilibili.Convertors
             if (isLiving)
             {
                 var startTime = detail.GetExtensionIfNotNull<DateTimeOffset>(LiveExtensionDataId.StartTime);
-                sb.AppendLine($"Start Time: {startTime}");
+                sb.AppendLine($"Start Time: {startTime.ToTimeString()}");
             }
 
             sb.AppendLine($"URL: https://live.bilibili.com/{detail.Identifier.Id}");
