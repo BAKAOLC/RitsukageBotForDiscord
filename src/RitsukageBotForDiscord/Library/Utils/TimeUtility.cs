@@ -5,8 +5,10 @@ namespace RitsukageBot.Library.Utils
     /// </summary>
     public static class TimeUtility
     {
-        private const string TimeFormat = "yyyy-MM-dd HH:mm:ss";
-        private const string TimeFormatWithoutSpace = "yyyy-MM-dd_HH:mm:ss";
+        private const string DateFormat = "yyyy-MM-dd";
+        private const string TimeFormat = "HH:mm:ss";
+        private const string DateTimeFormat = "yyyy-MM-dd HH:mm:ss";
+        private const string DateTimeFormatWithoutSpace = "yyyy-MM-dd_HH:mm:ss";
         private static readonly TimeSpan Offset = TimeSpan.FromHours(8);
 
         /// <summary>
@@ -35,23 +37,53 @@ namespace RitsukageBot.Library.Utils
         }
 
         /// <summary>
-        ///     Converts the given <see cref="DateTimeOffset" /> to a string.
+        ///     Converts the given <see cref="DateTimeOffset" /> to a date string.
         /// </summary>
         /// <param name="dateTimeOffset"></param>
         /// <returns></returns>
-        public static string ToTimeString(this DateTimeOffset dateTimeOffset)
+        public static string ToDateString(this DateTimeOffset dateTimeOffset)
         {
-            return dateTimeOffset.ToString(TimeFormat);
+            return dateTimeOffset.ToString(DateFormat);
         }
 
         /// <summary>
-        ///     Converts the given <see cref="DateTimeOffset" /> to a string without space.
+        ///     Converts the given <see cref="DateTimeOffset" /> to a time string.
+        /// </summary>
+        /// <param name="dateTime"></param>
+        /// <returns></returns>
+        public static string ToTimeString(this DateTime dateTime)
+        {
+            return dateTime.ToString(TimeFormat);
+        }
+
+        /// <summary>
+        ///     Converts the given <see cref="DateTimeOffset" /> to a date time string.
         /// </summary>
         /// <param name="dateTimeOffset"></param>
         /// <returns></returns>
-        public static string ToTimeStringWithoutSpace(this DateTimeOffset dateTimeOffset)
+        public static string ToDateTimeString(this DateTimeOffset dateTimeOffset)
         {
-            return dateTimeOffset.ToString(TimeFormatWithoutSpace);
+            return dateTimeOffset.ToString(DateTimeFormat);
+        }
+
+        /// <summary>
+        ///     Converts the given <see cref="DateTimeOffset" /> to a date time string without space.
+        /// </summary>
+        /// <param name="dateTimeOffset"></param>
+        /// <returns></returns>
+        public static string ToDateTimeStringWithoutSpace(this DateTimeOffset dateTimeOffset)
+        {
+            return dateTimeOffset.ToString(DateTimeFormatWithoutSpace);
+        }
+
+        /// <summary>
+        ///     Converts the given <see cref="DateTimeOffset" /> to iso8601 string.
+        /// </summary>
+        /// <param name="dateTimeOffset"></param>
+        /// <returns></returns>
+        public static string ToUtcDateTimeString(this DateTimeOffset dateTimeOffset)
+        {
+            return dateTimeOffset.UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ssZ");
         }
     }
 }

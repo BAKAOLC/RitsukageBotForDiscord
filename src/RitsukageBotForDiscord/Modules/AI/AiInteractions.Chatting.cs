@@ -325,7 +325,7 @@ namespace RitsukageBot.Modules.AI
         private async Task InsertChatHistory(DateTimeOffset time, string message, string reply)
         {
             if (string.IsNullOrWhiteSpace(message) || string.IsNullOrWhiteSpace(reply)) return;
-            var key = $"chat_history_{time.ConvertToSettingsOffset().ToTimeStringWithoutSpace()}";
+            var key = $"chat_history_{time.ConvertToSettingsOffset().ToDateTimeStringWithoutSpace()}";
             var value = new JObject
             {
                 ["message"] = message,

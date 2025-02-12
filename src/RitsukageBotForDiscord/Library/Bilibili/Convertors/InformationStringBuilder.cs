@@ -200,7 +200,7 @@ namespace RitsukageBot.Library.Bilibili.Convertors
             if (isLiving)
             {
                 var startTime = detail.GetExtensionIfNotNull<DateTimeOffset>(LiveExtensionDataId.StartTime);
-                sb.AppendLine($"Start Time: {startTime.ToTimeString()}");
+                sb.AppendLine($"Start Time: {startTime.ToDateTimeString()}");
             }
 
             sb.AppendLine($"URL: https://live.bilibili.com/{detail.Identifier.Id}");
