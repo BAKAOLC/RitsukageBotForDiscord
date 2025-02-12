@@ -239,7 +239,7 @@ namespace RitsukageBot.Modules.Schedules
                 };
                 var dayObject = new JObject
                 {
-                    ["date"] = day.ODate.ConvertToSettingsOffset().ToDateTimeString(),
+                    ["date"] = day.ODate.ConvertToSettingsOffset().ToDateString(),
                     ["lunar"] = $"{day.LunarYear}年{day.LMonth}月{day.LDate}日",
                     ["weekday"] = day.CnDay,
                     ["needWork"] = workday,

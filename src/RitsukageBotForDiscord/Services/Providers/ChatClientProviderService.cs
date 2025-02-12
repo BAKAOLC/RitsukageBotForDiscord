@@ -380,7 +380,7 @@ namespace RitsukageBot.Services.Providers
             if (string.IsNullOrWhiteSpace(message)) return null;
             var data = new JObject
             {
-                ["time"] = time.ToDateTimeString(),
+                ["time"] = time.ConvertToSettingsOffset().ToDateTimeString(),
             };
 
             if (id.HasValue)
