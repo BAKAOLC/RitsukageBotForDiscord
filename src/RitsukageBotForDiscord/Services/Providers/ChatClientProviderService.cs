@@ -478,7 +478,7 @@ namespace RitsukageBot.Services.Providers
                 ? response[(jsonStringBuilder.Length + 1)..].Trim()
                 : string.Empty;
 
-            var contentIndex = content.IndexOf("##content##", StringComparison.Ordinal);
+            var contentIndex = content.IndexOf("##content##", StringComparison.OrdinalIgnoreCase);
             if (contentIndex != -1) content = content[(contentIndex + 11)..].Trim();
             jsonHeader = jsonStringBuilder.ToString().Trim();
             return true;
