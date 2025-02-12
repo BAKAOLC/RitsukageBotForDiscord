@@ -470,6 +470,18 @@ namespace RitsukageBot.Modules.AI
                 memory = longMemory;
             }
 
+            if (memory.Count == 0)
+            {
+                var errorEmbed = new EmbedBuilder();
+                errorEmbed.WithAuthor(user);
+                errorEmbed.WithTitle(type == ChatMemoryType.ShortTerm ? "Short Memory" : "Long Memory");
+                errorEmbed.WithDescription("The memory is empty");
+                errorEmbed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
+                errorEmbed.WithCurrentTimestamp();
+                await FollowupAsync(embed: errorEmbed.Build()).ConfigureAwait(false);
+                return;
+            }
+
             var embed = new EmbedBuilder();
             embed.WithAuthor(user);
             embed.WithTitle(type == ChatMemoryType.ShortTerm ? "Short Memory" : "Long Memory");
@@ -494,8 +506,18 @@ namespace RitsukageBot.Modules.AI
         {
             await DeferAsync().ConfigureAwait(false);
             var keys = key.Split('|', StringSplitOptions.RemoveEmptyEntries);
+            if (keys.Length == 0)
+            {
+                var errorEmbed = new EmbedBuilder();
+                errorEmbed.WithTitle("Error");
+                errorEmbed.WithDescription("Please provide the key to remove the memory");
+                errorEmbed.WithColor(Color.Red);
+                await FollowupAsync(embed: errorEmbed.Build()).ConfigureAwait(false);
+                return;
+            }
+
             foreach (var k in keys)
-                await ChatClientProvider.RemoveMemory(user.Id, type, k);
+                await ChatClientProvider.RemoveMemory(user.Id, type, k).ConfigureAwait(false);
             var embed = new EmbedBuilder();
             embed.WithAuthor(user);
             embed.WithTitle("Remove Memory");
@@ -520,7 +542,8 @@ namespace RitsukageBot.Modules.AI
             foreach (var key in memory)
                 if (key.Key.StartsWith("chat_history_"))
                 {
-                    await ChatClientProvider.RemoveMemory(Context.User.Id, ChatMemoryType.LongTerm, key.Key);
+                    await ChatClientProvider.RemoveMemory(Context.User.Id, ChatMemoryType.LongTerm, key.Key)
+                        .ConfigureAwait(false);
                     keys.Add(key.Key);
                 }
 
