@@ -457,36 +457,56 @@ namespace RitsukageBot.Modules.AI
         /// <returns></returns>
         [RequireOwner]
         [SlashCommand("query_memory", "Query the memory of the AI")]
-        public async Task QueryMemory(SocketUser user, ChatMemoryType type = ChatMemoryType.ShortTerm)
+        public async Task QueryMemory(SocketUser user, ChatMemoryType type = ChatMemoryType.Any)
         {
             await DeferAsync().ConfigureAwait(false);
 
-            if (type == ChatMemoryType.Any)
+            var memoryDict = new Dictionary<ChatMemoryType, JObject>();
+            switch (type)
             {
-                var errorEmbed = new EmbedBuilder();
-                errorEmbed.WithTitle("Error");
-                errorEmbed.WithDescription("Can not query the memory with the type of Any");
-                errorEmbed.WithColor(Color.Red);
-                await FollowupAsync(embed: errorEmbed.Build()).ConfigureAwait(false);
-                return;
+                case ChatMemoryType.Any:
+                {
+                    foreach (var memoryType in Enum.GetValues<ChatMemoryType>())
+                    {
+                        if (memoryType == ChatMemoryType.Any) continue;
+                        var memory = await ChatClientProvider.GetMemory(user.Id, memoryType).ConfigureAwait(false);
+                        if (memoryType == ChatMemoryType.LongTerm)
+                        {
+                            var longMemory = new JObject();
+                            foreach (var (key, value) in memory)
+                                if (!key.StartsWith("chat_history_"))
+                                    longMemory[key] = value;
+
+                            if (longMemory.Count > 0)
+                                memoryDict[memoryType] = longMemory;
+                        }
+                        else if (memory.Count > 0)
+                        {
+                            memoryDict[memoryType] = memory;
+                        }
+                    }
+
+                    break;
+                }
+                case ChatMemoryType.LongTerm:
+                {
+                    var memory = new JObject();
+                    foreach (var (key, value) in memory)
+                        if (!key.StartsWith("chat_history_"))
+                            memory[key] = value;
+                    if (memory.Count > 0)
+                        memoryDict[type] = memory;
+                    break;
+                }
             }
 
-            var memory = await ChatClientProvider.GetMemory(user.Id, type).ConfigureAwait(false);
-            if (type == ChatMemoryType.LongTerm)
-            {
-                var longMemory = new JObject();
-                foreach (var (key, value) in memory)
-                    if (!key.StartsWith("chat_history_"))
-                        longMemory[key] = value;
-                memory = longMemory;
-            }
 
-            if (memory.Count == 0)
+            if (memoryDict.Count == 0)
             {
                 var errorEmbed = new EmbedBuilder();
                 errorEmbed.WithAuthor(user);
-                errorEmbed.WithTitle(type == ChatMemoryType.ShortTerm ? "Short Memory" : "Long Memory");
-                errorEmbed.WithDescription("The memory is empty");
+                errorEmbed.WithTitle("Query Memory");
+                errorEmbed.WithDescription("There is no memory for this user");
                 errorEmbed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
                 errorEmbed.WithCurrentTimestamp();
                 await FollowupAsync(embed: errorEmbed.Build()).ConfigureAwait(false);
@@ -495,10 +515,14 @@ namespace RitsukageBot.Modules.AI
 
             var embed = new EmbedBuilder();
             embed.WithAuthor(user);
-            embed.WithTitle(type == ChatMemoryType.ShortTerm ? "Short Memory" : "Long Memory");
-            var memoryTexts = new List<string>();
-            foreach (var memoryItem in memory) memoryTexts.Add($"{memoryItem.Key}: {memoryItem.Value}");
-            embed.WithDescription($"```\n{string.Join('\n', memoryTexts)}\n```");
+            embed.WithTitle("Query Memory");
+            foreach (var (memoryType, memory) in memoryDict)
+            {
+                var memoryTexts = new List<string>();
+                foreach (var memoryItem in memory) memoryTexts.Add($"{memoryItem.Key}: {memoryItem.Value}");
+                embed.AddField(memoryType.ToString(), $"```\n{string.Join('\n', memoryTexts)}\n```");
+            }
+
             embed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
             embed.WithCurrentTimestamp();
             await FollowupAsync(embed: embed.Build()).ConfigureAwait(false);
@@ -513,7 +537,7 @@ namespace RitsukageBot.Modules.AI
         /// <returns></returns>
         [RequireOwner]
         [SlashCommand("remove_memory", "Remove the memory of the AI")]
-        public async Task RemoveMemory(SocketUser user, string key, ChatMemoryType type = ChatMemoryType.LongTerm)
+        public async Task RemoveMemory(SocketUser user, string key, ChatMemoryType type = ChatMemoryType.Any)
         {
             await DeferAsync().ConfigureAwait(false);
             var keys = key.Split('|', StringSplitOptions.RemoveEmptyEntries);
