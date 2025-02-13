@@ -460,6 +460,17 @@ namespace RitsukageBot.Modules.AI
         public async Task QueryMemory(SocketUser user, ChatMemoryType type = ChatMemoryType.ShortTerm)
         {
             await DeferAsync().ConfigureAwait(false);
+
+            if (type == ChatMemoryType.Any)
+            {
+                var errorEmbed = new EmbedBuilder();
+                errorEmbed.WithTitle("Error");
+                errorEmbed.WithDescription("Can not query the memory with the type of Any");
+                errorEmbed.WithColor(Color.Red);
+                await FollowupAsync(embed: errorEmbed.Build()).ConfigureAwait(false);
+                return;
+            }
+
             var memory = await ChatClientProvider.GetMemory(user.Id, type).ConfigureAwait(false);
             if (type == ChatMemoryType.LongTerm)
             {
@@ -518,10 +529,18 @@ namespace RitsukageBot.Modules.AI
 
             foreach (var k in keys)
                 await ChatClientProvider.RemoveMemory(user.Id, type, k).ConfigureAwait(false);
+
+            var memoryType = type switch
+            {
+                ChatMemoryType.ShortTerm => "short-term",
+                ChatMemoryType.LongTerm => "long-term",
+                ChatMemoryType.Any => "any",
+                _ => "unknown",
+            };
             var embed = new EmbedBuilder();
             embed.WithAuthor(user);
             embed.WithTitle("Remove Memory");
-            embed.WithDescription($"The memory has been removed: \n{string.Join('\n', keys)}");
+            embed.WithDescription($"The {memoryType} memory has been removed: \n{string.Join('\n', keys)}");
             embed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
             embed.WithCurrentTimestamp();
             embed.WithColor(Color.DarkRed);

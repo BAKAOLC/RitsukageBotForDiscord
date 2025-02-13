@@ -266,6 +266,7 @@ namespace RitsukageBot.Services.Providers
         /// <returns></returns>
         public async Task<JObject> GetMemory(ulong userId, ChatMemoryType type = ChatMemoryType.ShortTerm)
         {
+            if (type == ChatMemoryType.Any) throw new ArgumentException("Chat memory type cannot be any", nameof(type));
             var table = _databaseProviderService.Table<ChatMemory>();
             var memory = await table.Where(x => x.UserId == userId && x.Type == type)
                 .OrderBy(x => x.Timestamp)
@@ -291,6 +292,7 @@ namespace RitsukageBot.Services.Providers
         /// <returns></returns>
         public async Task InsertMemory(ulong userId, ChatMemoryType type, string key, string value)
         {
+            if (type == ChatMemoryType.Any) throw new ArgumentException("Chat memory type cannot be any", nameof(type));
             var memory = new ChatMemory
             {
                 UserId = userId,
@@ -314,15 +316,17 @@ namespace RitsukageBot.Services.Providers
         public async Task RemoveMemory(ulong userId, ChatMemoryType type, string key)
         {
             var table = _databaseProviderService.Table<ChatMemory>();
-            var memory = await table.Where(x => x.UserId == userId && x.Type == type && x.Key == key)
-                .FirstOrDefaultAsync()
-                .ConfigureAwait(false);
-            if (memory is not null)
-            {
-                await _databaseProviderService.DeleteAsync(memory).ConfigureAwait(false);
-                _logger.LogInformation("Removed {Type} memory for {UserId} with key {Key}: {Value}", type, userId, key,
-                    memory.Value);
-            }
+            var firstQuery = type == ChatMemoryType.Any
+                ? table.Where(x => x.UserId == userId && x.Key == key)
+                : table.Where(x => x.UserId == userId && x.Key == key && x.Type == type);
+            var memories = await firstQuery.ToArrayAsync().ConfigureAwait(false);
+            if (memories is { Length: > 0 })
+                foreach (var memory in memories)
+                {
+                    await _databaseProviderService.DeleteAsync(memory).ConfigureAwait(false);
+                    _logger.LogInformation("Removed {Type} memory for {UserId} with key {Key}: {Value}",
+                        type, userId, key, memory.Value);
+                }
         }
 
         /// <summary>
@@ -333,13 +337,27 @@ namespace RitsukageBot.Services.Providers
         /// <returns></returns>
         public async Task<int> ClearMemory(ulong userId, ChatMemoryType type)
         {
-            var recordMemory = await GetMemory(userId, type).ConfigureAwait(false);
-            var count = await _databaseProviderService.Table<ChatMemory>()
-                .Where(x => x.UserId == userId && x.Type == type)
-                .DeleteAsync().ConfigureAwait(false);
+            var memoryDict = new Dictionary<ChatMemoryType, JObject>();
+            if (type == ChatMemoryType.Any)
+            {
+                foreach (var memoryType in Enum.GetValues<ChatMemoryType>())
+                    if (memoryType != ChatMemoryType.Any)
+                        memoryDict[memoryType] = await GetMemory(userId, memoryType).ConfigureAwait(false);
+            }
+            else
+            {
+                memoryDict[type] = await GetMemory(userId, type).ConfigureAwait(false);
+            }
+
+            var table = _databaseProviderService.Table<ChatMemory>();
+            var firstQuery = type == ChatMemoryType.Any
+                ? table.Where(x => x.UserId == userId)
+                : table.Where(x => x.UserId == userId && x.Type == type);
+            var count = await firstQuery.DeleteAsync().ConfigureAwait(false);
+            foreach (var (memoryType, recordMemory) in memoryDict)
             foreach (var (key, value) in recordMemory)
-                _logger.LogInformation("Removed {Type} memory for {UserId} with key {Key}: {Value}", type, userId, key,
-                    value);
+                _logger.LogInformation("Removed {Type} memory for {UserId} with key {Key}: {Value}",
+                    memoryType, userId, key, value);
             return count;
         }
 

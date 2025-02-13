@@ -9,21 +9,31 @@ namespace RitsukageBot.Library.Data
     public class ChatMemory
     {
         /// <summary>
-        ///     Key.
+        ///     Id.
         /// </summary>
         [PrimaryKey]
+        [AutoIncrement]
         [Column("id")]
+        public ulong Id { get; set; }
+
+        /// <summary>
+        ///     Key.
+        /// </summary>
+        [Indexed]
+        [Column("key")]
         public string Key { get; set; } = string.Empty;
 
         /// <summary>
         ///     Memory for user.
         /// </summary>
+        [Indexed]
         [Column("user_id")]
         public ulong UserId { get; set; }
 
         /// <summary>
         ///     Type.
         /// </summary>
+        [Indexed]
         [Column("type")]
         public ChatMemoryType Type { get; set; } = ChatMemoryType.ShortTerm;
 
@@ -45,6 +55,11 @@ namespace RitsukageBot.Library.Data
     /// </summary>
     public enum ChatMemoryType
     {
+        /// <summary>
+        ///     Any
+        /// </summary>
+        Any,
+
         /// <summary>
         ///     Short Term
         /// </summary>
