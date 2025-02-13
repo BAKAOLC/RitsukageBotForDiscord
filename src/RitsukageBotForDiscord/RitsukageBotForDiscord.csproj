@@ -1,150 +1,162 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-	<PropertyGroup>
-		<OutputType>Exe</OutputType>
-		<TargetFramework>net9.0</TargetFramework>
-		<LangVersion>latest</LangVersion>
-		<RollForward>Major</RollForward>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<Nullable>enable</Nullable>
-		<AssemblyName>RitsukageBot</AssemblyName>
-		<RootNamespace>RitsukageBot</RootNamespace>
-		<ApplicationIcon>icon.ico</ApplicationIcon>
-		<BaseOutputPath>..\..\bin</BaseOutputPath>
-		<GenerateDocumentationFile>True</GenerateDocumentationFile>
-		<PackageProjectUrl>https://github.com/BAKAOLC/RitsukageBotForDiscord</PackageProjectUrl>
-		<Authors>OLC</Authors>
-		<RepositoryUrl>https://github.com/BAKAOLC/RitsukageBotForDiscord.git</RepositoryUrl>
-		<RepositoryType>git</RepositoryType>
-		<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
-		<CETCompat>false</CETCompat>
-		<NoWarn>$(NoWarn);NETSDK1206</NoWarn>
-	</PropertyGroup>
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net9.0</TargetFramework>
+        <LangVersion>latest</LangVersion>
+        <RollForward>Major</RollForward>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AssemblyName>RitsukageBot</AssemblyName>
+        <RootNamespace>RitsukageBot</RootNamespace>
+        <ApplicationIcon>icon.ico</ApplicationIcon>
+        <BaseOutputPath>..\..\bin</BaseOutputPath>
+        <GenerateDocumentationFile>True</GenerateDocumentationFile>
+        <PackageProjectUrl>https://github.com/BAKAOLC/RitsukageBotForDiscord</PackageProjectUrl>
+        <Authors>OLC</Authors>
+        <RepositoryUrl>https://github.com/BAKAOLC/RitsukageBotForDiscord.git</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+        <CETCompat>false</CETCompat>
+        <NoWarn>$(NoWarn);NETSDK1206</NoWarn>
+    </PropertyGroup>
 
-	<PropertyGroup>
-		<BeautySharedRuntimeMode>False</BeautySharedRuntimeMode>
-		<!-- beauty into sub-directory, default is libs, quote with "" if contains space  -->
-		<BeautyLibsDir Condition="$(BeautySharedRuntimeMode) == 'True'">../libraries</BeautyLibsDir>
-		<BeautyLibsDir Condition="$(BeautySharedRuntimeMode) != 'True'">./libraries</BeautyLibsDir>
-		<!-- dlls that you don't want to be moved or can not be moved -->
-		<!-- <BeautyExcludes>dll1.dll;lib*;...</BeautyExcludes> -->
-		<!-- dlls that end users never needed, so hide them -->
-		<!-- <BeautyHiddens>hostfxr;hostpolicy;*.deps.json;*.runtimeconfig*.json</BeautyHiddens> -->
-		<!-- set to True if you want to disable -->
-		<DisableBeauty>False</DisableBeauty>
-		<!-- set to False if you want to beauty on build -->
-		<BeautyOnPublishOnly>False</BeautyOnPublishOnly>
-		<!-- DO NOT TOUCH THIS OPTION -->
-		<BeautyNoRuntimeInfo>False</BeautyNoRuntimeInfo>
-		<!-- valid values: auto|with|without -->
-		<BeautyNBLoaderVerPolicy>auto</BeautyNBLoaderVerPolicy>
-		<!-- set to True if you want to allow 3rd debuggers(like dnSpy) debugs the app -->
-		<BeautyEnableDebugging>False</BeautyEnableDebugging>
-		<!-- the patch can reduce the file count -->
-		<!-- set to False if you want to disable -->
-		<!-- SCD Mode Feature Only -->
-		<BeautyUsePatch>True</BeautyUsePatch>
-		<!-- App Entry Dll = BeautyDir + BeautyAppHostDir + BeautyAppHostEntry -->
-		<!-- see https://github.com/nulastudio/NetBeauty2#customize-apphost for more details -->
-		<!-- relative path based on AppHostDir -->
-		<!-- .NET Core Non Single-File Only -->
-		<!-- <BeautyAppHostEntry>bin/MyApp.dll</BeautyAppHostEntry> -->
-		<!-- relative path based on BeautyDir -->
-		<!-- .NET Core Non Single-File Only -->
-		<!-- <BeautyAppHostDir>..</BeautyAppHostDir> -->
-		<!-- <BeautyAfterTasks></BeautyAfterTasks> -->
-		<!-- valid values: Error|Detail|Info -->
-		<BeautyLogLevel>Info</BeautyLogLevel>
-		<!-- set to a repo mirror if you have troble in connecting github -->
-		<!-- <BeautyGitCDN>https://gitee.com/liesauer/HostFXRPatcher</BeautyGitCDN> -->
-		<!-- <BeautyGitTree>master</BeautyGitTree> -->
-	</PropertyGroup>
+    <PropertyGroup>
+        <BeautySharedRuntimeMode>False</BeautySharedRuntimeMode>
+        <!-- beauty into sub-directory, default is libs, quote with "" if contains space  -->
+        <BeautyLibsDir Condition="$(BeautySharedRuntimeMode) == 'True'">../libraries</BeautyLibsDir>
+        <BeautyLibsDir Condition="$(BeautySharedRuntimeMode) != 'True'">./libraries</BeautyLibsDir>
+        <!-- dlls that you don't want to be moved or can not be moved -->
+        <!-- <BeautyExcludes>dll1.dll;lib*;...</BeautyExcludes> -->
+        <!-- dlls that end users never needed, so hide them -->
+        <!-- <BeautyHiddens>hostfxr;hostpolicy;*.deps.json;*.runtimeconfig*.json</BeautyHiddens> -->
+        <!-- set to True if you want to disable -->
+        <DisableBeauty>False</DisableBeauty>
+        <!-- set to False if you want to beauty on build -->
+        <BeautyOnPublishOnly>False</BeautyOnPublishOnly>
+        <!-- DO NOT TOUCH THIS OPTION -->
+        <BeautyNoRuntimeInfo>False</BeautyNoRuntimeInfo>
+        <!-- valid values: auto|with|without -->
+        <BeautyNBLoaderVerPolicy>auto</BeautyNBLoaderVerPolicy>
+        <!-- set to True if you want to allow 3rd debuggers(like dnSpy) debugs the app -->
+        <BeautyEnableDebugging>False</BeautyEnableDebugging>
+        <!-- the patch can reduce the file count -->
+        <!-- set to False if you want to disable -->
+        <!-- SCD Mode Feature Only -->
+        <BeautyUsePatch>True</BeautyUsePatch>
+        <!-- App Entry Dll = BeautyDir + BeautyAppHostDir + BeautyAppHostEntry -->
+        <!-- see https://github.com/nulastudio/NetBeauty2#customize-apphost for more details -->
+        <!-- relative path based on AppHostDir -->
+        <!-- .NET Core Non Single-File Only -->
+        <!-- <BeautyAppHostEntry>bin/MyApp.dll</BeautyAppHostEntry> -->
+        <!-- relative path based on BeautyDir -->
+        <!-- .NET Core Non Single-File Only -->
+        <!-- <BeautyAppHostDir>..</BeautyAppHostDir> -->
+        <!-- <BeautyAfterTasks></BeautyAfterTasks> -->
+        <!-- valid values: Error|Detail|Info -->
+        <BeautyLogLevel>Info</BeautyLogLevel>
+        <!-- set to a repo mirror if you have troble in connecting github -->
+        <!-- <BeautyGitCDN>https://gitee.com/liesauer/HostFXRPatcher</BeautyGitCDN> -->
+        <!-- <BeautyGitTree>master</BeautyGitTree> -->
+    </PropertyGroup>
 
-	<ItemGroup>
-		<Content Include="icon.ico" />
-	</ItemGroup>
+    <ItemGroup>
+        <Content Include="icon.ico" />
+    </ItemGroup>
 
-	<ItemGroup>
-		<PackageReference Include="Discord.Net" Version="3.17.1" />
-		<PackageReference Include="Discord.Net.Commands" Version="3.17.1" />
-		<PackageReference Include="Discord.Net.Interactions" Version="3.17.1" />
-		<PackageReference Include="Discord.Net.WebSocket" Version="3.17.1" />
-		<PackageReference Include="DnsClient" Version="1.8.0" />
-		<PackageReference Include="GitVersion.MsBuild" Version="6.1.0">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
-		<PackageReference Include="GoogleApi" Version="5.7.6" />
-		<PackageReference Include="HtmlAgilityPack" Version="1.11.72" />
-		<PackageReference Include="JetBrains.Annotations" Version="2024.3.0" />
-		<PackageReference Include="MediatR" Version="12.4.1" />
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.12.0" />
-		<PackageReference Include="Microsoft.Extensions.AI" Version="9.1.0-preview.1.25064.3" />
-		<PackageReference Include="Microsoft.Extensions.AI.Ollama" Version="9.1.0-preview.1.25064.3" />
-		<PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="9.1.0-preview.1.25064.3" />
-		<PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.1" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.1" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.1" />
-		<PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.1" />
-		<PackageReference Include="Microsoft.Extensions.Http" Version="9.0.1" />
-		<PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.1" />
-		<PackageReference Include="Microsoft.Extensions.Options" Version="9.0.1" />
-		<PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="9.0.1" />
-		<PackageReference Include="NeoSmart.Caching.Sqlite.AspNetCore" Version="9.0.0" />
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-		<PackageReference Include="NLog" Version="5.3.4" />
-		<PackageReference Include="NLog.Extensions.Logging" Version="5.3.15" />
-		<PackageReference Include="nulastudio.NetBeauty" Version="2.1.4.6" />
-		<PackageReference Include="Octokit" Version="14.0.0" />
-		<PackageReference Include="SixLabors.ImageSharp" Version="3.1.6" />
-		<PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.5" />
-		<PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
-		<PackageReference Include="System.Text.Encoding.CodePages" Version="9.0.1" />
-		<PackageReference Include="ZiggyCreatures.FusionCache" Version="2.0.0" />
-		<PackageReference Include="ZiggyCreatures.FusionCache.Serialization.NewtonsoftJson" Version="2.0.0" />
-	</ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Discord.Net" Version="3.17.1" />
+        <PackageReference Include="Discord.Net.Commands" Version="3.17.1" />
+        <PackageReference Include="Discord.Net.Interactions" Version="3.17.1" />
+        <PackageReference Include="Discord.Net.WebSocket" Version="3.17.1" />
+        <PackageReference Include="DnsClient" Version="1.8.0" />
+        <PackageReference Include="GitVersion.MsBuild" Version="6.1.0">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="GoogleApi" Version="5.7.6" />
+        <PackageReference Include="HtmlAgilityPack" Version="1.11.72" />
+        <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" />
+        <PackageReference Include="MediatR" Version="12.4.1" />
+        <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.12.0" />
+        <PackageReference Include="Microsoft.Extensions.AI" Version="9.1.0-preview.1.25064.3" />
+        <PackageReference Include="Microsoft.Extensions.AI.Ollama" Version="9.1.0-preview.1.25064.3" />
+        <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="9.1.0-preview.1.25064.3" />
+        <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.1" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.1" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.1" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.1" />
+        <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.1" />
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.1" />
+        <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.1" />
+        <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="9.0.1" />
+        <PackageReference Include="NeoSmart.Caching.Sqlite.AspNetCore" Version="9.0.0" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+        <PackageReference Include="NLog" Version="5.3.4" />
+        <PackageReference Include="NLog.Extensions.Logging" Version="5.3.15" />
+        <PackageReference Include="nulastudio.NetBeauty" Version="2.1.4.6" />
+        <PackageReference Include="Octokit" Version="14.0.0" />
+        <PackageReference Include="SixLabors.ImageSharp" Version="3.1.6" />
+        <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.5" />
+        <PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
+        <PackageReference Include="System.Text.Encoding.CodePages" Version="9.0.1" />
+        <PackageReference Include="ZiggyCreatures.FusionCache" Version="2.0.0" />
+        <PackageReference Include="ZiggyCreatures.FusionCache.Serialization.NewtonsoftJson" Version="2.0.0" />
+    </ItemGroup>
 
-	<ItemGroup>
-		<None Update="appsettings.json">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="nlog.config">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-	</ItemGroup>
+    <ItemGroup>
+        <None Update="appsettings.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="nlog.config">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
 
-	<ItemGroup>
-		<ProjectReference Include="..\bili-kernel\src\Authorizers\Authorizers.Tv\Authorizers.Tv.csproj" />
-		<ProjectReference Include="..\bili-kernel\src\BiliKernel.Abstractions\BiliKernel.Abstractions.csproj" />
-		<ProjectReference Include="..\bili-kernel\src\BiliKernel.Core\BiliKernel.Core.csproj" />
-		<ProjectReference Include="..\bili-kernel\src\BiliKernel.Grpc\BiliKernel.Grpc.csproj" />
-		<ProjectReference Include="..\bili-kernel\src\Services\Services.Article\Services.Article.csproj" />
-		<ProjectReference Include="..\bili-kernel\src\Services\Services.Comment\Services.Comment.csproj" />
-		<ProjectReference Include="..\bili-kernel\src\Services\Services.Media\Services.Media.csproj" />
-		<ProjectReference Include="..\bili-kernel\src\Services\Services.Moment\Services.Moment.csproj" />
-		<ProjectReference Include="..\bili-kernel\src\Services\Services.Search\Services.Search.csproj" />
-		<ProjectReference Include="..\bili-kernel\src\Services\Services.User\Services.User.csproj" />
-	</ItemGroup>
+    <ItemGroup>
+        <None Remove="static\bad_news.jpg" />
+        <EmbeddedResource Include="static\bad_news.jpg" />
+        <None Remove="static\good_news.jpg" />
+        <EmbeddedResource Include="static\good_news.jpg" />
+        <None Remove="static\msyh.ttc" />
+        <None Remove="static\SourceHanSansSC-Normal.otf" />
+    </ItemGroup>
 
-	<ItemGroup>
-		<None Remove="static\bad_news.jpg" />
-		<EmbeddedResource Include="static\bad_news.jpg" />
-		<None Remove="static\good_news.jpg" />
-		<EmbeddedResource Include="static\good_news.jpg" />
-		<None Remove="static\msyh.ttc" />
-		<None Remove="static\SourceHanSansSC-Normal.otf" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Reference Include="Richasy.BiliKernel.Abstractions">
-	    <HintPath>..\bili-kernel\src\BiliKernel.Core\bin\Debug\netstandard2.0\Richasy.BiliKernel.Abstractions.dll</HintPath>
-	  </Reference>
-	  <Reference Include="Richasy.BiliKernel.Core">
-	    <HintPath>..\bili-kernel\src\Authorizers\Authorizers.Tv\bin\Debug\netstandard2.0\Richasy.BiliKernel.Core.dll</HintPath>
-	  </Reference>
-	  <Reference Include="Richasy.BiliKernel.Grpc">
-	    <HintPath>..\bili-kernel\src\BiliKernel.Core\bin\Debug\netstandard2.0\Richasy.BiliKernel.Grpc.dll</HintPath>
-	  </Reference>
-	</ItemGroup>
+    <ItemGroup>
+      <Reference Include="Richasy.BiliKernel.Abstractions">
+        <HintPath>..\bili-kernel-dll-build\bin\Richasy.BiliKernel.Abstractions.dll</HintPath>
+      </Reference>
+      <Reference Include="Richasy.BiliKernel.Authorizers.TV">
+        <HintPath>..\bili-kernel-dll-build\bin\Richasy.BiliKernel.Authorizers.TV.dll</HintPath>
+      </Reference>
+      <Reference Include="Richasy.BiliKernel.Core">
+        <HintPath>..\bili-kernel-dll-build\bin\Richasy.BiliKernel.Core.dll</HintPath>
+      </Reference>
+      <Reference Include="Richasy.BiliKernel.Grpc">
+        <HintPath>..\bili-kernel-dll-build\bin\Richasy.BiliKernel.Grpc.dll</HintPath>
+      </Reference>
+      <Reference Include="Richasy.BiliKernel.Services.Article">
+        <HintPath>..\bili-kernel-dll-build\bin\Richasy.BiliKernel.Services.Article.dll</HintPath>
+      </Reference>
+      <Reference Include="Richasy.BiliKernel.Services.Comment">
+        <HintPath>..\bili-kernel-dll-build\bin\Richasy.BiliKernel.Services.Comment.dll</HintPath>
+      </Reference>
+      <Reference Include="Richasy.BiliKernel.Services.Media">
+        <HintPath>..\bili-kernel-dll-build\bin\Richasy.BiliKernel.Services.Media.dll</HintPath>
+      </Reference>
+      <Reference Include="Richasy.BiliKernel.Services.Moment">
+        <HintPath>..\bili-kernel-dll-build\bin\Richasy.BiliKernel.Services.Moment.dll</HintPath>
+      </Reference>
+      <Reference Include="Richasy.BiliKernel.Services.Search">
+        <HintPath>..\bili-kernel-dll-build\bin\Richasy.BiliKernel.Services.Search.dll</HintPath>
+      </Reference>
+      <Reference Include="Richasy.BiliKernel.Services.User">
+        <HintPath>..\bili-kernel-dll-build\bin\Richasy.BiliKernel.Services.User.dll</HintPath>
+      </Reference>
+      <PackageReference Include="Google.Protobuf" Version="3.29.3" />
+      <PackageReference Include="QRCoder" Version="1.6.0" />
+      <PackageReference Include="RichasyKernel.Abstractions" Version="0.0.1" />
+      <PackageReference Include="RichasyKernel.Core" Version="0.0.1" />
+    </ItemGroup>
 
 </Project>
