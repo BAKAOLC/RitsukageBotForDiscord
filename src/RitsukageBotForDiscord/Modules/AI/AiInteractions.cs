@@ -72,7 +72,6 @@ namespace RitsukageBot.Modules.AI
         ///     Chat with the AI
         /// </summary>
         /// <param name="message"></param>
-        /// <param name="role"></param>
         /// <returns></returns>
         [SlashCommand("chat", "Chat with the AI")]
         public async Task ChatAsync(string message)
