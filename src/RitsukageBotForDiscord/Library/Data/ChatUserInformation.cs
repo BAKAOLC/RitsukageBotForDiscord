@@ -20,5 +20,11 @@ namespace RitsukageBot.Library.Data
         /// </summary>
         [Column("good")]
         public int Good { get; set; }
+
+        /// <summary>
+        ///     Target Role.
+        /// </summary>
+        [Column("target_role")]
+        public string TargetRole { get; set; } = "Normal";
     }
 }

@@ -33,6 +33,21 @@ namespace RitsukageBot.Modules.AI
             return config;
         }
 
+        private async Task<string> GetUserChatTargetRole(ulong userId)
+        {
+            var (_, user) = await DatabaseProviderService.GetOrCreateAsync<ChatUserInformation>(userId)
+                .ConfigureAwait(false);
+            return user.TargetRole;
+        }
+
+        private async Task SetUserChatTargetRole(ulong userId, string targetRole)
+        {
+            var (_, user) = await DatabaseProviderService.GetOrCreateAsync<ChatUserInformation>(userId)
+                .ConfigureAwait(false);
+            user.TargetRole = targetRole;
+            await DatabaseProviderService.InsertOrUpdateAsync(user).ConfigureAwait(false);
+        }
+
         private async Task<UserGoodInfo[]> GetUserGoodInfoAsync(ChatUserInformation[] users)
         {
             var list = new List<UserGoodInfo>();

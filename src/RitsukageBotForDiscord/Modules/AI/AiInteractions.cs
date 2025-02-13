@@ -75,9 +75,7 @@ namespace RitsukageBot.Modules.AI
         /// <param name="role"></param>
         /// <returns></returns>
         [SlashCommand("chat", "Chat with the AI")]
-        public async Task ChatAsync(string message,
-            [Autocomplete(typeof(AiRolesInteractionAutocompleteHandler))]
-            string role = "Normal")
+        public async Task ChatAsync(string message)
         {
             await DeferAsync().ConfigureAwait(false);
 
@@ -113,12 +111,13 @@ namespace RitsukageBot.Modules.AI
                 await FollowupAsync(embed: embed.Build(), ephemeral: true).ConfigureAwait(false);
             }
 
+            var role = await GetUserChatTargetRole(Context.User.Id).ConfigureAwait(false);
             if (!ChatClientProvider.GetRoleData(out var roleData, out var temperature, role))
             {
                 var embed = new EmbedBuilder
                 {
                     Title = "Error",
-                    Description = "Invalid role",
+                    Description = $"Invalid role: {role}",
                     Color = Color.Red,
                 };
                 await FollowupAsync(embed: embed.Build(), ephemeral: true).ConfigureAwait(false);
@@ -201,6 +200,37 @@ namespace RitsukageBot.Modules.AI
             {
                 IsProcessing.Remove(Context.User.Id);
             }
+        }
+
+        /// <summary>
+        ///     Setting the chat role
+        /// </summary>
+        /// <param name="role"></param>
+        [SlashCommand("target_role", "Set the chat role")]
+        public async Task SetChatRole([Autocomplete(typeof(AiRolesInteractionAutocompleteHandler))] string role)
+        {
+            await DeferAsync().ConfigureAwait(false);
+
+            if (!ChatClientProvider.GetRoleData(out _, out _, role))
+            {
+                var errorEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = $"Invalid role: {role}",
+                    Color = Color.Red,
+                };
+                await FollowupAsync(embed: errorEmbed.Build()).ConfigureAwait(false);
+                return;
+            }
+
+            await SetUserChatTargetRole(Context.User.Id, role).ConfigureAwait(false);
+            var embed = new EmbedBuilder
+            {
+                Title = "Set Chat Role",
+                Description = $"The chat role has been set to: {role}",
+                Color = Color.Green,
+            };
+            await FollowupAsync(embed: embed.Build()).ConfigureAwait(false);
         }
 
         /// <summary>
