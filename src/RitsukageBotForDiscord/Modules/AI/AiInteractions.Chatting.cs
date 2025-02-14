@@ -330,12 +330,13 @@ namespace RitsukageBot.Modules.AI
             assistantEmbed.WithColor(Color.Orange);
             await ModifyOriginalResponseAsync(x =>
             {
+                x.Content = messageContent;
+                x.Components = null;
                 var list = new List<Embed>();
                 if (resultEmbeds is not null)
                     list.AddRange(resultEmbeds.Select(embed => embed.Build()));
                 list.Add(assistantEmbed.Build());
                 x.Embeds = list.ToArray();
-                x.Components = null;
             }).ConfigureAwait(false);
             var embedBuilders = await TryPostprocessMessage(userMessageObject.Message, content,
                 JArray.Parse(jsonHeader ?? "[]"),
@@ -344,11 +345,16 @@ namespace RitsukageBot.Modules.AI
                 .ConfigureAwait(false);
             await ModifyOriginalResponseAsync(x =>
             {
+                x.Content = messageContent;
+                x.Components = null;
                 var list = new List<Embed>();
                 if (resultEmbeds is not null)
                     list.AddRange(resultEmbeds.Select(embed => embed.Build()));
                 list.AddRange(embedBuilders.Select(embed => embed.Build()));
-                x.Embeds = list.ToArray();
+                if (list.Count > 0)
+                    x.Embeds = list.ToArray();
+                else
+                    x.Embed = null;
             }).ConfigureAwait(false);
             return (true, null);
         }
