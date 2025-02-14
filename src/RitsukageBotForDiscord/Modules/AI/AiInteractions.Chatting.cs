@@ -342,15 +342,14 @@ namespace RitsukageBot.Modules.AI
                 cancellationToken).ConfigureAwait(false);
             await InsertChatHistory(Context.Interaction.CreatedAt, userMessageObject.Message, content)
                 .ConfigureAwait(false);
-            if (embedBuilders.Length > 0)
-                await ModifyOriginalResponseAsync(x =>
-                {
-                    var list = new List<Embed>();
-                    if (resultEmbeds is not null)
-                        list.AddRange(resultEmbeds.Select(embed => embed.Build()));
-                    list.AddRange(embedBuilders.Select(embed => embed.Build()));
-                    x.Embeds = list.ToArray();
-                }).ConfigureAwait(false);
+            await ModifyOriginalResponseAsync(x =>
+            {
+                var list = new List<Embed>();
+                if (resultEmbeds is not null)
+                    list.AddRange(resultEmbeds.Select(embed => embed.Build()));
+                list.AddRange(embedBuilders.Select(embed => embed.Build()));
+                x.Embeds = list.ToArray();
+            }).ConfigureAwait(false);
             return (true, null);
         }
 
