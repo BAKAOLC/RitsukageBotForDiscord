@@ -17,7 +17,8 @@ namespace RitsukageBot.Modules.AI
     // ReSharper disable once MismatchedFileName
     public partial class AiInteractions
     {
-        private async Task<string> TryPreprocessingMessage(string message, CancellationToken cancellationToken = default)
+        private async Task<string> TryPreprocessingMessage(string message,
+            CancellationToken cancellationToken = default)
         {
             try
             {
@@ -38,6 +39,7 @@ namespace RitsukageBot.Modules.AI
                     prompt,
                     new(ChatRole.User, jsonData.ToString()),
                 };
+                Logger.LogInformation("Preprocessing message: {Message}", jsonData);
                 var resultCompletion = await chatClient.CompleteAsync(messageList, new()
                     {
                         Temperature = 0.1f,
