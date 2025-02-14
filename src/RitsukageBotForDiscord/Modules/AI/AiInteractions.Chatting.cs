@@ -317,6 +317,18 @@ namespace RitsukageBot.Modules.AI
             var userMessageObject = userMessageData.ToObject<UserMessage>();
             if (userMessageObject is null) return (true, null);
             if (!ChatClientProvider.CheckAssistantEnabled("Postprocessing")) return (true, null);
+            var assistantEmbed = new EmbedBuilder();
+            assistantEmbed.WithDescription("Postprocessing the response...");
+            assistantEmbed.WithColor(Color.Orange);
+            await ModifyOriginalResponseAsync(x =>
+            {
+                var list = new List<Embed>();
+                if (resultEmbeds is not null)
+                    list.AddRange(resultEmbeds.Select(embed => embed.Build()));
+                list.Add(assistantEmbed.Build());
+                x.Embeds = list.ToArray();
+                x.Components = null;
+            }).ConfigureAwait(false);
             var embedBuilders = await TryPostprocessMessage(userMessageObject.Message, content,
                 JArray.Parse(jsonHeader ?? "[]"),
                 cancellationToken).ConfigureAwait(false);
