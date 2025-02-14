@@ -438,6 +438,48 @@ namespace RitsukageBot.Services.Providers
         }
 
         /// <summary>
+        ///     Build user postprocessing message
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="time"></param>
+        /// <param name="message"></param>
+        /// <param name="reply"></param>
+        /// <param name="actions"></param>
+        /// <returns></returns>
+        public async Task<ChatMessage?> BuildUserPostprocessingMessage(ulong id, DateTimeOffset time,
+            string message, string reply, JArray actions)
+        {
+            if (string.IsNullOrWhiteSpace(message)) return null;
+            if (string.IsNullOrWhiteSpace(reply)) return null;
+            var shortMemory = await GetMemory(id).ConfigureAwait(false);
+            var innerLongMemory = await GetMemory(id, ChatMemoryType.LongTerm).ConfigureAwait(false);
+            var longMemory = new JObject();
+            var chatHistory = new JObject();
+            foreach (var (key, value) in innerLongMemory)
+                if (key.StartsWith("chat_history_"))
+                    chatHistory[key] = value;
+                else
+                    longMemory[key] = value;
+            var data = new JObject
+            {
+                ["time"] = time.ConvertToSettingsOffset().ToDateTimeString(),
+                ["content"] = new JObject
+                {
+                    ["userMessage"] = message,
+                    ["replyMessage"] = reply,
+                    ["actions"] = actions,
+                },
+                ["record"] = new JObject
+                {
+                    ["short_memory"] = shortMemory,
+                    ["long_memory"] = longMemory,
+                    ["chat_history"] = chatHistory,
+                },
+            };
+            return new(ChatRole.User, data.ToString(Formatting.None));
+        }
+
+        /// <summary>
         ///     Check message header
         /// </summary>
         /// <param name="response"></param>

@@ -1,4 +1,5 @@
 using System.Text;
+using Discord;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -65,11 +66,12 @@ namespace RitsukageBot.Modules.AI
 
         private async Task<string> ProgressPreprocessActions(string json)
         {
+            if (string.IsNullOrWhiteSpace(json)) return string.Empty;
+            var result = new List<string>();
             try
             {
                 var actionArrayData = JArray.Parse(json);
                 Logger.LogInformation("Preprocessing actions: {ActionArrayData}", actionArrayData);
-                var dataList = new List<string>();
                 foreach (var actionData in actionArrayData)
                 {
                     if (actionData is not JObject data) continue;
@@ -82,66 +84,35 @@ namespace RitsukageBot.Modules.AI
                             continue;
                         }
 
-                        switch (actionType)
+                        var resultMessage = actionType switch
                         {
-                            case "web_search":
-                            {
-                                var result = await PreprocessWebSearch(data).ConfigureAwait(false);
-                                if (!string.IsNullOrEmpty(result))
-                                    dataList.Add(result);
-                                break;
-                            }
-                            case "date_base_info":
-                            {
-                                var result = await PreprocessDateBaseInfo(data).ConfigureAwait(false);
-                                if (!string.IsNullOrEmpty(result))
-                                    dataList.Add(result);
-                                break;
-                            }
-                            case "range_date_base_info":
-                            {
-                                var result = await PreprocessRangeDateBaseInfo(data).ConfigureAwait(false);
-                                if (!string.IsNullOrEmpty(result))
-                                    dataList.Add(result);
-                                break;
-                            }
-                            case "bilibili_video_info":
-                            {
-                                var result = await PreprocessBilibiliVideoInfo(data).ConfigureAwait(false);
-                                if (!string.IsNullOrEmpty(result))
-                                    dataList.Add(result);
-                                break;
-                            }
-                            case "bilibili_user_info":
-                            {
-                                var result = await PreprocessBilibiliUserInfo(data).ConfigureAwait(false);
-                                if (!string.IsNullOrEmpty(result))
-                                    dataList.Add(result);
-                                break;
-                            }
-                            case "bilibili_live_info":
-                            {
-                                var result = await PreprocessBilibiliLiveInfo(data).ConfigureAwait(false);
-                                if (!string.IsNullOrEmpty(result))
-                                    dataList.Add(result);
-                                break;
-                            }
-                        }
+                            "web_search" => await PreprocessWebSearch(data).ConfigureAwait(false),
+                            "date_base_info" => await PreprocessDateBaseInfo(data).ConfigureAwait(false),
+                            "range_date_base_info" => await PreprocessRangeDateBaseInfo(data).ConfigureAwait(false),
+                            "bilibili_video_info" => await PreprocessBilibiliVideoInfo(data).ConfigureAwait(false),
+                            "bilibili_user_info" => await PreprocessBilibiliUserInfo(data).ConfigureAwait(false),
+                            "bilibili_live_info" => await PreprocessBilibiliLiveInfo(data).ConfigureAwait(false),
+                            _ => string.Empty,
+                        };
+
+                        if (!string.IsNullOrEmpty(resultMessage))
+                            result.Add(resultMessage);
                     }
                     catch (Exception ex)
                     {
                         Logger.LogError(ex, "Error while processing the JSON action: {Json}", data.ToString());
                     }
                 }
-
-                return string.Join("\n\n", dataList);
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                Logger.LogError(e, "Error while processing preprocess actions");
+                Logger.LogError(ex, "Error while parsing the JSON header: {JsonHeader}", json);
+                var errorEmbed = new EmbedBuilder();
+                errorEmbed.WithColor(Color.Red);
+                errorEmbed.WithDescription("An error occurred while processing the response");
             }
 
-            return string.Empty;
+            return string.Join("\n\n", result);
         }
 
         private async Task<string> PreprocessWebSearch(JObject data)
