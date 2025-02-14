@@ -324,7 +324,13 @@ namespace RitsukageBot.Modules.AI
             var userMessageData = JObject.Parse(userMessage);
             var userMessageObject = userMessageData.ToObject<UserMessage>();
             if (userMessageObject is null) return (true, null);
-            if (!ChatClientProvider.CheckAssistantEnabled("Postprocessing")) return (true, null);
+            if (!ChatClientProvider.CheckAssistantEnabled("Postprocessing"))
+            {
+                await InsertChatHistory(Context.Interaction.CreatedAt, userMessageObject.Message, content)
+                    .ConfigureAwait(false);
+                return (true, null);
+            }
+
             var assistantEmbed = new EmbedBuilder();
             assistantEmbed.WithDescription("Postprocessing the response...");
             assistantEmbed.WithColor(Color.Orange);
