@@ -30,7 +30,7 @@ namespace RitsukageBot.Modules.AI
 
                 var jsonData = new JObject
                 {
-                    ["time"] = Context.Interaction.CreatedAt,
+                    ["time"] = Context.Interaction.CreatedAt.ConvertToSettingsOffset().ToDateTimeString(),
                     ["message"] = message,
                 };
 
