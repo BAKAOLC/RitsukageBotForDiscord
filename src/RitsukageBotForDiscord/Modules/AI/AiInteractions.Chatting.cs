@@ -217,6 +217,7 @@ namespace RitsukageBot.Modules.AI
                                 {
                                     x.Content = updateContent;
                                     x.Embeds = recordResultEmbed.Select(embed => embed.Build()).ToArray();
+                                    x.Components = null;
                                 }).ConfigureAwait(false);
                             }
                             else
@@ -226,6 +227,7 @@ namespace RitsukageBot.Modules.AI
                                 {
                                     x.Content = updateContent;
                                     x.Embeds = recordResultEmbed.Select(embed => embed.Build()).ToArray();
+                                    x.Components = null;
                                 }).ConfigureAwait(false);
                             }
                         }
@@ -233,7 +235,11 @@ namespace RitsukageBot.Modules.AI
                         {
                             if (checkedEmbed)
                             {
-                                await ModifyOriginalResponseAsync(x => { x.Content = updateContent; })
+                                await ModifyOriginalResponseAsync(x =>
+                                    {
+                                        x.Content = updateContent;
+                                        x.Components = null;
+                                    })
                                     .ConfigureAwait(false);
                             }
                             else
@@ -243,6 +249,7 @@ namespace RitsukageBot.Modules.AI
                                 {
                                     x.Content = updateContent;
                                     x.Embed = null;
+                                    x.Components = null;
                                 }).ConfigureAwait(false);
                             }
                         }
@@ -266,6 +273,7 @@ namespace RitsukageBot.Modules.AI
                                 list.AddRange(x.Embeds.Value);
                             list.AddRange(resultEmbeds.Select(embed => embed.Build()));
                             x.Embeds = list.ToArray();
+                            x.Components = null;
                         }).ConfigureAwait(false);
                     }, CancellationToken.None).ConfigureAwait(false);
                 return (false, "The chat with AI was canceled");
