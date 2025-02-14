@@ -202,6 +202,28 @@ namespace RitsukageBot.Modules.AI
         }
 
         /// <summary>
+        ///     Cancel the chat
+        /// </summary>
+        /// <param name="user"></param>
+        [RequireUserPermission(GuildPermission.Administrator
+                               | GuildPermission.ManageGuild
+                               | GuildPermission.ManageChannels)]
+        [RequireUserPermission(ChannelPermission.ManageChannels)]
+        [SlashCommand("shutdown_chat", "Shutdown the chat")]
+        public async Task ShutdownChatAsync(SocketUser user)
+        {
+            await DeferAsync().ConfigureAwait(false);
+            ShutdownChat(user.Id);
+            var embed = new EmbedBuilder
+            {
+                Title = "Chat with AI",
+                Description = $"The chat with AI has been canceled for {user.Mention}",
+                Color = Color.DarkGrey,
+            };
+            await FollowupAsync(embed: embed.Build()).ConfigureAwait(false);
+        }
+
+        /// <summary>
         ///     Setting the chat role
         /// </summary>
         /// <param name="role"></param>
