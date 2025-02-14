@@ -293,17 +293,33 @@ namespace RitsukageBot.Services.Providers
         public async Task InsertMemory(ulong userId, ChatMemoryType type, string key, string value)
         {
             if (type == ChatMemoryType.Any) throw new ArgumentException("Chat memory type cannot be any", nameof(type));
-            var memory = new ChatMemory
+            var table = _databaseProviderService.Table<ChatMemory>();
+            var firstQuery = table.Where(x => x.UserId == userId && x.Type == type && x.Key == key);
+            var memory = await firstQuery.FirstOrDefaultAsync().ConfigureAwait(false);
+            bool isUpdate;
+            if (memory is null)
             {
-                UserId = userId,
-                Type = type,
-                Key = key,
-                Value = value,
-                Timestamp = DateTimeOffset.Now,
-            };
+                memory = new();
+                isUpdate = false;
+            }
+            else
+            {
+                isUpdate = true;
+            }
+
+            memory.UserId = userId;
+            memory.Type = type;
+            memory.Key = key;
+            memory.Value = value;
+            memory.Timestamp = DateTimeOffset.Now;
             await _databaseProviderService.InsertOrUpdateAsync(memory).ConfigureAwait(false);
-            _logger.LogInformation("Added new {Type} memory for {UserId} with key {Key}: {Value}", type, userId, key,
-                value);
+            // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
+            if (isUpdate)
+                _logger.LogInformation("Updated {Type} memory for {UserId} with key {Key}: {Value}",
+                    type, userId, key, value);
+            else
+                _logger.LogInformation("Added new {Type} memory for {UserId} with key {Key}: {Value}",
+                    type, userId, key, value);
         }
 
         /// <summary>
