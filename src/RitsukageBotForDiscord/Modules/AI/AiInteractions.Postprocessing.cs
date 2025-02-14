@@ -1,9 +1,6 @@
-using System.Text;
 using Discord;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using RitsukageBot.Library.Data;
 using RitsukageBot.Services.Providers;
 using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
 
@@ -12,7 +9,7 @@ namespace RitsukageBot.Modules.AI
     // ReSharper disable once MismatchedFileName
     public partial class AiInteractions
     {
-        private async Task<EmbedBuilder[]> TryPostprocessMessage(string userMessage, string replyMessage,
+        private async Task<EmbedBuilder[]> TryPostprocessingMessage(string userMessage, string replyMessage,
             JArray actionData,
             CancellationToken cancellationToken = default)
         {
@@ -49,7 +46,7 @@ namespace RitsukageBot.Modules.AI
                     ChatClientProviderService.FormatResponse(resultMessage);
                 if (!string.IsNullOrWhiteSpace(thinkContent))
                     Logger.LogInformation("Think content: {ThinkContent}", thinkContent);
-                if (hasJsonHeader) return await ProgressPostprocessActions(jsonHeader!).ConfigureAwait(false);
+                if (hasJsonHeader) return await ProgressPostprocessingActions(jsonHeader!).ConfigureAwait(false);
                 return [];
             }
             catch (OperationCanceledException)
@@ -64,7 +61,7 @@ namespace RitsukageBot.Modules.AI
             return [];
         }
 
-        private async Task<EmbedBuilder[]> ProgressPostprocessActions(string json)
+        private async Task<EmbedBuilder[]> ProgressPostprocessingActions(string json)
         {
             if (string.IsNullOrWhiteSpace(json)) return [];
             var result = new List<EmbedBuilder>();
@@ -72,7 +69,7 @@ namespace RitsukageBot.Modules.AI
             {
                 var actionArrayData = JArray.Parse(json);
                 Logger.LogInformation("Postprocessing actions: {ActionArrayData}", actionArrayData);
-                var showMemoryChange = ChatClientProvider.GetConfig<bool>("ShowMemoryChange");
+                /*
                 foreach (var actionData in actionArrayData)
                 {
                     if (actionData is not JObject data) continue;
@@ -87,28 +84,7 @@ namespace RitsukageBot.Modules.AI
 
                         switch (actionType)
                         {
-                            case "add_short_memory":
-                            {
-                                var embed = await PostprocessAddShortMemory(data).ConfigureAwait(false);
-                                if (embed is not null && showMemoryChange)
-                                    result.Add(embed);
-                                break;
-                            }
-                            case "add_long_memory":
-                            {
-                                var embed = await PostprocessAddLongMemory(data).ConfigureAwait(false);
-                                if (embed is not null && showMemoryChange)
-                                    result.Add(embed);
-                                break;
-                            }
-                            case "remove_long_memory":
-                            case "remove_chat_history":
-                            {
-                                var embed = await PostprocessRemoveLongMemory(data).ConfigureAwait(false);
-                                if (embed is not null && showMemoryChange)
-                                    result.Add(embed);
-                                break;
-                            }
+
                         }
                     }
                     catch (Exception ex)
@@ -116,6 +92,7 @@ namespace RitsukageBot.Modules.AI
                         Logger.LogError(ex, "Error while processing the JSON action: {Json}", data.ToString());
                     }
                 }
+                */
             }
             catch (Exception ex)
             {
@@ -130,102 +107,8 @@ namespace RitsukageBot.Modules.AI
             return [.. result];
         }
 
-        private async Task<EmbedBuilder?> PostprocessAddShortMemory(JObject data)
+        private static class PostprocessingActionParam
         {
-            if (data is null) throw new InvalidDataException("Invalid JSON data for add_short_memory action");
-            if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
-                throw new InvalidDataException("Invalid JSON data for add_short_memory action");
-            var param = paramToken.ToObject<PostprocessActionParam.ShortMemoryActionParam>()
-                        ?? throw new InvalidDataException("Invalid JSON data for add_short_memory action");
-            if (param.Data.Count == 0)
-                throw new InvalidDataException("Invalid JSON data for add_short_memory action");
-
-            var sb = new StringBuilder();
-            foreach (var (key, value) in param.Data)
-            {
-                if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(value?.ToString()))
-                    continue;
-                await ChatClientProvider
-                    .InsertMemory(Context.User.Id, ChatMemoryType.ShortTerm, key, value.ToString())
-                    .ConfigureAwait(false);
-                sb.Append($"{key} = {value}\n");
-            }
-
-            var embed = new EmbedBuilder();
-            embed.WithColor(Color.DarkGreen);
-            embed.WithDescription($"Added short-term memory: \n{sb}");
-            return embed;
-        }
-
-        private async Task<EmbedBuilder?> PostprocessAddLongMemory(JObject data)
-        {
-            if (data is null) throw new InvalidDataException("Invalid JSON data for add_long_memory action");
-            if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
-                throw new InvalidDataException("Invalid JSON data for add_long_memory action");
-            var param = paramToken.ToObject<PostprocessActionParam.LongMemoryActionParam>()
-                        ?? throw new InvalidDataException("Invalid JSON data for add_long_memory action");
-            if (param.Data.Count == 0)
-                throw new InvalidDataException("Invalid JSON data for add_long_memory action");
-
-            var sb = new StringBuilder();
-            foreach (var (key, value) in param.Data)
-            {
-                if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(value?.ToString()))
-                    continue;
-                await ChatClientProvider
-                    .InsertMemory(Context.User.Id, ChatMemoryType.LongTerm, key, value.ToString())
-                    .ConfigureAwait(false);
-                sb.Append($"{key} = {value}\n");
-            }
-
-            var embed = new EmbedBuilder();
-            embed.WithColor(Color.DarkGreen);
-            embed.WithDescription($"Added long-term memory: \n{sb}");
-            return embed;
-        }
-
-        private async Task<EmbedBuilder?> PostprocessRemoveLongMemory(JObject data)
-        {
-            if (data is null) throw new InvalidDataException("Invalid JSON data for remove_long_memory action");
-            if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
-                throw new InvalidDataException("Invalid JSON data for remove_long_memory action");
-            var param = paramToken.ToObject<PostprocessActionParam.RemoveLongMemoryActionParam>()
-                        ?? throw new InvalidDataException("Invalid JSON data for remove_long_memory action");
-            if (param.Keys.Length == 0)
-                throw new InvalidDataException("Invalid JSON data for remove_long_memory action");
-
-            var sb = new StringBuilder();
-            foreach (var key in param.Keys)
-            {
-                if (string.IsNullOrWhiteSpace(key))
-                    continue;
-                await ChatClientProvider.RemoveMemory(Context.User.Id, ChatMemoryType.LongTerm, key)
-                    .ConfigureAwait(false);
-                sb.Append($"{key}\n");
-            }
-
-            var embed = new EmbedBuilder();
-            embed.WithColor(Color.DarkRed);
-            embed.WithDescription($"Removed long-term memory: \n{sb}");
-            return embed;
-        }
-
-        private static class PostprocessActionParam
-        {
-            internal class ShortMemoryActionParam
-            {
-                [JsonProperty("data")] public JObject Data { get; set; } = [];
-            }
-
-            internal class LongMemoryActionParam
-            {
-                [JsonProperty("data")] public JObject Data { get; set; } = [];
-            }
-
-            internal class RemoveLongMemoryActionParam
-            {
-                [JsonProperty("keys")] public string[] Keys { get; set; } = [];
-            }
         }
     }
 }

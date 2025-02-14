@@ -160,7 +160,7 @@ namespace RitsukageBot.Modules.AI
                 showBtn = false;
 
                 var assistantMessage =
-                    await TryPreprocessMessage(message, cancellationTokenSource.Token).ConfigureAwait(false);
+                    await TryPreprocessingMessage(message, cancellationTokenSource.Token).ConfigureAwait(false);
 
                 if (cancellationTokenSource.IsCancellationRequested) return;
 

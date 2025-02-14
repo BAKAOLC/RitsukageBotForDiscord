@@ -17,7 +17,7 @@ namespace RitsukageBot.Modules.AI
     // ReSharper disable once MismatchedFileName
     public partial class AiInteractions
     {
-        private async Task<string> TryPreprocessMessage(string message, CancellationToken cancellationToken = default)
+        private async Task<string> TryPreprocessingMessage(string message, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -49,7 +49,7 @@ namespace RitsukageBot.Modules.AI
                     ChatClientProviderService.FormatResponse(resultMessage);
                 if (!string.IsNullOrWhiteSpace(thinkContent))
                     Logger.LogInformation("Think content: {ThinkContent}", thinkContent);
-                if (hasJsonHeader) return await ProgressPreprocessActions(jsonHeader!).ConfigureAwait(false);
+                if (hasJsonHeader) return await ProgressPreprocessingActions(jsonHeader!).ConfigureAwait(false);
                 return string.Empty;
             }
             catch (OperationCanceledException)
@@ -64,7 +64,7 @@ namespace RitsukageBot.Modules.AI
             return string.Empty;
         }
 
-        private async Task<string> ProgressPreprocessActions(string json)
+        private async Task<string> ProgressPreprocessingActions(string json)
         {
             if (string.IsNullOrWhiteSpace(json)) return string.Empty;
             var result = new List<string>();
@@ -86,12 +86,12 @@ namespace RitsukageBot.Modules.AI
 
                         var resultMessage = actionType switch
                         {
-                            "web_search" => await PreprocessWebSearch(data).ConfigureAwait(false),
-                            "date_base_info" => await PreprocessDateBaseInfo(data).ConfigureAwait(false),
-                            "range_date_base_info" => await PreprocessRangeDateBaseInfo(data).ConfigureAwait(false),
-                            "bilibili_video_info" => await PreprocessBilibiliVideoInfo(data).ConfigureAwait(false),
-                            "bilibili_user_info" => await PreprocessBilibiliUserInfo(data).ConfigureAwait(false),
-                            "bilibili_live_info" => await PreprocessBilibiliLiveInfo(data).ConfigureAwait(false),
+                            "web_search" => await PreprocessingWebSearch(data).ConfigureAwait(false),
+                            "date_base_info" => await PreprocessingDateBaseInfo(data).ConfigureAwait(false),
+                            "range_date_base_info" => await PreprocessingRangeDateBaseInfo(data).ConfigureAwait(false),
+                            "bilibili_video_info" => await PreprocessingBilibiliVideoInfo(data).ConfigureAwait(false),
+                            "bilibili_user_info" => await PreprocessingBilibiliUserInfo(data).ConfigureAwait(false),
+                            "bilibili_live_info" => await PreprocessingBilibiliLiveInfo(data).ConfigureAwait(false),
                             _ => string.Empty,
                         };
 
@@ -115,12 +115,12 @@ namespace RitsukageBot.Modules.AI
             return string.Join("\n\n", result);
         }
 
-        private async Task<string> PreprocessWebSearch(JObject data)
+        private async Task<string> PreprocessingWebSearch(JObject data)
         {
             if (data is null) throw new InvalidDataException("Invalid JSON data for web search action");
             if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
                 throw new InvalidDataException("Invalid JSON data for web search action");
-            var param = paramToken.ToObject<PreprocessActionParam.WebSearchActionParam>()
+            var param = paramToken.ToObject<PreprocessingActionParam.WebSearchActionParam>()
                         ?? throw new InvalidDataException("Invalid JSON data for web search action");
             if (string.IsNullOrWhiteSpace(param.Query))
                 throw new InvalidDataException("Invalid query for web search action");
@@ -129,12 +129,12 @@ namespace RitsukageBot.Modules.AI
             return $"[Google Search: \"{param.Query}\"]\n{string.Join("\n\n", resultStrings)}";
         }
 
-        private static async Task<string> PreprocessDateBaseInfo(JObject data)
+        private static async Task<string> PreprocessingDateBaseInfo(JObject data)
         {
             if (data is null) throw new InvalidDataException("Invalid JSON data for date base info action");
             if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
                 throw new InvalidDataException("Invalid JSON data for date base info action");
-            var param = paramToken.ToObject<PreprocessActionParam.DateBaseInfoActionParam>()
+            var param = paramToken.ToObject<PreprocessingActionParam.DateBaseInfoActionParam>()
                         ?? throw new InvalidDataException("Invalid JSON data for date base info action");
             var time = param.Date.AsSettingsOffset();
             var days = await OpenApi.GetCalendarAsync(time).ConfigureAwait(false);
@@ -163,12 +163,12 @@ namespace RitsukageBot.Modules.AI
             return $"[Date Base Info: {param.Date:yyyy-MM-dd}]\n{todayString}";
         }
 
-        private static async Task<string> PreprocessRangeDateBaseInfo(JObject data)
+        private static async Task<string> PreprocessingRangeDateBaseInfo(JObject data)
         {
             if (data is null) throw new InvalidDataException("Invalid JSON data for range date base info action");
             if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
                 throw new InvalidDataException("Invalid JSON data for range  date base info action");
-            var param = paramToken.ToObject<PreprocessActionParam.RangeDateBaseInfoActionParam>()
+            var param = paramToken.ToObject<PreprocessingActionParam.RangeDateBaseInfoActionParam>()
                         ?? throw new InvalidDataException("Invalid JSON data for range date base info action");
             var days = new List<BaiduCalendarDay>();
             var from = param.From.AsSettingsOffset();
@@ -210,12 +210,12 @@ namespace RitsukageBot.Modules.AI
             return sb.ToString();
         }
 
-        private async Task<string> PreprocessBilibiliVideoInfo(JObject data)
+        private async Task<string> PreprocessingBilibiliVideoInfo(JObject data)
         {
             if (data is null) throw new InvalidDataException("Invalid JSON data for bilibili video info action");
             if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
                 throw new InvalidDataException("Invalid JSON data for bilibili video info action");
-            var param = paramToken.ToObject<PreprocessActionParam.BilibiliVideoInfoActionParam>()
+            var param = paramToken.ToObject<PreprocessingActionParam.BilibiliVideoInfoActionParam>()
                         ?? throw new InvalidDataException("Invalid JSON data for bilibili video info action");
             var playerService = BiliKernelProviderService.GetRequiredService<IPlayerService>();
             var info = await playerService.GetVideoPageDetailAsync(new(param.Id.ToString(), null, null))
@@ -223,12 +223,12 @@ namespace RitsukageBot.Modules.AI
             return $"[Bilibili Video Info: {param.Id}]\n{InformationStringBuilder.BuildVideoInfo(info)}";
         }
 
-        private async Task<string> PreprocessBilibiliUserInfo(JObject data)
+        private async Task<string> PreprocessingBilibiliUserInfo(JObject data)
         {
             if (data is null) throw new InvalidDataException("Invalid JSON data for bilibili user info action");
             if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
                 throw new InvalidDataException("Invalid JSON data for bilibili user info action");
-            var param = paramToken.ToObject<PreprocessActionParam.BilibiliUserInfoActionParam>()
+            var param = paramToken.ToObject<PreprocessingActionParam.BilibiliUserInfoActionParam>()
                         ?? throw new InvalidDataException("Invalid JSON data for bilibili user info action");
             var userService = BiliKernelProviderService.GetRequiredService<IUserService>();
             var info = await userService.GetUserInformationAsync(param.Id.ToString())
@@ -236,12 +236,12 @@ namespace RitsukageBot.Modules.AI
             return $"[Bilibili User Info: {param.Id}]\n{InformationStringBuilder.BuildUserInfo(info)}";
         }
 
-        private async Task<string> PreprocessBilibiliLiveInfo(JObject data)
+        private async Task<string> PreprocessingBilibiliLiveInfo(JObject data)
         {
             if (data is null) throw new InvalidDataException("Invalid JSON data for bilibili live info action");
             if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
                 throw new InvalidDataException("Invalid JSON data for bilibili live info action");
-            var param = paramToken.ToObject<PreprocessActionParam.BilibiliLiveInfoActionParam>()
+            var param = paramToken.ToObject<PreprocessingActionParam.BilibiliLiveInfoActionParam>()
                         ?? throw new InvalidDataException("Invalid JSON data for bilibili live info action");
             var liveService = BiliKernelProviderService.GetRequiredService<IPlayerService>();
             var info = await liveService.GetLivePageDetailAsync(new(param.Id.ToString(), null, null))
@@ -249,7 +249,7 @@ namespace RitsukageBot.Modules.AI
             return $"[Bilibili Live Info: {param.Id}]\n{InformationStringBuilder.BuildLiveInfo(info)}";
         }
 
-        private static class PreprocessActionParam
+        private static class PreprocessingActionParam
         {
             internal class WebSearchActionParam
             {
