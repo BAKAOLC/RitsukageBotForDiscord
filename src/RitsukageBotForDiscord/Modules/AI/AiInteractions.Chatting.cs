@@ -316,6 +316,7 @@ namespace RitsukageBot.Modules.AI
             var userMessageData = JObject.Parse(userMessage);
             var userMessageObject = userMessageData.ToObject<UserMessage>();
             if (userMessageObject is null) return (true, null);
+            if (!ChatClientProvider.CheckAssistantEnabled("Postprocessing")) return (true, null);
             var embedBuilders = await TryPostprocessMessage(userMessageObject.Message, content,
                 JArray.Parse(jsonHeader ?? "[]"),
                 cancellationToken).ConfigureAwait(false);
@@ -325,8 +326,8 @@ namespace RitsukageBot.Modules.AI
                 await ModifyOriginalResponseAsync(x =>
                 {
                     var list = new List<Embed>();
-                    if (x.Embeds.IsSpecified)
-                        list.AddRange(x.Embeds.Value);
+                    if (resultEmbeds is not null)
+                        list.AddRange(resultEmbeds.Select(embed => embed.Build()));
                     list.AddRange(embedBuilders.Select(embed => embed.Build()));
                     x.Embeds = list.ToArray();
                 }).ConfigureAwait(false);
