@@ -556,7 +556,7 @@ namespace RitsukageBot.Services.Providers
 
             var contentIndex = content.IndexOf("##content##", StringComparison.OrdinalIgnoreCase);
             if (contentIndex != -1) content = content[(contentIndex + 11)..].Trim();
-            jsonHeader = jsonStringBuilder.ToString().Trim();
+            jsonHeader = JsonUtility.TryFixJson(jsonStringBuilder.ToString());
             return true;
         }
 
