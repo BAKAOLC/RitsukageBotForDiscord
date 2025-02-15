@@ -403,6 +403,53 @@ namespace RitsukageBot.Services.Providers
         }
 
         /// <summary>
+        ///     Record chat data change history
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        /// <param name="reason"></param>
+        /// <param name="time"></param>
+        /// <returns></returns>
+        public async Task RecordChatDataChangeHistory(ulong userId, string key, int value, string? reason, DateTimeOffset time)
+        {
+            var table = _databaseProviderService.Table<ChatDataChangeHistory>();
+            var item = new ChatDataChangeHistory
+            {
+                UserId = userId,
+                Key = key,
+                Value = value,
+                Reason = reason ?? string.Empty,
+                Timestamp = time,
+            };
+            await _databaseProviderService.InsertAsync(item).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        ///    Query chat data change history
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="key"></param>
+        /// <param name="startTime"></param>
+        /// <param name="endTime"></param>
+        /// <param name="limit"></param>
+        /// <returns></returns>
+        public async Task<ChatDataChangeHistory[]> QueryChatDataChangeHistory(ulong userId, string key,
+            DateTimeOffset? startTime = null, DateTimeOffset? endTime = null, int limit = 100)
+        {
+            var table = _databaseProviderService.Table<ChatDataChangeHistory>();
+            var query = table.Where(x => x.UserId == userId && x.Key == key);
+            if (startTime.HasValue)
+                query = query.Where(x => x.Timestamp >= startTime.Value);
+            if (endTime.HasValue)
+                query = query.Where(x => x.Timestamp <= endTime.Value);
+
+            var result = await query.OrderByDescending(x => x.Timestamp).Take(limit).ToArrayAsync();
+            result = result.OrderBy(x => x.Timestamp).ToArray();
+            return result;
+        }
+
+        /// <summary>
         ///     Build user chat message
         /// </summary>
         /// <param name="name"></param>

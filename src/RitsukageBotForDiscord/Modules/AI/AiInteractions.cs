@@ -1,3 +1,4 @@
+using System.Text;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
@@ -278,6 +279,45 @@ namespace RitsukageBot.Modules.AI
             var rate = (userInfo.Good + 10000) / 20000.0;
             var color = ColorUtility.Transition(colorBad, colorGood, rate);
             embed.WithColor(color);
+            await FollowupAsync(embed: embed.Build()).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        ///     Query the good history of the AI
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        [SlashCommand("good_history", "Query the good change history of the AI")]
+        public async Task QueryGoodHistory(SocketUser? user = null)
+        {
+            await DeferAsync().ConfigureAwait(false);
+            user ??= Context.User;
+            var history = await ChatClientProvider.QueryChatDataChangeHistory(user.Id, "good", limit: 10)
+                .ConfigureAwait(false);
+            var embed = new EmbedBuilder();
+            embed.WithCurrentTimestamp();
+            embed.WithTitle("Good History");
+            embed.WithAuthor(user);
+            embed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
+            if (history.Length == 0)
+            {
+                embed.WithDescription("No good change history");
+            }
+            else
+            {
+                var sb = new StringBuilder();
+                foreach (var item in history)
+                {
+                    var time = item.Timestamp.ToUnixTimeSeconds();
+                    if (string.IsNullOrWhiteSpace(item.Reason))
+                        sb.AppendLine($"<t:{time}:R> {item.Value:+#;-#;0}");
+                    else
+                        sb.AppendLine($"<t:{time}:R> {item.Value:+#;-#;0} ({item.Reason})");
+                }
+
+                embed.WithDescription(sb.ToString());
+            }
+
             await FollowupAsync(embed: embed.Build()).ConfigureAwait(false);
         }
 

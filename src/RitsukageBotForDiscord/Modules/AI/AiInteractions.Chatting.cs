@@ -463,6 +463,8 @@ namespace RitsukageBot.Modules.AI
                 .ConfigureAwait(false);
             userRecord.Good += param.Value;
             await DatabaseProviderService.InsertOrUpdateAsync(userRecord).ConfigureAwait(false);
+            await ChatClientProvider.RecordChatDataChangeHistory(Context.User.Id, "good", param.Value, param.Reason,
+                Context.Interaction.CreatedAt).ConfigureAwait(false);
             Color color;
             string modifyTag;
             if (param.Value > 0)
