@@ -210,6 +210,20 @@ namespace RitsukageBot.Modules.Schedules
 
         private async Task<ChatMessage?> CreateTimeMessageRequireMessage(DateTimeOffset targetTime, string prompt)
         {
+            var emotes = await GetEmotes().ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(emotes))
+                prompt += $"""
+
+
+                           [Emotes]
+                           You can use the following defined emoticons in your conversations
+                           The format of an emoticon is <:emoticon name:emoticon id>
+                           You can determine the meaning of an emoticon based on its name
+                           When you use emoticons, you must make sure that they are formatted correctly and that you only use the emoticons listed below
+                           list of emoticons:
+                           {emotes}
+                           """;
+
             var time = targetTime.ConvertToSettingsOffset();
             var days = await OpenApi.GetCalendarAsync(time).ConfigureAwait(false);
             var minDay = time.Date.AddDays(-1);
@@ -260,6 +274,15 @@ namespace RitsukageBot.Modules.Schedules
         private static string FormatJson(string json)
         {
             return JToken.Parse(json).ToString(Formatting.Indented);
+        }
+
+        private async Task<string> GetEmotes()
+        {
+            var emotes = await _discordClient.GetApplicationEmotesAsync().ConfigureAwait(false);
+            var sb = new StringBuilder();
+            foreach (var emote in emotes)
+                sb.AppendLine(emote.ToString());
+            return sb.ToString();
         }
     }
 }
