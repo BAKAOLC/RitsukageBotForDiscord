@@ -146,6 +146,18 @@ namespace RitsukageBot.Modules.AI
 
             var messageList = new List<ChatMessage> { roleData };
 
+            var emotes = await GetEmotes().ConfigureAwait(false);
+
+            roleData.Text += $"""
+                              [Emotes]
+                              You can use the following defined emoticons in your conversations
+                              The format of an emoticon is <:emoticon name:emoticon id>
+                              You can determine the meaning of an emoticon based on its name
+                              When you use emoticons, you must make sure that they are formatted correctly and that you only use the emoticons listed below
+                              list of emoticons:
+                              {emotes}
+                              """;
+
             if (ChatClientProvider.CheckAssistantEnabled("Preprocessing"))
             {
                 var assistantEmbed = new EmbedBuilder();

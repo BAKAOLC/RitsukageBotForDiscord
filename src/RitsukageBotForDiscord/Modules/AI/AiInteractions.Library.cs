@@ -1,3 +1,4 @@
+using System.Text;
 using Discord;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -19,6 +20,15 @@ namespace RitsukageBot.Modules.AI
             embed.WithColor(Color.Red);
             await FollowupAsync(embed: embed.Build(), ephemeral: true).ConfigureAwait(false);
             return false;
+        }
+
+        private async Task<string> GetEmotes()
+        {
+            var emotes = await Context.Client.GetApplicationEmotesAsync().ConfigureAwait(false);
+            var sb = new StringBuilder();
+            foreach (var emote in emotes)
+                sb.AppendLine(emote.ToString());
+            return sb.ToString();
         }
 
         private static string FormatJson(string json)
