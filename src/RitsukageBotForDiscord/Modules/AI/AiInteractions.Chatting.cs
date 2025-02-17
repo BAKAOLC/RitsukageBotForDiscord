@@ -125,6 +125,9 @@ namespace RitsukageBot.Modules.AI
             var isTimeout = false;
             Exception? exception = null;
             var lockObject = new Lock();
+            var generatingEmbed = new EmbedBuilder();
+            generatingEmbed.WithDescription("Generating the response...");
+            generatingEmbed.WithColor(Color.Orange);
             {
                 var cancellationTokenSource1 = new CancellationTokenSource();
                 var cancellationTokenSource2 = new CancellationTokenSource();
@@ -216,7 +219,10 @@ namespace RitsukageBot.Modules.AI
                                 await ModifyOriginalResponseAsync(x =>
                                 {
                                     x.Content = updateContent;
-                                    x.Embeds = recordResultEmbed.Select(embed => embed.Build()).ToArray();
+                                    var embeds = new List<Embed>();
+                                    embeds.AddRange(recordResultEmbed.Select(embed => embed.Build()));
+                                    embeds.Add(generatingEmbed.Build());
+                                    x.Embeds = embeds.ToArray();
                                     x.Components = null;
                                 }).ConfigureAwait(false);
                             }
@@ -226,7 +232,10 @@ namespace RitsukageBot.Modules.AI
                                 await ModifyOriginalResponseAsync(x =>
                                 {
                                     x.Content = updateContent;
-                                    x.Embeds = recordResultEmbed.Select(embed => embed.Build()).ToArray();
+                                    var embeds = new List<Embed>();
+                                    embeds.AddRange(recordResultEmbed.Select(embed => embed.Build()));
+                                    embeds.Add(generatingEmbed.Build());
+                                    x.Embeds = embeds.ToArray();
                                     x.Components = null;
                                 }).ConfigureAwait(false);
                             }
@@ -238,6 +247,7 @@ namespace RitsukageBot.Modules.AI
                                 await ModifyOriginalResponseAsync(x =>
                                     {
                                         x.Content = updateContent;
+                                        x.Embed = generatingEmbed.Build();
                                         x.Components = null;
                                     })
                                     .ConfigureAwait(false);
@@ -248,7 +258,7 @@ namespace RitsukageBot.Modules.AI
                                 await ModifyOriginalResponseAsync(x =>
                                 {
                                     x.Content = updateContent;
-                                    x.Embed = null;
+                                    x.Embed = generatingEmbed.Build();
                                     x.Components = null;
                                 }).ConfigureAwait(false);
                             }
