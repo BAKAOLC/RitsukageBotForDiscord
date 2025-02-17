@@ -105,7 +105,22 @@ namespace RitsukageBot.Modules.Schedules
             var roles = _chatClientProviderService.GetRoles();
             var role = roles[Random.Shared.Next(roles.Length)];
             if (_chatClientProviderService.GetRoleData(out var roleData, out var temperature, role))
+            {
+                var emotes = await GetEmotes().ConfigureAwait(false);
+                if (!string.IsNullOrWhiteSpace(emotes))
+                    roleData.Text += $"""
+
+
+                                      [Emotes]
+                                      You can use the following defined emoticons in your conversations
+                                      The format of an emoticon is <:emoticon name:emoticon id>
+                                      You can determine the meaning of an emoticon based on its name
+                                      When you use emoticons, you must make sure that they are formatted correctly and that you only use the emoticons listed below
+                                      list of emoticons:
+                                      {emotes}
+                                      """;
                 messageList.Add(roleData);
+            }
 
             var message = await CreateTimeMessageRequireMessage(targetTime, prompt).ConfigureAwait(false);
             if (message is null) return;
@@ -210,20 +225,6 @@ namespace RitsukageBot.Modules.Schedules
 
         private async Task<ChatMessage?> CreateTimeMessageRequireMessage(DateTimeOffset targetTime, string prompt)
         {
-            var emotes = await GetEmotes().ConfigureAwait(false);
-            if (!string.IsNullOrWhiteSpace(emotes))
-                prompt += $"""
-
-
-                           [Emotes]
-                           You can use the following defined emoticons in your conversations
-                           The format of an emoticon is <:emoticon name:emoticon id>
-                           You can determine the meaning of an emoticon based on its name
-                           When you use emoticons, you must make sure that they are formatted correctly and that you only use the emoticons listed below
-                           list of emoticons:
-                           {emotes}
-                           """;
-
             var time = targetTime.ConvertToSettingsOffset();
             var days = await OpenApi.GetCalendarAsync(time).ConfigureAwait(false);
             var minDay = time.Date.AddDays(-1);
