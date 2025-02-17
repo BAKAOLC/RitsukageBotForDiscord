@@ -53,7 +53,7 @@ namespace RitsukageBot.Modules.Bilibili
                     embeds[^1].WithBilibiliLogoIconFooter();
                     await FollowupWithFileAsync(BilibiliIconData.GetLogoIconStream(),
                         BilibiliIconData.LogoIconFileName,
-                        embeds: embeds.Select(x => x.Build()).ToArray()).ConfigureAwait(false);
+                        embeds: [.. embeds.Select(x => x.Build())]).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {

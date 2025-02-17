@@ -51,7 +51,7 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
                 needRemoved.Add(config);
             }
 
-            configs = configs.Except(needRemoved).ToArray();
+            configs = [.. configs.Except(needRemoved)];
 
             var usersRequests = GetMomentsRequests(configs);
             await UpdateMomentsAsync(usersRequests).ConfigureAwait(false);
@@ -110,7 +110,7 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
             var component = new ComponentBuilder().WithButton("Watch moment",
                 url: $"https://www.bilibili.com/opus/{moment.Id}", style: ButtonStyle.Link);
             await channel.SendFileAsync(BilibiliIconData.GetLogoIconStream(), BilibiliIconData.LogoIconFileName, text,
-                embeds: embeds.Select(x => x.Build()).ToArray(), components: component.Build()).ConfigureAwait(false);
+                embeds: [.. embeds.Select(x => x.Build())], components: component.Build()).ConfigureAwait(false);
         }
 
         private async Task UpdateMomentsAsync(params IEnumerable<UserMomentsRequest> requests)

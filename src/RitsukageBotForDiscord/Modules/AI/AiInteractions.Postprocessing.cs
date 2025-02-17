@@ -15,7 +15,7 @@ namespace RitsukageBot.Modules.AI
         {
             try
             {
-                if (!ChatClientProvider.GetAssistant("Postprocessing", out var prompt, out var chatClient))
+                if (!ChatClientProvider.GetAssistant("Postprocessing", out var prompt, out var temperature, out var chatClient))
                 {
                     Logger.LogWarning("Unable to get the assistant for postprocessing");
                     return [];
@@ -37,7 +37,7 @@ namespace RitsukageBot.Modules.AI
                 };
                 var resultCompletion = await chatClient.CompleteAsync(messageList, new()
                     {
-                        Temperature = 0.1f,
+                        Temperature = temperature,
                     }, cancellationToken)
                     .ConfigureAwait(false);
 

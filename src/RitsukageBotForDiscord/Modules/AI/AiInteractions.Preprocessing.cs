@@ -22,7 +22,7 @@ namespace RitsukageBot.Modules.AI
         {
             try
             {
-                if (!ChatClientProvider.GetAssistant("Preprocessing", out var prompt, out var chatClient))
+                if (!ChatClientProvider.GetAssistant("Preprocessing", out var prompt, out var temperature, out var chatClient))
                 {
                     Logger.LogWarning("Unable to get the assistant for preprocessing");
                     return string.Empty;
@@ -42,7 +42,7 @@ namespace RitsukageBot.Modules.AI
                 Logger.LogInformation("Preprocessing message: {Message}", jsonData);
                 var resultCompletion = await chatClient.CompleteAsync(messageList, new()
                     {
-                        Temperature = 0.1f,
+                        Temperature = temperature,
                     }, cancellationToken)
                     .ConfigureAwait(false);
 

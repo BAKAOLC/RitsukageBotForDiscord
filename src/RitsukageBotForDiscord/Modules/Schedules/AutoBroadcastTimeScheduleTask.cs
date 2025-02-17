@@ -229,7 +229,7 @@ namespace RitsukageBot.Modules.Schedules
             var days = await OpenApi.GetCalendarAsync(time).ConfigureAwait(false);
             var minDay = time.Date.AddDays(-1);
             var maxDay = time.Date.AddDays(7);
-            days = days.Where(x => x.ODate >= minDay && x.ODate <= maxDay).ToArray();
+            days = [.. days.Where(x => x.ODate >= minDay && x.ODate <= maxDay)];
             var calendar = new JArray();
             foreach (var day in days)
             {
