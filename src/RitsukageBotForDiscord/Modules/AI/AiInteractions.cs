@@ -356,6 +356,7 @@ namespace RitsukageBot.Modules.AI
             embed.AddField("To", good.ToString());
             embed.WithAuthor(user);
             embed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
+            var change = good - userInfo.Good;
             var colorGood = Color.Green;
             var colorBad = Color.Red;
             var rate = (good + 10000) / 20000.0;
@@ -363,6 +364,9 @@ namespace RitsukageBot.Modules.AI
             embed.WithColor(color);
             userInfo.Good = good;
             await DatabaseProviderService.InsertOrUpdateAsync(userInfo).ConfigureAwait(false);
+            await ChatClientProvider
+                .RecordChatDataChangeHistory(user.Id, "good", change, "Admin modify", Context.Interaction.CreatedAt)
+                .ConfigureAwait(false);
             await FollowupAsync(embed: embed.Build()).ConfigureAwait(false);
         }
 
