@@ -4,7 +4,7 @@ using SixLabors.ImageSharp.PixelFormats;
 namespace RitsukageBot.Library.Graphic.Processing
 {
     /// <summary>
-    ///     Invert color
+    ///     Move Animation
     /// </summary>
     /// <typeparam name="T">pixel type</typeparam>
     public class MoveAnimation<T>(MoveAnimation<T>.MoveDirection direction)
