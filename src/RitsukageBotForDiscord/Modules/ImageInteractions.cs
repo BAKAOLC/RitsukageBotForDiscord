@@ -30,7 +30,6 @@ namespace RitsukageBot.Modules
         [
             new("Invert Color", $"{CustomId}:invert_color"),
             new("Invert Frames", $"{CustomId}:invert_frames"),
-            new("Distorting Mirror", $"{CustomId}:distorting_mirror"),
             new("Mirror Left", $"{CustomId}:mirror_left"),
             new("Mirror Right", $"{CustomId}:mirror_right"),
             new("Mirror Top", $"{CustomId}:mirror_top"),
@@ -482,16 +481,6 @@ namespace RitsukageBot.Modules
         public Task InvertFrameAsync()
         {
             return TriggerProcessAsync<InvertFrames<Rgba32>>();
-        }
-
-        /// <summary>
-        ///     Distorting mirror
-        /// </summary>
-        /// <returns></returns>
-        [ComponentInteraction($"{ImageInteractions.CustomId}:distorting_mirror")]
-        public Task DistortingMirrorAsync()
-        {
-            return TriggerProcessAsync<DistortingMirror<Rgba32>>(new());
         }
 
         /// <summary>
