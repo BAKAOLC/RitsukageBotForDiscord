@@ -29,7 +29,7 @@ namespace RitsukageBot.Library.Graphic.Processing
             for (var i = 0; i < lcm; i++)
             {
                 var index = i;
-                var img = originalFrames[i];
+                var img = originalFrames[i % originalFrames.Length];
                 var rate = (float)(i % CycleFrame) / CycleFrame;
                 rate = rate < 0.5f ? rate * 2 : 1 - (rate - 0.5f) * 2;
                 tasks[i] = Task.Run(() => newImages[index] = Process(img, rate));
