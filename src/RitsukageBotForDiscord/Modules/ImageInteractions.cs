@@ -621,10 +621,7 @@ namespace RitsukageBot.Modules
             imageStream.Seek(0, SeekOrigin.Begin);
             image.Dispose();
             await ModifyOriginalResponseAsync(x =>
-                {
-                    x.Attachments = new List<FileAttachment> { new(imageStream, fileName) };
-                    x.Embed = new EmbedBuilder().WithColor(Color.Green).WithDescription("success").Build();
-                })
+                    x.Attachments = new List<FileAttachment> { new(imageStream, fileName) })
                 .ConfigureAwait(false);
             await imageStream.DisposeAsync().ConfigureAwait(false);
         }
@@ -636,10 +633,6 @@ namespace RitsukageBot.Modules
 
         private async Task TriggerProcessAsync<T>(T processStep) where T : IProcessStep<Rgba32>
         {
-            await ModifyOriginalResponseAsync(x =>
-            {
-                x.Embed = new EmbedBuilder().WithColor(Color.Orange).WithDescription("Processing...").Build();
-            }).ConfigureAwait(false);
             using var image = await GetImageAsync().ConfigureAwait(false);
             if (image is null) return;
 
