@@ -58,7 +58,7 @@ namespace RitsukageBot.Modules
         [SlashCommand("modify", "Begin image interaction")]
         public async Task ModifyAsync(string url)
         {
-            await DeferAsync().ConfigureAwait(false);
+            await DeferAsync(true).ConfigureAwait(false);
 
             var (success, image, message) = await GetImageAsync(url).ConfigureAwait(false);
 
@@ -101,7 +101,7 @@ namespace RitsukageBot.Modules
         [SlashCommand("good-news", "Generate Good News image")]
         public async Task GoodNewsAsync(string text)
         {
-            await DeferAsync().ConfigureAwait(false);
+            await DeferAsync(true).ConfigureAwait(false);
             using var image = GoodBadNewsGenerators.GenerateGoodNewsImage(text);
             var guid = await ImageCacheProviderService.CacheImageAsync(image).ConfigureAwait(false);
             var fileName = $"{guid}.png";
@@ -121,7 +121,7 @@ namespace RitsukageBot.Modules
         [SlashCommand("bad-news", "Generate Bad News image")]
         public async Task BadNewsAsync(string text)
         {
-            await DeferAsync().ConfigureAwait(false);
+            await DeferAsync(true).ConfigureAwait(false);
             using var image = GoodBadNewsGenerators.GenerateBadNewsImage(text);
             var guid = await ImageCacheProviderService.CacheImageAsync(image).ConfigureAwait(false);
             var fileName = $"{guid}.png";
@@ -141,7 +141,7 @@ namespace RitsukageBot.Modules
         [SlashCommand("group-cyan", "Generate Group Cyan image")]
         public async Task GroupCyanAsync(string url)
         {
-            await DeferAsync().ConfigureAwait(false);
+            await DeferAsync(true).ConfigureAwait(false);
 
             var (success, image, message) = await GetImageAsync(url).ConfigureAwait(false);
 
@@ -188,7 +188,7 @@ namespace RitsukageBot.Modules
         [SlashCommand("colorful-chars", "Generate Colorful Chars image")]
         public async Task ColorfulCharImageAsync(string url, int fontSize = 12, int pixelSize = 4)
         {
-            await DeferAsync().ConfigureAwait(false);
+            await DeferAsync(true).ConfigureAwait(false);
 
             var (success, image, message) = await GetImageAsync(url).ConfigureAwait(false);
 
@@ -660,7 +660,7 @@ namespace RitsukageBot.Modules
         public Task CancelAsync()
         {
             Logger.LogInformation("Image interaction canceled for {MessageId}", Context.Interaction.Message.Id);
-            return DeleteOriginalResponseAsync();
+            return Context.Interaction.UpdateAsync(x => x.Components = null);
         }
 
         /// <summary>
@@ -683,7 +683,7 @@ namespace RitsukageBot.Modules
                 await Context.Channel.SendMessageAsync(embed: embed).ConfigureAwait(false);
             }
 
-            await DeleteOriginalResponseAsync().ConfigureAwait(false);
+            await Context.Interaction.UpdateAsync(x => x.Components = null).ConfigureAwait(false);
         }
 
         /// <summary>
