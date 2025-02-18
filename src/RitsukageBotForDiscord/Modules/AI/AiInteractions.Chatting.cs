@@ -15,7 +15,7 @@ namespace RitsukageBot.Modules.AI
     public partial class AiInteractions
     {
         private async Task BeginChatAsync(IList<ChatMessage> messageList, string role,
-            int retry = 0, float temperature = 1.0f, bool showBtn = true, CancellationToken cancellationToken = default)
+            int retry = 0, float temperature = 1.0f, CancellationToken cancellationToken = default)
         {
             if (!CheckUserInputMessage(messageList))
             {
@@ -45,9 +45,8 @@ namespace RitsukageBot.Modules.AI
             {
                 x.Content = null;
                 x.Embed = waitEmbed.Build();
-                if (showBtn)
-                    x.Components = new ComponentBuilder()
-                        .WithButton("Cancel", $"{CustomId}:cancel_chat", ButtonStyle.Danger).Build();
+                x.Components = new ComponentBuilder()
+                    .WithButton("Cancel", $"{CustomId}:cancel_chat", ButtonStyle.Danger).Build();
             }).ConfigureAwait(false);
 
             var endpointConfig = ChatClientProvider.GetFirstChatEndpoint();
@@ -83,6 +82,8 @@ namespace RitsukageBot.Modules.AI
                     {
                         x.Content = null;
                         x.Embed = retryEmbed.Build();
+                        x.Components = new ComponentBuilder()
+                            .WithButton("Cancel", $"{CustomId}:cancel_chat", ButtonStyle.Danger).Build();
                     }).ConfigureAwait(false);
                     (isSuccess, errorMessage) =
                         await TryGettingResponse(messageList, role, endpointConfig,
