@@ -35,7 +35,7 @@ namespace RitsukageBot.Services.Providers
                 Query = query,
             };
             var response = await GoogleSearch.WebSearch.QueryAsync(request).ConfigureAwait(false);
-            return response.Items.ToArray();
+            return [.. response.Items];
         }
     }
 }

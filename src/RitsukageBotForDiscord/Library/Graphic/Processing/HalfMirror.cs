@@ -4,7 +4,7 @@ using SixLabors.ImageSharp.PixelFormats;
 namespace RitsukageBot.Library.Graphic.Processing
 {
     /// <summary>
-    ///     Invert color
+    ///     Half mirror
     /// </summary>
     /// <typeparam name="T">pixel type</typeparam>
     public class HalfMirror<T>(HalfMirror<T>.MirrorType type) : IProcessStep<T> where T : unmanaged, IPixel<T>

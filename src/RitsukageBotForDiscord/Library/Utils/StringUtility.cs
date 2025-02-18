@@ -109,7 +109,7 @@ namespace RitsukageBot.Library.Utils
         /// <returns></returns>
         public static string[] MatchUrls(this string value)
         {
-            return GetUrlRegex().Matches(value).Select(x => x.Value).ToArray();
+            return [.. GetUrlRegex().Matches(value).Select(x => x.Value)];
         }
 
         [GeneratedRegex(

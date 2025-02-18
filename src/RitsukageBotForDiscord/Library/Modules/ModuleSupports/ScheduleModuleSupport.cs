@@ -75,7 +75,7 @@ namespace RitsukageBot.Library.Modules.ModuleSupports
                 if (minNextInterval > TimeSpan.Zero)
                     await Task.Delay(minNextInterval, _cancellationTokenSource.Token).ConfigureAwait(false);
                 if (_cancellationTokenSource.Token.IsCancellationRequested) return;
-                tasks = _tasks.Where(task => task.IsEnabled && task.NextExecutedTime <= minNextExecutedTime).ToArray();
+                tasks = [.. _tasks.Where(task => task.IsEnabled && task.NextExecutedTime <= minNextExecutedTime)];
                 foreach (var task in tasks)
                 {
                     var scheduleTask = task.TriggerAsync(minNextExecutedTime, _cancellationTokenSource.Token);

@@ -122,12 +122,14 @@ namespace RitsukageBot.Services.Providers
         /// </summary>
         /// <param name="type"></param>
         /// <param name="promptMessage"></param>
+        /// <param name="temperature"></param>
         /// <param name="chatClient"></param>
         /// <returns></returns>
-        public bool GetAssistant(string type, [NotNullWhen(true)] out ChatMessage? promptMessage,
+        public bool GetAssistant(string type, [NotNullWhen(true)] out ChatMessage? promptMessage, out float temperature,
             [NotNullWhen(true)] out IChatClient? chatClient)
         {
             promptMessage = null;
+            temperature = 0.6f;
             chatClient = null;
             var assistantConfig = _configuration.GetSection($"AI:Assistant:{type}").Get<AssistantConfig>();
             if (assistantConfig is null)
@@ -136,6 +138,7 @@ namespace RitsukageBot.Services.Providers
                 return false;
             }
 
+            temperature = assistantConfig.PromptConfig.Temperature;
             if (!assistantConfig.Enabled)
             {
                 _logger.LogWarning("Assistant {Type} is disabled", type);
@@ -192,7 +195,7 @@ namespace RitsukageBot.Services.Providers
         /// <returns></returns>
         public string GetPromptExtensions()
         {
-            var extensions = _configuration.GetSection("AI:PromptExtension").Get<PromptExtensionConfig[]>();
+            var extensions = _configuration.GetSection("AI:PromptExtension").Get<PromptConfig[]>();
             if (extensions is null || extensions.Length == 0)
             {
                 _logger.LogWarning("Prompt extensions not found");
@@ -218,7 +221,7 @@ namespace RitsukageBot.Services.Providers
         {
             chatMessage = null;
             temperature = 1.0f;
-            var roleData = _configuration.GetSection($"AI:RoleData:{type}").Get<RoleConfig>();
+            var roleData = _configuration.GetSection($"AI:RoleData:{type}").Get<PromptConfig>();
             if (roleData is null)
             {
                 _logger.LogWarning("Role {Type} data not found", type);
@@ -255,7 +258,7 @@ namespace RitsukageBot.Services.Providers
         /// <returns></returns>
         public string[] GetRoles()
         {
-            return _configuration.GetSection("AI:RoleData").GetChildren().Select(x => x.Key).ToArray();
+            return [.. _configuration.GetSection("AI:RoleData").GetChildren().Select(x => x.Key)];
         }
 
         /// <summary>
@@ -274,7 +277,7 @@ namespace RitsukageBot.Services.Providers
 
             if (memory.Length == 0) return [];
 
-            memory = memory.GroupBy(x => x.Key).Select(x => x.Last()).ToArray();
+            memory = [.. memory.GroupBy(x => x.Key).Select(x => x.Last())];
 
             var data = new JObject();
             foreach (var item in memory) data[item.Key] = item.Value;
@@ -413,7 +416,6 @@ namespace RitsukageBot.Services.Providers
         /// <returns></returns>
         public async Task RecordChatDataChangeHistory(ulong userId, string key, int value, string? reason, DateTimeOffset time)
         {
-            var table = _databaseProviderService.Table<ChatDataChangeHistory>();
             var item = new ChatDataChangeHistory
             {
                 UserId = userId,
@@ -444,8 +446,8 @@ namespace RitsukageBot.Services.Providers
             if (endTime.HasValue)
                 query = query.Where(x => x.Timestamp <= endTime.Value);
 
-            var result = await query.OrderByDescending(x => x.Timestamp).Take(limit).ToArrayAsync();
-            result = result.OrderBy(x => x.Timestamp).ToArray();
+            var result = await query.OrderByDescending(x => x.Timestamp).Take(limit).ToArrayAsync().ConfigureAwait(false);
+            result = [.. result.OrderBy(x => x.Timestamp)];
             return result;
         }
 
@@ -665,24 +667,8 @@ namespace RitsukageBot.Services.Providers
         /// </summary>
         /// <param name="Prompt"></param>
         /// <param name="PromptFile"></param>
-        public record PromptConfig(string Prompt = "", string PromptFile = "");
-
-        /// <summary>
-        ///     Prompt extension configuration
-        /// </summary>
-        /// <param name="Prompt"></param>
-        /// <param name="PromptFile"></param>
-        public record PromptExtensionConfig(string Prompt = "", string PromptFile = "")
-            : PromptConfig(Prompt, PromptFile);
-
-        /// <summary>
-        ///     Role configuration
-        /// </summary>
-        /// <param name="Prompt"></param>
-        /// <param name="PromptFile"></param>
         /// <param name="Temperature"></param>
-        public record RoleConfig(string Prompt = "", string PromptFile = "", float Temperature = 0.6f)
-            : PromptConfig(Prompt, PromptFile);
+        public record PromptConfig(string Prompt = "", string PromptFile = "", float Temperature = 0.6f);
 
         /// <summary>
         ///     Assistant configuration

@@ -91,7 +91,7 @@ namespace RitsukageBot.Modules.Bilibili.Events
                 embeds[^1].WithBilibiliLogoIconFooter();
                 await message.Channel
                     .SendFileAsync(BilibiliIconData.GetLogoIconStream(), BilibiliIconData.LogoIconFileName,
-                        embeds: embeds.Select(x => x.Build()).ToArray())
+                        embeds: [.. embeds.Select(x => x.Build())])
                     .ConfigureAwait(false);
             }
         }
