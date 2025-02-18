@@ -26,7 +26,7 @@ namespace RitsukageBot.Library.Graphic.Processing
             var lcm = images.Length * CycleFrame / MathUtility.Gcd(images.Length, CycleFrame);
             var newImages = images = new Image<T>[lcm];
             var tasks = new Task[lcm];
-            for (var i = 0; i < lcm; i++)
+            for (var i = 0; i < originalFrames.Length; i++)
             {
                 var index = i;
                 var img = originalFrames[i];
