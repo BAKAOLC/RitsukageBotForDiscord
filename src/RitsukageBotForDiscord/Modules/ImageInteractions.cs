@@ -620,8 +620,8 @@ namespace RitsukageBot.Modules
 
             imageStream.Seek(0, SeekOrigin.Begin);
             image.Dispose();
-            await Context.Interaction
-                .UpdateAsync(x => x.Attachments = new List<FileAttachment> { new(imageStream, fileName) })
+            await ModifyOriginalResponseAsync(x =>
+                    x.Attachments = new List<FileAttachment> { new(imageStream, fileName) })
                 .ConfigureAwait(false);
             await imageStream.DisposeAsync().ConfigureAwait(false);
         }
