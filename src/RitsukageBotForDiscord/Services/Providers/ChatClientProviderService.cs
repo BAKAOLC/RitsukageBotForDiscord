@@ -476,6 +476,7 @@ namespace RitsukageBot.Services.Providers
                     .ConfigureAwait(false);
                 var shortMemory = await GetMemory(id.Value).ConfigureAwait(false);
                 var innerLongMemory = await GetMemory(id.Value, ChatMemoryType.LongTerm).ConfigureAwait(false);
+                var selfStateMemory = await GetMemory(id.Value, ChatMemoryType.SelfState).ConfigureAwait(false);
                 var longMemory = new JObject();
                 var chatHistory = new JObject();
                 foreach (var (key, value) in innerLongMemory)
@@ -486,6 +487,7 @@ namespace RitsukageBot.Services.Providers
 
                 data["short_memory"] = shortMemory;
                 data["long_memory"] = longMemory;
+                data["self_state"] = selfStateMemory;
                 data["chat_history"] = chatHistory;
                 data["good"] = userInfo.Good;
             }
