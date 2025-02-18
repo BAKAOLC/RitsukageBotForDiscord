@@ -660,6 +660,7 @@ namespace RitsukageBot.Modules.AI
             {
                 ChatMemoryType.ShortTerm => "short-term",
                 ChatMemoryType.LongTerm => "long-term",
+                ChatMemoryType.SelfState => "self-state",
                 ChatMemoryType.Any => "any",
                 _ => "unknown",
             };
@@ -722,6 +723,7 @@ namespace RitsukageBot.Modules.AI
                 }
 
             await ChatClientProvider.ClearMemory(Context.User.Id, ChatMemoryType.ShortTerm).ConfigureAwait(false);
+            await ChatClientProvider.ClearMemory(Context.User.Id, ChatMemoryType.SelfState).ConfigureAwait(false);
 
             var embed = new EmbedBuilder();
             embed.WithAuthor(Context.User);

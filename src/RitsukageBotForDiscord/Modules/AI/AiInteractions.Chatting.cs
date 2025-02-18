@@ -423,6 +423,13 @@ namespace RitsukageBot.Modules.AI
                                     result.Add(embed);
                                 break;
                             }
+                            case "update_self_state":
+                            {
+                                var embed = await ProcessingUpdateSelfState(data).ConfigureAwait(false);
+                                if (embed is not null && showMemoryChange)
+                                    result.Add(embed);
+                                break;
+                            }
                             case "remove_long_memory":
                             case "remove_chat_history":
                             {
@@ -493,7 +500,7 @@ namespace RitsukageBot.Modules.AI
             if (data is null) throw new InvalidDataException("Invalid JSON data for add_short_memory action");
             if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
                 throw new InvalidDataException("Invalid JSON data for add_short_memory action");
-            var param = paramToken.ToObject<ActionParam.ShortMemoryActionParam>()
+            var param = paramToken.ToObject<ActionParam.MemoryActionParam>()
                         ?? throw new InvalidDataException("Invalid JSON data for add_short_memory action");
             if (param.Data.Count == 0)
                 throw new InvalidDataException("Invalid JSON data for add_short_memory action");
@@ -520,7 +527,7 @@ namespace RitsukageBot.Modules.AI
             if (data is null) throw new InvalidDataException("Invalid JSON data for add_long_memory action");
             if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
                 throw new InvalidDataException("Invalid JSON data for add_long_memory action");
-            var param = paramToken.ToObject<ActionParam.LongMemoryActionParam>()
+            var param = paramToken.ToObject<ActionParam.MemoryActionParam>()
                         ?? throw new InvalidDataException("Invalid JSON data for add_long_memory action");
             if (param.Data.Count == 0)
                 throw new InvalidDataException("Invalid JSON data for add_long_memory action");
@@ -547,7 +554,7 @@ namespace RitsukageBot.Modules.AI
             if (data is null) throw new InvalidDataException("Invalid JSON data for remove_long_memory action");
             if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
                 throw new InvalidDataException("Invalid JSON data for remove_long_memory action");
-            var param = paramToken.ToObject<ActionParam.RemoveLongMemoryActionParam>()
+            var param = paramToken.ToObject<ActionParam.RemoveMemoryActionParam>()
                         ?? throw new InvalidDataException("Invalid JSON data for remove_long_memory action");
             if (param.Keys.Length == 0)
                 throw new InvalidDataException("Invalid JSON data for remove_long_memory action");
@@ -565,6 +572,32 @@ namespace RitsukageBot.Modules.AI
             var embed = new EmbedBuilder();
             embed.WithColor(Color.DarkRed);
             embed.WithDescription($"Removed long-term memory: \n{sb}");
+            return embed;
+        }
+
+        private async Task<EmbedBuilder?> ProcessingUpdateSelfState(JObject data)
+        {
+            if (data is null) throw new InvalidDataException("Invalid JSON data for update_self_state action");
+            if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
+                throw new InvalidDataException("Invalid JSON data for update_self_state action");
+            var param = paramToken.ToObject<ActionParam.MemoryActionParam>()
+                        ?? throw new InvalidDataException("Invalid JSON data for update_self_state action");
+            if (param.Data.Count == 0)
+                throw new InvalidDataException("Invalid JSON data for update_self_state action");
+            var sb = new StringBuilder();
+            foreach (var (key, value) in param.Data)
+            {
+                if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(value?.ToString()))
+                    continue;
+                await ChatClientProvider
+                    .InsertMemory(Context.User.Id, ChatMemoryType.SelfState, key, value.ToString())
+                    .ConfigureAwait(false);
+                sb.Append($"{key} = {value}\n");
+            }
+
+            var embed = new EmbedBuilder();
+            embed.WithColor(Color.DarkGreen);
+            embed.WithDescription($"Updated self state: \n{sb}");
             return embed;
         }
 
@@ -592,17 +625,12 @@ namespace RitsukageBot.Modules.AI
                 [JsonProperty("reason")] public string Reason { get; set; } = string.Empty;
             }
 
-            internal class ShortMemoryActionParam
+            internal class MemoryActionParam
             {
                 [JsonProperty("data")] public JObject Data { get; set; } = [];
             }
 
-            internal class LongMemoryActionParam
-            {
-                [JsonProperty("data")] public JObject Data { get; set; } = [];
-            }
-
-            internal class RemoveLongMemoryActionParam
+            internal class RemoveMemoryActionParam
             {
                 [JsonProperty("keys")] public string[] Keys { get; set; } = [];
             }

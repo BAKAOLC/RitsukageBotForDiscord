@@ -69,5 +69,10 @@ namespace RitsukageBot.Library.Data
         ///     Long Term
         /// </summary>
         LongTerm,
+
+        /// <summary>
+        ///    Self State
+        /// </summary>
+        SelfState,
     }
 }
