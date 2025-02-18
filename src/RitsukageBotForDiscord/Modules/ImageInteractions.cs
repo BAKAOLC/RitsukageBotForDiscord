@@ -636,7 +636,7 @@ namespace RitsukageBot.Modules
 
         private async Task TriggerProcessAsync<T>(T processStep) where T : IProcessStep<Rgba32>
         {
-            await ModifyOriginalResponseAsync(x =>
+            await Context.Interaction.Message.ModifyAsync(x =>
             {
                 x.Embed = new EmbedBuilder().WithColor(Color.Orange).WithDescription("Processing...").Build();
             }).ConfigureAwait(false);
@@ -660,7 +660,7 @@ namespace RitsukageBot.Modules
         public Task CancelAsync()
         {
             Logger.LogInformation("Image interaction canceled for {MessageId}", Context.Interaction.Message.Id);
-            return DeleteOriginalResponseAsync();
+            return Context.Interaction.Message.DeleteAsync();
         }
 
         /// <summary>
@@ -683,7 +683,7 @@ namespace RitsukageBot.Modules
                 await Context.Channel.SendMessageAsync(embed: embed).ConfigureAwait(false);
             }
 
-            await DeleteOriginalResponseAsync().ConfigureAwait(false);
+            await Context.Interaction.Message.DeleteAsync().ConfigureAwait(false);
         }
 
         /// <summary>
