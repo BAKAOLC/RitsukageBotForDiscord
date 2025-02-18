@@ -620,7 +620,7 @@ namespace RitsukageBot.Modules
 
             imageStream.Seek(0, SeekOrigin.Begin);
             image.Dispose();
-            await ModifyOriginalResponseAsync(x =>
+            await Context.Interaction.Message.ModifyAsync(x =>
                 {
                     x.Attachments = new List<FileAttachment> { new(imageStream, fileName) };
                     x.Embed = new EmbedBuilder().WithColor(Color.Green).WithDescription("success").Build();
