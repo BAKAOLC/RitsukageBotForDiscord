@@ -448,6 +448,13 @@ namespace RitsukageBot.Modules.AI
                                     result.Add(embed);
                                 break;
                             }
+                            case "remove_self_state":
+                            {
+                                var embed = await ProcessingRemoveSelfState(data).ConfigureAwait(false);
+                                if (embed is not null && showMemoryChange)
+                                    result.Add(embed);
+                                break;
+                            }
                         }
                     }
                     catch (Exception ex)
@@ -608,6 +615,31 @@ namespace RitsukageBot.Modules.AI
             var embed = new EmbedBuilder();
             embed.WithColor(Color.DarkGreen);
             embed.WithDescription($"Updated self state: \n{sb}");
+            return embed;
+        }
+
+        private async Task<EmbedBuilder?> ProcessingRemoveSelfState(JObject data)
+        {
+            if (data is null) throw new InvalidDataException("Invalid JSON data for remove_self_state action");
+            if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
+                throw new InvalidDataException("Invalid JSON data for remove_self_state action");
+            var param = paramToken.ToObject<ActionParam.RemoveMemoryActionParam>()
+                        ?? throw new InvalidDataException("Invalid JSON data for remove_self_state action");
+            if (param.Keys.Length == 0)
+                throw new InvalidDataException("Invalid JSON data for remove_self_state action");
+            var sb = new StringBuilder();
+            foreach (var key in param.Keys)
+            {
+                if (string.IsNullOrWhiteSpace(key))
+                    continue;
+                await ChatClientProvider.RemoveMemory(Context.User.Id, ChatMemoryType.SelfState, key)
+                    .ConfigureAwait(false);
+                sb.Append($"{key}\n");
+            }
+
+            var embed = new EmbedBuilder();
+            embed.WithColor(Color.DarkRed);
+            embed.WithDescription($"Removed self state: \n{sb}");
             return embed;
         }
 
