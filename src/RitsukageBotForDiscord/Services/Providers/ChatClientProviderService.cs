@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
@@ -20,7 +21,7 @@ namespace RitsukageBot.Services.Providers
     ///     Service to provide the chat client
     /// </summary>
     /// <param name="serviceProvider"></param>
-    public class ChatClientProviderService(IServiceProvider serviceProvider)
+    public partial class ChatClientProviderService(IServiceProvider serviceProvider)
     {
         private readonly IConfiguration _configuration = serviceProvider.GetRequiredService<IConfiguration>();
 
@@ -414,7 +415,8 @@ namespace RitsukageBot.Services.Providers
         /// <param name="reason"></param>
         /// <param name="time"></param>
         /// <returns></returns>
-        public async Task RecordChatDataChangeHistory(ulong userId, string key, int value, string? reason, DateTimeOffset time)
+        public async Task RecordChatDataChangeHistory(ulong userId, string key, int value, string? reason,
+            DateTimeOffset time)
         {
             var item = new ChatDataChangeHistory
             {
@@ -428,7 +430,7 @@ namespace RitsukageBot.Services.Providers
         }
 
         /// <summary>
-        ///    Query chat data change history
+        ///     Query chat data change history
         /// </summary>
         /// <param name="userId"></param>
         /// <param name="key"></param>
@@ -446,7 +448,8 @@ namespace RitsukageBot.Services.Providers
             if (endTime.HasValue)
                 query = query.Where(x => x.Timestamp <= endTime.Value);
 
-            var result = await query.OrderByDescending(x => x.Timestamp).Take(limit).ToArrayAsync().ConfigureAwait(false);
+            var result = await query.OrderByDescending(x => x.Timestamp).Take(limit).ToArrayAsync()
+                .ConfigureAwait(false);
             result = [.. result.OrderBy(x => x.Timestamp)];
             return result;
         }
@@ -605,8 +608,9 @@ namespace RitsukageBot.Services.Providers
                 ? response[(jsonStringBuilder.Length + 1)..].Trim()
                 : string.Empty;
 
-            var contentIndex = content.IndexOf("##content##", StringComparison.OrdinalIgnoreCase);
-            if (contentIndex != -1) content = content[(contentIndex + 11)..].Trim();
+            var contentRegex = ContentRegex();
+            if (contentRegex.IsMatch(content))
+                content = content[contentRegex.Match(content).Length..].Trim();
             jsonHeader = JsonUtility.TryFixJson(jsonStringBuilder.ToString());
             return true;
         }
@@ -654,6 +658,9 @@ namespace RitsukageBot.Services.Providers
                 return (hasJsonHeader, content, jsonHeader, sb.ToString());
             }
         }
+
+        [GeneratedRegex(@"^\s*#{0,2}content##", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+        private static partial Regex ContentRegex();
 
         /// <summary>
         ///     Endpoint configuration
