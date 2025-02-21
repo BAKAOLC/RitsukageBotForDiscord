@@ -487,6 +487,8 @@ namespace RitsukageBot.Modules.AI
                     .ConfigureAwait(false);
                 sb.Append($"{key} = {value}\n");
             }
+            
+            if (sb.Length == 0) return null;
 
             var embed = new EmbedBuilder();
             embed.WithColor(Color.DarkGreen);
@@ -515,6 +517,8 @@ namespace RitsukageBot.Modules.AI
                 sb.Append($"{key} = {value}\n");
             }
 
+            if (sb.Length == 0) return null;
+
             var embed = new EmbedBuilder();
             embed.WithColor(Color.DarkGreen);
             embed.WithDescription($"Added long-term memory: \n{sb}");
@@ -540,6 +544,8 @@ namespace RitsukageBot.Modules.AI
                     .ConfigureAwait(false);
                 sb.Append($"{key}\n");
             }
+
+            if (sb.Length == 0) return null;
 
             var embed = new EmbedBuilder();
             embed.WithColor(Color.DarkRed);
@@ -567,6 +573,8 @@ namespace RitsukageBot.Modules.AI
                 sb.Append($"{key} = {value}\n");
             }
 
+            if (sb.Length == 0) return null;
+
             var embed = new EmbedBuilder();
             embed.WithColor(Color.DarkGreen);
             embed.WithDescription($"Updated self state: \n{sb}");
@@ -591,6 +599,8 @@ namespace RitsukageBot.Modules.AI
                     .ConfigureAwait(false);
                 sb.Append($"{key}\n");
             }
+
+            if (sb.Length == 0) return null;
 
             var embed = new EmbedBuilder();
             embed.WithColor(Color.DarkRed);
