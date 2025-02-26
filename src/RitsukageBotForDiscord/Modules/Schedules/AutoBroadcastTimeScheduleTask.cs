@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
@@ -279,6 +280,8 @@ namespace RitsukageBot.Modules.Schedules
 
         private async Task<string> GetEmotes()
         {
+            while (_discordClient.ConnectionState is not ConnectionState.Connected)
+                await Task.Delay(1000).ConfigureAwait(false);
             var emotes = await _discordClient.GetApplicationEmotesAsync().ConfigureAwait(false);
             var sb = new StringBuilder();
             foreach (var emote in emotes)
