@@ -102,15 +102,48 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
             _logger.LogDebug("DynamicWatcherScheduleTask is completed");
         }
 
-        private static async Task SendMomentAsync(IMessageChannel channel, MomentInformation moment)
+        private async Task SendMomentAsync(IMessageChannel channel, MomentInformation moment)
         {
-            var embeds = InformationEmbedBuilder.BuildMomentInfo(moment);
-            embeds[^1].WithBilibiliLogoIconFooter();
-            var text = $"User {moment.User?.Name} has a new moment!";
-            var component = new ComponentBuilder().WithButton("Watch moment",
-                url: $"https://www.bilibili.com/opus/{moment.Id}", style: ButtonStyle.Link);
-            await channel.SendFileAsync(BilibiliIconData.GetLogoIconStream(), BilibiliIconData.LogoIconFileName, text,
-                embeds: [.. embeds.Select(x => x.Build())], components: component.Build()).ConfigureAwait(false);
+            try
+            {
+                var embeds = InformationEmbedBuilder.BuildMomentInfo(moment);
+                embeds[^1].WithBilibiliLogoIconFooter();
+                var text = $"User {moment.User?.Name} has a new moment!";
+                var component = new ComponentBuilder().WithButton("Watch moment",
+                    url: $"https://www.bilibili.com/opus/{moment.Id}", style: ButtonStyle.Link);
+
+                var embedBatches = embeds.Select((embed, index) => new { embed, index })
+                    .GroupBy(x => x.index / 10)
+                    .Select(g => g.Select(x => x.embed.Build()).ToArray())
+                    .ToArray();
+
+                switch (embedBatches.Length)
+                {
+                    case 0:
+                    {
+                        await channel.SendFileAsync(BilibiliIconData.GetLogoIconStream(),
+                            BilibiliIconData.LogoIconFileName,
+                            text, components: component.Build()).ConfigureAwait(false);
+                        break;
+                    }
+                    default:
+                    {
+                        await channel.SendFileAsync(BilibiliIconData.GetLogoIconStream(),
+                            BilibiliIconData.LogoIconFileName,
+                            text,
+                            embeds: embedBatches[0], components: component.Build()).ConfigureAwait(false);
+                        for (var i = 1; i < embedBatches.Length; i++)
+                            await channel.SendFileAsync(BilibiliIconData.GetLogoIconStream(),
+                                BilibiliIconData.LogoIconFileName,
+                                embeds: embedBatches[i]).ConfigureAwait(false);
+                        break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send moment {MomentId}", moment.Id);
+            }
         }
 
         private async Task UpdateMomentsAsync(params IEnumerable<UserMomentsRequest> requests)
