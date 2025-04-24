@@ -72,12 +72,16 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
                 var embed = InformationEmbedBuilder.BuildLiveInfo(liveInfo);
                 embed.WithBilibiliLogoIconFooter();
                 embed.Timestamp = null; // Remove timestamp
+                embed.WithColor(isLiving ? Color.Green : Color.Red);
                 var text = $"{liveInfo.User.Name}'s live room is now {(isLiving ? "living!" : "offline...")}";
                 if (!isLiving)
                 {
+                    embed.Title = null;
+                    embed.Fields = null;
+                    embed.ImageUrl = null;
+                    embed.WithDescription(text);
                     await messageChannel.SendFileAsync(BilibiliIconData.GetLogoIconStream(),
-                        BilibiliIconData.LogoIconFileName,
-                        text, embed: embed.Build()).ConfigureAwait(false);
+                        BilibiliIconData.LogoIconFileName, embed: embed.Build()).ConfigureAwait(false);
                     continue;
                 }
 
