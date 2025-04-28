@@ -77,7 +77,7 @@ namespace RitsukageBot.Modules.Bilibili.Schedules
                 if (!isLiving)
                 {
                     embed.Title = null;
-                    embed.Fields = null;
+                    embed.Fields = [];
                     embed.ImageUrl = null;
                     embed.WithDescription(text);
                     await messageChannel.SendFileAsync(BilibiliIconData.GetLogoIconStream(),
