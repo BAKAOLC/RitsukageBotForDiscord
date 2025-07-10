@@ -150,7 +150,17 @@ namespace RitsukageBot.Modules.AI
                 _ = Task.Run(async () =>
                     {
                         await foreach (var response in chatClient.CompleteStreamingAsync(messageList,
-                                           new() { Temperature = temperature, MaxOutputTokens = 8192 },
+                                           new()
+                                           {
+                                               Temperature = temperature,
+                                               MaxOutputTokens = 8192,
+                                               // Properties for Grok
+                                               AdditionalProperties = new(new Dictionary<string, object?>
+                                               {
+                                                   { "max_completion_tokens", 8192 },
+                                                   { "search_parameters", new Dictionary<string, object>() },
+                                               }),
+                                           },
                                            cancellationTokenSource2.Token))
                         {
                             if (cancellationToken.IsCancellationRequested) return;
@@ -487,7 +497,7 @@ namespace RitsukageBot.Modules.AI
                     .ConfigureAwait(false);
                 sb.Append($"{key} = {value}\n");
             }
-            
+
             if (sb.Length == 0) return null;
 
             var embed = new EmbedBuilder();
