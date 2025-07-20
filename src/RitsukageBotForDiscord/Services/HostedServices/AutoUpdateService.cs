@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.IO;
 using System.IO.Compression;
 using System.Reflection;
 using System.Text;
@@ -146,29 +147,94 @@ namespace RitsukageBot.Services.HostedServices
         private async Task UpdateAsync(Stream stream)
         {
             logger.LogDebug("Saving update to update.zip...");
-            await using var fileStream =
-                new FileStream("update.zip", FileMode.Create, FileAccess.Write, FileShare.None);
-            await stream.CopyToAsync(fileStream).ConfigureAwait(false);
-            stream.Close();
-            fileStream.Close();
-
-            logger.LogDebug("Extracting update...");
-            ZipFile.ExtractToDirectory("update.zip", "update", true);
-            File.Delete("update.zip");
-
-            logger.LogDebug("Generating update script...");
-            var scriptPath = await GenerateUpdateScriptAsync().ConfigureAwait(false);
-            logger.LogDebug("Executing update script...");
-            if (PlatformUtility.GetOperatingSystem() == PlatformID.Win32NT)
-                Process.Start(new ProcessStartInfo
+            const string updateZipPath = "update.zip";
+            const string updateDirPath = "update";
+            
+            try
+            {
+                // Clean up any existing update files
+                if (File.Exists(updateZipPath))
                 {
-                    FileName = scriptPath,
-                    UseShellExecute = true,
-                    CreateNoWindow = true,
-                });
-            else
-                Process.Start("sh", scriptPath);
-            HostCancellationToken.Cancel();
+                    File.Delete(updateZipPath);
+                }
+                if (Directory.Exists(updateDirPath))
+                {
+                    Directory.Delete(updateDirPath, true);
+                }
+                
+                // Save the stream to update.zip
+                await using var fileStream =
+                    new FileStream(updateZipPath, FileMode.Create, FileAccess.Write, FileShare.None);
+                await stream.CopyToAsync(fileStream).ConfigureAwait(false);
+                stream.Close();
+                fileStream.Close();
+
+                logger.LogDebug("Extracting update...");
+                
+                // Create update directory
+                Directory.CreateDirectory(updateDirPath);
+                
+                // Extract with overwrite enabled
+                ZipFile.ExtractToDirectory(updateZipPath, updateDirPath, true);
+                
+                // Verify extraction succeeded
+                if (!Directory.Exists(updateDirPath) || !Directory.GetFileSystemEntries(updateDirPath).Any())
+                {
+                    logger.LogError("Update extraction failed - update directory is empty");
+                    return;
+                }
+                
+                // Clean up the zip file
+                File.Delete(updateZipPath);
+                
+                logger.LogDebug("Update extracted successfully. Files found: {FileCount}", 
+                    Directory.GetFileSystemEntries(updateDirPath, "*", SearchOption.AllDirectories).Length);
+
+                logger.LogDebug("Generating update script...");
+                var scriptPath = await GenerateUpdateScriptAsync().ConfigureAwait(false);
+                
+                logger.LogDebug("Executing update script: {ScriptPath}", scriptPath);
+                
+                if (PlatformUtility.GetOperatingSystem() == PlatformID.Win32NT)
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = scriptPath,
+                        UseShellExecute = true,
+                        CreateNoWindow = true,
+                        WorkingDirectory = Environment.CurrentDirectory
+                    });
+                }
+                else
+                {
+                    // Make script executable
+                    Process.Start("chmod", $"+x {scriptPath}")?.WaitForExit();
+                    Process.Start("sh", scriptPath);
+                }
+                
+                // Give a moment for the script to start before cancelling
+                await Task.Delay(1000).ConfigureAwait(false);
+                HostCancellationToken.Cancel();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to process update");
+                
+                // Clean up on failure
+                try
+                {
+                    if (File.Exists(updateZipPath))
+                        File.Delete(updateZipPath);
+                    if (Directory.Exists(updateDirPath))
+                        Directory.Delete(updateDirPath, true);
+                }
+                catch (Exception cleanupEx)
+                {
+                    logger.LogWarning(cleanupEx, "Failed to clean up update files after error");
+                }
+                
+                throw;
+            }
         }
 
         private static async Task<string> GenerateUpdateScriptAsync()
@@ -182,16 +248,40 @@ namespace RitsukageBot.Services.HostedServices
                 script.AppendLine($"title Updating {assemblyName}");
                 script.AppendLine("echo Stopping current process...");
                 script.AppendLine($"taskkill /pid {pid} /f");
-                script.AppendLine("echo Deleting libraries and runtimes folders...");
-                script.AppendLine("rmdir /s /q libraries");
-                script.AppendLine("rmdir /s /q runtimes");
-                script.AppendLine("echo Done.");
-                script.AppendLine("echo Moving update folder...");
-                script.AppendLine("xcopy /e /y update .");
-                script.AppendLine("rmdir /s /q update");
-                script.AppendLine("echo Restarting...");
-                script.AppendLine($"start {assemblyName}.exe");
-                script.AppendLine("del %0");
+                
+                // Wait for process to fully terminate
+                script.AppendLine("echo Waiting for process to terminate...");
+                script.AppendLine("timeout /t 3 /nobreak > nul");
+                
+                // Wait until process is actually gone
+                script.AppendLine(":waitloop");
+                script.AppendLine($"tasklist /fi \"pid eq {pid}\" 2>nul | find \"{pid}\" >nul");
+                script.AppendLine("if not errorlevel 1 (");
+                script.AppendLine("    timeout /t 1 /nobreak > nul");
+                script.AppendLine("    goto waitloop");
+                script.AppendLine(")");
+                
+                script.AppendLine("echo Process terminated. Cleaning up old files...");
+                
+                // More comprehensive cleanup
+                script.AppendLine("if exist libraries rmdir /s /q libraries");
+                script.AppendLine("if exist runtimes rmdir /s /q runtimes");
+                script.AppendLine("if exist ref rmdir /s /q ref");
+                
+                // Delete old executable files that might be locked
+                script.AppendLine($"if exist {assemblyName}.exe del /f /q {assemblyName}.exe");
+                script.AppendLine($"if exist {assemblyName}.dll del /f /q {assemblyName}.dll");
+                script.AppendLine($"if exist {assemblyName}.pdb del /f /q {assemblyName}.pdb");
+                
+                script.AppendLine("echo Copying new files...");
+                
+                // Use robocopy for better file handling
+                script.AppendLine("robocopy update . /e /move /r:3 /w:1");
+                script.AppendLine("if exist update rmdir /s /q update");
+                
+                script.AppendLine("echo Restarting application...");
+                script.AppendLine($"start \"\" \"{assemblyName}.exe\"");
+                script.AppendLine("del \"%~f0\"");
 
                 await File.WriteAllTextAsync("update.bat", script.ToString()).ConfigureAwait(false);
                 return "update.bat";
@@ -200,17 +290,38 @@ namespace RitsukageBot.Services.HostedServices
             script.AppendLine("#!/bin/bash");
             script.AppendLine("echo Stopping current process...");
             script.AppendLine($"kill {pid}");
-            script.AppendLine("echo Deleting libraries and runtimes folders...");
-            script.AppendLine("rm -rf libraries");
-            script.AppendLine("rm -rf runtimes");
-            script.AppendLine("echo Done.");
-            script.AppendLine("echo Moving update folder...");
-            script.AppendLine("cp -r update/* .");
-            script.AppendLine("rm -rf update");
-            script.AppendLine("echo Restarting...");
+            
+            // Wait for process to terminate
+            script.AppendLine("echo Waiting for process to terminate...");
+            script.AppendLine("sleep 3");
+            
+            // Wait until process is actually gone
+            script.AppendLine($"while kill -0 {pid} 2>/dev/null; do");
+            script.AppendLine("    echo Process still running, waiting...");
+            script.AppendLine("    sleep 1");
+            script.AppendLine("done");
+            
+            script.AppendLine("echo Process terminated. Cleaning up old files...");
+            
+            // More comprehensive cleanup
+            script.AppendLine("rm -rf libraries runtimes ref");
+            script.AppendLine($"rm -f {assemblyName} {assemblyName}.dll {assemblyName}.pdb");
+            
+            script.AppendLine("echo Copying new files...");
+            
+            // Better file copying with error handling
+            script.AppendLine("if [ -d \"update\" ]; then");
+            script.AppendLine("    cp -rf update/* . 2>/dev/null || echo 'Some files could not be copied'");
+            script.AppendLine("    rm -rf update");
+            script.AppendLine("else");
+            script.AppendLine("    echo 'Error: update directory not found'");
+            script.AppendLine("    exit 1");
+            script.AppendLine("fi");
+            
+            script.AppendLine("echo Setting permissions and restarting...");
             script.AppendLine($"chmod +x {assemblyName}");
-            script.AppendLine($"./{assemblyName} &");
-            script.AppendLine("rm $0");
+            script.AppendLine($"nohup ./{assemblyName} > /dev/null 2>&1 &");
+            script.AppendLine("rm -- \"$0\"");
 
             await File.WriteAllTextAsync("update.sh", script.ToString()).ConfigureAwait(false);
             return "update.sh";
