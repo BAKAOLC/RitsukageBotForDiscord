@@ -819,6 +819,759 @@ namespace RitsukageBot.Modules.AI
                 return Task.FromResult(AutocompletionResult.FromSuccess(results.Take(25)));
             }
         }
+
+        /// <summary>
+        ///     Query user ID by username in current Discord server
+        /// </summary>
+        /// <param name="username">Username to search for</param>
+        /// <returns></returns>
+        [SlashCommand("query_user_id", "Query user ID by username in current Discord server")]
+        public async Task QueryUserIdAsync(string username)
+        {
+            await DeferAsync().ConfigureAwait(false);
+
+            if (Context.Guild is null)
+            {
+                var errorEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "This command can only be used in a guild.",
+                    Color = Color.Red,
+                };
+                await FollowupAsync(embed: errorEmbed.Build()).ConfigureAwait(false);
+                return;
+            }
+
+            var users = Context.Guild.Users
+                .Where(u => u.Username.Contains(username, StringComparison.OrdinalIgnoreCase) ||
+                           (u.GlobalName?.Contains(username, StringComparison.OrdinalIgnoreCase) ?? false))
+                .Take(10)
+                .ToList();
+
+            if (!users.Any())
+            {
+                var notFoundEmbed = new EmbedBuilder
+                {
+                    Title = "User Search",
+                    Description = $"No users found with username containing: {username}",
+                    Color = Color.Orange,
+                };
+                await FollowupAsync(embed: notFoundEmbed.Build()).ConfigureAwait(false);
+                return;
+            }
+
+            var embed = new EmbedBuilder
+            {
+                Title = "User Search Results",
+                Description = $"Found {users.Count} user(s) matching: {username}",
+                Color = Color.Green,
+            };
+
+            foreach (var user in users)
+            {
+                var fieldName = user.GlobalName ?? user.Username;
+                var fieldValue = $"ID: `{user.Id}`\nUsername: {user.Username}\nMention: <@{user.Id}>";
+                embed.AddField(fieldName, fieldValue, true);
+            }
+
+            embed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
+            embed.WithCurrentTimestamp();
+
+            await FollowupAsync(embed: embed.Build()).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        ///     Get user information by user ID in current Discord server
+        /// </summary>
+        /// <param name="userId">User ID to query</param>
+        /// <returns></returns>
+        [SlashCommand("get_user_info", "Get user information by user ID in current Discord server")]
+        public async Task GetUserInfoAsync(string userId)
+        {
+            await DeferAsync().ConfigureAwait(false);
+
+            if (Context.Guild is null)
+            {
+                var errorEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "This command can only be used in a guild.",
+                    Color = Color.Red,
+                };
+                await FollowupAsync(embed: errorEmbed.Build()).ConfigureAwait(false);
+                return;
+            }
+
+            if (!ulong.TryParse(userId, out var id))
+            {
+                var errorEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "Invalid user ID format.",
+                    Color = Color.Red,
+                };
+                await FollowupAsync(embed: errorEmbed.Build()).ConfigureAwait(false);
+                return;
+            }
+
+            var user = Context.Guild.GetUser(id);
+            if (user is null)
+            {
+                var notFoundEmbed = new EmbedBuilder
+                {
+                    Title = "User Information",
+                    Description = $"User with ID `{id}` not found in this server.",
+                    Color = Color.Orange,
+                };
+                await FollowupAsync(embed: notFoundEmbed.Build()).ConfigureAwait(false);
+                return;
+            }
+
+            var embed = new EmbedBuilder
+            {
+                Title = "User Information",
+                Color = Color.Blue,
+            };
+
+            embed.WithThumbnailUrl(user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl());
+            embed.AddField("Display Name", user.DisplayName, true);
+            embed.AddField("Username", user.Username, true);
+            embed.AddField("User ID", user.Id.ToString(), true);
+            embed.AddField("Account Created", $"<t:{user.CreatedAt.ToUnixTimeSeconds()}:F>", true);
+            embed.AddField("Joined Server", user.JoinedAt.HasValue ? $"<t:{user.JoinedAt.Value.ToUnixTimeSeconds()}:F>" : "Unknown", true);
+            embed.AddField("Is Bot", user.IsBot ? "Yes" : "No", true);
+
+            if (user.Roles.Any(r => r.Id != Context.Guild.EveryoneRole.Id))
+            {
+                var roles = string.Join(", ", user.Roles.Where(r => r.Id != Context.Guild.EveryoneRole.Id).Select(r => r.Mention));
+                embed.AddField("Roles", roles.Length > 1024 ? "Too many roles to display" : roles);
+            }
+
+            embed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
+            embed.WithCurrentTimestamp();
+
+            await FollowupAsync(embed: embed.Build()).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        ///     List accessible channels in current Discord server
+        /// </summary>
+        /// <returns></returns>
+        [SlashCommand("list_channels", "List accessible channels in current Discord server")]
+        public async Task ListChannelsAsync()
+        {
+            await DeferAsync().ConfigureAwait(false);
+
+            if (Context.Guild is null)
+            {
+                var errorEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "This command can only be used in a guild.",
+                    Color = Color.Red,
+                };
+                await FollowupAsync(embed: errorEmbed.Build()).ConfigureAwait(false);
+                return;
+            }
+
+            var textChannels = Context.Guild.TextChannels
+                .Where(c => Context.Guild.CurrentUser.GetPermissions(c).ViewChannel)
+                .OrderBy(c => c.Position)
+                .ToList();
+
+            var voiceChannels = Context.Guild.VoiceChannels
+                .Where(c => Context.Guild.CurrentUser.GetPermissions(c).ViewChannel)
+                .OrderBy(c => c.Position)
+                .ToList();
+
+            var embed = new EmbedBuilder
+            {
+                Title = "Accessible Channels",
+                Color = Color.Green,
+            };
+
+            if (textChannels.Any())
+            {
+                var textChannelList = string.Join("\n", textChannels.Take(20).Select(c => $"<#{c.Id}> (`{c.Id}`)"));
+                if (textChannels.Count > 20)
+                    textChannelList += $"\n... and {textChannels.Count - 20} more";
+                embed.AddField($"Text Channels ({textChannels.Count})", textChannelList);
+            }
+
+            if (voiceChannels.Any())
+            {
+                var voiceChannelList = string.Join("\n", voiceChannels.Take(20).Select(c => $"{c.Name} (`{c.Id}`)"));
+                if (voiceChannels.Count > 20)
+                    voiceChannelList += $"\n... and {voiceChannels.Count - 20} more";
+                embed.AddField($"Voice Channels ({voiceChannels.Count})", voiceChannelList);
+            }
+
+            embed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
+            embed.WithCurrentTimestamp();
+
+            await FollowupAsync(embed: embed.Build()).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        ///     Send private message to specified user
+        /// </summary>
+        /// <param name="userId">User ID to send message to</param>
+        /// <param name="message">Message content</param>
+        /// <returns></returns>
+        [RequireOwner]
+        [SlashCommand("send_dm", "Send private message to specified user")]
+        public async Task SendDirectMessageAsync(string userId, string message)
+        {
+            await DeferAsync().ConfigureAwait(false);
+
+            if (!ulong.TryParse(userId, out var id))
+            {
+                var errorEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "Invalid user ID format.",
+                    Color = Color.Red,
+                };
+                await FollowupAsync(embed: errorEmbed.Build()).ConfigureAwait(false);
+                return;
+            }
+
+            var user = Context.Client.GetUser(id);
+            if (user is null)
+            {
+                var notFoundEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = $"User with ID `{id}` not found.",
+                    Color = Color.Red,
+                };
+                await FollowupAsync(embed: notFoundEmbed.Build()).ConfigureAwait(false);
+                return;
+            }
+
+            try
+            {
+                await user.SendMessageAsync(message).ConfigureAwait(false);
+                var successEmbed = new EmbedBuilder
+                {
+                    Title = "Message Sent",
+                    Description = $"Successfully sent private message to {user.Username} (`{user.Id}`)",
+                    Color = Color.Green,
+                };
+                await FollowupAsync(embed: successEmbed.Build()).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                var errorEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = $"Failed to send message: {ex.Message}",
+                    Color = Color.Red,
+                };
+                await FollowupAsync(embed: errorEmbed.Build()).ConfigureAwait(false);
+            }
+        }
+
+        /// <summary>
+        ///     Send message to specified channel
+        /// </summary>
+        /// <param name="channelId">Channel ID to send message to</param>
+        /// <param name="message">Message content</param>
+        /// <returns></returns>
+        [RequireUserPermission(GuildPermission.Administrator
+                               | GuildPermission.ManageGuild
+                               | GuildPermission.ManageChannels)]
+        [SlashCommand("send_channel_message", "Send message to specified channel")]
+        public async Task SendChannelMessageAsync(string channelId, string message)
+        {
+            await DeferAsync().ConfigureAwait(false);
+
+            if (!ulong.TryParse(channelId, out var id))
+            {
+                var errorEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "Invalid channel ID format.",
+                    Color = Color.Red,
+                };
+                await FollowupAsync(embed: errorEmbed.Build()).ConfigureAwait(false);
+                return;
+            }
+
+            var channel = Context.Client.GetChannel(id) as IMessageChannel;
+            if (channel is null)
+            {
+                var notFoundEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = $"Channel with ID `{id}` not found or is not a message channel.",
+                    Color = Color.Red,
+                };
+                await FollowupAsync(embed: notFoundEmbed.Build()).ConfigureAwait(false);
+                return;
+            }
+
+            try
+            {
+                await channel.SendMessageAsync(message).ConfigureAwait(false);
+                var successEmbed = new EmbedBuilder
+                {
+                    Title = "Message Sent",
+                    Description = $"Successfully sent message to <#{channel.Id}>",
+                    Color = Color.Green,
+                };
+                await FollowupAsync(embed: successEmbed.Build()).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                var errorEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = $"Failed to send message: {ex.Message}",
+                    Color = Color.Red,
+                };
+                await FollowupAsync(embed: errorEmbed.Build()).ConfigureAwait(false);
+            }
+        }
+
+        /// <summary>
+        ///     Get random users from current channel
+        /// </summary>
+        /// <param name="count">Number of users to get (max 10)</param>
+        /// <returns></returns>
+        [SlashCommand("random_users", "Get random users from current channel")]
+        public async Task GetRandomUsersAsync(int count = 5)
+        {
+            await DeferAsync().ConfigureAwait(false);
+
+            if (Context.Guild is null)
+            {
+                var errorEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "This command can only be used in a guild.",
+                    Color = Color.Red,
+                };
+                await FollowupAsync(embed: errorEmbed.Build()).ConfigureAwait(false);
+                return;
+            }
+
+            if (count <= 0 || count > 10)
+            {
+                var errorEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "Count must be between 1 and 10.",
+                    Color = Color.Red,
+                };
+                await FollowupAsync(embed: errorEmbed.Build()).ConfigureAwait(false);
+                return;
+            }
+
+            var users = Context.Guild.Users
+                .Where(u => !u.IsBot && u.Status != UserStatus.Offline)
+                .ToList();
+
+            if (!users.Any())
+            {
+                var noUsersEmbed = new EmbedBuilder
+                {
+                    Title = "Random Users",
+                    Description = "No online users found in this server.",
+                    Color = Color.Orange,
+                };
+                await FollowupAsync(embed: noUsersEmbed.Build()).ConfigureAwait(false);
+                return;
+            }
+
+            var randomUsers = users.OrderBy(_ => Guid.NewGuid()).Take(count).ToList();
+
+            var embed = new EmbedBuilder
+            {
+                Title = "Random Users",
+                Description = $"Selected {randomUsers.Count} random online user(s):",
+                Color = Color.Blue,
+            };
+
+            foreach (var user in randomUsers)
+            {
+                var fieldName = user.DisplayName;
+                var fieldValue = $"Username: {user.Username}\nID: `{user.Id}`\nStatus: {user.Status}";
+                embed.AddField(fieldName, fieldValue, true);
+            }
+
+            embed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
+            embed.WithCurrentTimestamp();
+
+            await FollowupAsync(embed: embed.Build()).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        ///     Create AI scheduled task
+        /// </summary>
+        /// <param name="name">Task name</param>
+        /// <param name="prompt">AI prompt</param>
+        /// <param name="scheduleTime">When to schedule (format: yyyy-MM-dd HH:mm)</param>
+        /// <param name="scheduleType">Schedule type</param>
+        /// <param name="channelId">Optional channel ID for output</param>
+        /// <param name="intervalMinutes">Interval in minutes for periodic tasks</param>
+        /// <param name="targetTimes">Target execution times for countdown tasks</param>
+        /// <param name="aiRole">AI role to use</param>
+        /// <returns></returns>
+        [SlashCommand("create_task", "Create AI scheduled task")]
+        public async Task CreateScheduledTaskAsync(
+            string name,
+            string prompt,
+            string scheduleTime,
+            [Choice("OneTime", "OneTime")]
+            [Choice("Periodic", "Periodic")]
+            [Choice("Countdown", "Countdown")]
+            [Choice("UntilTime", "UntilTime")]
+            string scheduleType = "OneTime",
+            string? channelId = null,
+            int intervalMinutes = 60,
+            int targetTimes = 1,
+            [Autocomplete(typeof(AiRolesInteractionAutocompleteHandler))] string? aiRole = null)
+        {
+            await DeferAsync().ConfigureAwait(false);
+
+            if (!await CheckEnabled().ConfigureAwait(false)) return;
+
+            if (Context.Guild is null)
+            {
+                var errorEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "This command can only be used in a guild.",
+                    Color = Color.Red,
+                };
+                await FollowupAsync(embed: errorEmbed.Build()).ConfigureAwait(false);
+                return;
+            }
+
+            // Parse schedule time
+            if (!DateTime.TryParseExact(scheduleTime, "yyyy-MM-dd HH:mm", null, System.Globalization.DateTimeStyles.None, out var parsedTime))
+            {
+                var errorEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "Invalid schedule time format. Use: yyyy-MM-dd HH:mm (e.g., 2024-12-25 14:30)",
+                    Color = Color.Red,
+                };
+                await FollowupAsync(embed: errorEmbed.Build()).ConfigureAwait(false);
+                return;
+            }
+
+            var scheduleTimeOffset = new DateTimeOffset(parsedTime, TimeZoneInfo.Local.GetUtcOffset(parsedTime));
+
+            // Validate channel ID if provided
+            ulong? channelIdParsed = null;
+            if (!string.IsNullOrWhiteSpace(channelId))
+            {
+                if (!ulong.TryParse(channelId, out var cId))
+                {
+                    var errorEmbed = new EmbedBuilder
+                    {
+                        Title = "Error",
+                        Description = "Invalid channel ID format.",
+                        Color = Color.Red,
+                    };
+                    await FollowupAsync(embed: errorEmbed.Build()).ConfigureAwait(false);
+                    return;
+                }
+                channelIdParsed = cId;
+
+                var channel = Context.Client.GetChannel(cId);
+                if (channel is null)
+                {
+                    var errorEmbed = new EmbedBuilder
+                    {
+                        Title = "Error",
+                        Description = "Channel not found.",
+                        Color = Color.Red,
+                    };
+                    await FollowupAsync(embed: errorEmbed.Build()).ConfigureAwait(false);
+                    return;
+                }
+            }
+
+            // Validate AI role if provided
+            if (!string.IsNullOrWhiteSpace(aiRole) && !ChatClientProvider.GetRoleData(out _, out _, aiRole))
+            {
+                var errorEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = $"Invalid AI role: {aiRole}",
+                    Color = Color.Red,
+                };
+                await FollowupAsync(embed: errorEmbed.Build()).ConfigureAwait(false);
+                return;
+            }
+
+            // Create task
+            var task = new AiScheduledTask
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = name,
+                UserId = Context.User.Id,
+                GuildId = Context.Guild.Id,
+                ChannelId = channelIdParsed,
+                Prompt = prompt,
+                AiRole = aiRole,
+                ScheduleType = scheduleType,
+                ScheduleTime = scheduleTimeOffset,
+                IntervalSeconds = scheduleType is "Periodic" or "Countdown" or "UntilTime" ? intervalMinutes * 60L : null,
+                TargetTimes = scheduleType == "Countdown" ? (ulong)targetTimes : null,
+                TargetTime = scheduleType == "UntilTime" ? scheduleTimeOffset.AddMinutes(intervalMinutes * targetTimes) : null,
+                IsEnabled = true,
+                CreatedTime = DateTimeOffset.UtcNow,
+                UpdatedTime = DateTimeOffset.UtcNow
+            };
+
+            await DatabaseProviderService.InsertOrUpdateAsync(task).ConfigureAwait(false);
+
+            var embed = new EmbedBuilder
+            {
+                Title = "AI Scheduled Task Created",
+                Description = $"Task **{name}** has been created successfully.",
+                Color = Color.Green,
+            };
+
+            embed.AddField("Task ID", task.Id, true);
+            embed.AddField("Schedule Type", scheduleType, true);
+            embed.AddField("Schedule Time", $"<t:{scheduleTimeOffset.ToUnixTimeSeconds()}:F>", true);
+            embed.AddField("Output", channelIdParsed.HasValue ? $"<#{channelIdParsed.Value}>" : "Direct Message", true);
+            if (!string.IsNullOrWhiteSpace(aiRole))
+                embed.AddField("AI Role", aiRole, true);
+
+            embed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
+            embed.WithCurrentTimestamp();
+
+            await FollowupAsync(embed: embed.Build()).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        ///     List AI scheduled tasks
+        /// </summary>
+        /// <param name="showAll">Show all tasks (admin only) or just own tasks</param>
+        /// <returns></returns>
+        [SlashCommand("list_tasks", "List AI scheduled tasks")]
+        public async Task ListScheduledTasksAsync(bool showAll = false)
+        {
+            await DeferAsync().ConfigureAwait(false);
+
+            if (Context.Guild is null)
+            {
+                var errorEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "This command can only be used in a guild.",
+                    Color = Color.Red,
+                };
+                await FollowupAsync(embed: errorEmbed.Build()).ConfigureAwait(false);
+                return;
+            }
+
+            var query = showAll && Context.User.Id == Context.Client.Application.Owner.Id
+                ? "SELECT * FROM AiScheduledTask WHERE guild_id = ? ORDER BY created_time DESC"
+                : "SELECT * FROM AiScheduledTask WHERE guild_id = ? AND user_id = ? ORDER BY created_time DESC";
+
+            var parameters = showAll && Context.User.Id == Context.Client.Application.Owner.Id
+                ? new object[] { Context.Guild.Id }
+                : new object[] { Context.Guild.Id, Context.User.Id };
+
+            var tasks = await DatabaseProviderService.QueryAsync<AiScheduledTask>(query, parameters).ConfigureAwait(false);
+
+            if (!tasks.Any())
+            {
+                var noTasksEmbed = new EmbedBuilder
+                {
+                    Title = "AI Scheduled Tasks",
+                    Description = showAll ? "No scheduled tasks found in this server." : "You have no scheduled tasks.",
+                    Color = Color.Orange,
+                };
+                await FollowupAsync(embed: noTasksEmbed.Build()).ConfigureAwait(false);
+                return;
+            }
+
+            var embed = new EmbedBuilder
+            {
+                Title = "AI Scheduled Tasks",
+                Description = $"Found {tasks.Count} task(s)",
+                Color = Color.Blue,
+            };
+
+            foreach (var task in tasks.Take(10)) // Limit to first 10 tasks
+            {
+                var statusIcon = task.IsFinished ? "✅" : (task.IsEnabled ? "🟢" : "⏸️");
+                var fieldName = $"{statusIcon} {task.Name}";
+                
+                var fieldValue = $"ID: `{task.Id[..8]}...`\n" +
+                                $"Type: {task.ScheduleType}\n" +
+                                $"Schedule: <t:{task.ScheduleTime.ToUnixTimeSeconds()}:R>\n" +
+                                $"Executed: {task.ExecutedTimes} times";
+
+                if (task.LastExecutedTime.HasValue)
+                    fieldValue += $"\nLast: <t:{task.LastExecutedTime.Value.ToUnixTimeSeconds()}:R>";
+
+                if (showAll)
+                    fieldValue += $"\nCreator: <@{task.UserId}>";
+
+                embed.AddField(fieldName, fieldValue, true);
+            }
+
+            if (tasks.Count > 10)
+                embed.WithFooter($"Showing 10 of {tasks.Count} tasks");
+
+            embed.WithCurrentTimestamp();
+
+            await FollowupAsync(embed: embed.Build()).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        ///     Delete AI scheduled task
+        /// </summary>
+        /// <param name="taskId">Task ID to delete</param>
+        /// <returns></returns>
+        [SlashCommand("delete_task", "Delete AI scheduled task")]
+        public async Task DeleteScheduledTaskAsync(string taskId)
+        {
+            await DeferAsync().ConfigureAwait(false);
+
+            if (Context.Guild is null)
+            {
+                var errorEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "This command can only be used in a guild.",
+                    Color = Color.Red,
+                };
+                await FollowupAsync(embed: errorEmbed.Build()).ConfigureAwait(false);
+                return;
+            }
+
+            // Find the task
+            var task = await DatabaseProviderService.GetAsync<AiScheduledTask>(taskId).ConfigureAwait(false);
+            if (task is null)
+            {
+                var notFoundEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "Task not found.",
+                    Color = Color.Red,
+                };
+                await FollowupAsync(embed: notFoundEmbed.Build()).ConfigureAwait(false);
+                return;
+            }
+
+            // Check permissions (user can delete own tasks, admins can delete any)
+            var isOwner = Context.User.Id == Context.Client.Application.Owner.Id;
+            var isTaskCreator = task.UserId == Context.User.Id;
+            var hasAdminPermission = Context.User is SocketGuildUser guildUser && 
+                                    guildUser.GuildPermissions.Administrator;
+
+            if (!isOwner && !isTaskCreator && !hasAdminPermission)
+            {
+                var permissionEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "You don't have permission to delete this task.",
+                    Color = Color.Red,
+                };
+                await FollowupAsync(embed: permissionEmbed.Build()).ConfigureAwait(false);
+                return;
+            }
+
+            // Delete the task
+            await DatabaseProviderService.DeleteAsync<AiScheduledTask>(taskId).ConfigureAwait(false);
+
+            var successEmbed = new EmbedBuilder
+            {
+                Title = "Task Deleted",
+                Description = $"Successfully deleted task **{task.Name}** (`{task.Id[..8]}...`)",
+                Color = Color.Green,
+            };
+
+            successEmbed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
+            successEmbed.WithCurrentTimestamp();
+
+            await FollowupAsync(embed: successEmbed.Build()).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        ///     Toggle AI scheduled task enabled status
+        /// </summary>
+        /// <param name="taskId">Task ID to toggle</param>
+        /// <returns></returns>
+        [SlashCommand("toggle_task", "Toggle AI scheduled task enabled status")]
+        public async Task ToggleScheduledTaskAsync(string taskId)
+        {
+            await DeferAsync().ConfigureAwait(false);
+
+            if (Context.Guild is null)
+            {
+                var errorEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "This command can only be used in a guild.",
+                    Color = Color.Red,
+                };
+                await FollowupAsync(embed: errorEmbed.Build()).ConfigureAwait(false);
+                return;
+            }
+
+            // Find the task
+            var task = await DatabaseProviderService.GetAsync<AiScheduledTask>(taskId).ConfigureAwait(false);
+            if (task is null)
+            {
+                var notFoundEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "Task not found.",
+                    Color = Color.Red,
+                };
+                await FollowupAsync(embed: notFoundEmbed.Build()).ConfigureAwait(false);
+                return;
+            }
+
+            // Check permissions (same as delete)
+            var isOwner = Context.User.Id == Context.Client.Application.Owner.Id;
+            var isTaskCreator = task.UserId == Context.User.Id;
+            var hasAdminPermission = Context.User is SocketGuildUser guildUser && 
+                                    guildUser.GuildPermissions.Administrator;
+
+            if (!isOwner && !isTaskCreator && !hasAdminPermission)
+            {
+                var permissionEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "You don't have permission to modify this task.",
+                    Color = Color.Red,
+                };
+                await FollowupAsync(embed: permissionEmbed.Build()).ConfigureAwait(false);
+                return;
+            }
+
+            // Toggle the status
+            task.IsEnabled = !task.IsEnabled;
+            task.UpdatedTime = DateTimeOffset.UtcNow;
+            await DatabaseProviderService.InsertOrUpdateAsync(task).ConfigureAwait(false);
+
+            var statusText = task.IsEnabled ? "enabled" : "disabled";
+            var statusColor = task.IsEnabled ? Color.Green : Color.Orange;
+
+            var successEmbed = new EmbedBuilder
+            {
+                Title = "Task Status Updated",
+                Description = $"Task **{task.Name}** has been {statusText}.",
+                Color = statusColor,
+            };
+
+            successEmbed.WithFooter(Context.Client.CurrentUser.Username, Context.Client.CurrentUser.GetAvatarUrl());
+            successEmbed.WithCurrentTimestamp();
+
+            await FollowupAsync(embed: successEmbed.Build()).ConfigureAwait(false);
+        }
     }
 
     /// <summary>
