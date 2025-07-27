@@ -126,7 +126,7 @@ namespace RitsukageBot.Modules.AI
             var isError = false;
             var isTimeout = false;
             Exception? exception = null;
-            var lockObject = new Lock();
+            var lockObject = new object();
             var generatingEmbed = new EmbedBuilder();
             generatingEmbed.WithDescription("Generating the response...");
             generatingEmbed.WithColor(Color.Orange);
@@ -685,6 +685,8 @@ namespace RitsukageBot.Modules.AI
 
             var embed = new EmbedBuilder();
             embed.WithColor(Color.DarkRed);
+            embed.WithDescription($"Removed self state: \n{sb}");
+            return embed;
         }
 
         private async Task<EmbedBuilder?> ProcessingQueryUserId(JObject data)

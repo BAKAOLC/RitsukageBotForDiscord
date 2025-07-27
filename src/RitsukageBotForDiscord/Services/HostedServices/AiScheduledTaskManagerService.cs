@@ -35,7 +35,7 @@ namespace RitsukageBot.Services.HostedServices
                 try
                 {
                     await LoadAndExecuteTasksAsync(stoppingToken).ConfigureAwait(false);
-                    await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken).ConfigureAwait(false);
+                    await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {
@@ -45,7 +45,7 @@ namespace RitsukageBot.Services.HostedServices
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error in AI scheduled task manager");
-                    await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken).ConfigureAwait(false);
+                    await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken).ConfigureAwait(false);
                 }
             }
 
@@ -131,37 +131,49 @@ namespace RitsukageBot.Services.HostedServices
             if (currentTime < config.ScheduleTime)
                 return false;
 
-            switch (config)
+            switch (config.ScheduleType)
             {
-                case OneTimeScheduleConfiguration:
+                case ScheduleType.Once:
                     return config.ExecutedTimes == 0;
 
-                case PeriodicScheduleConfiguration periodic:
+                case ScheduleType.Periodic:
                     if (config.ExecutedTimes == 0)
                         return true;
                     
-                    var timeSinceLastExecution = currentTime - config.LastExecutedTime;
-                    return timeSinceLastExecution >= periodic.Interval;
+                    if (config is PeriodicScheduleConfiguration periodic)
+                    {
+                        var timeSinceLastExecution = currentTime - config.LastExecutedTime;
+                        return timeSinceLastExecution >= periodic.Interval;
+                    }
+                    return false;
 
-                case CountdownScheduleConfiguration countdown:
-                    if (config.ExecutedTimes >= countdown.TargetTimes)
-                        return false;
-                    
-                    if (config.ExecutedTimes == 0)
-                        return true;
-                    
-                    var timeSinceLastCountdown = currentTime - config.LastExecutedTime;
-                    return timeSinceLastCountdown >= countdown.Interval;
+                case ScheduleType.Countdown:
+                    if (config is CountdownScheduleConfiguration countdown)
+                    {
+                        if (config.ExecutedTimes >= countdown.TargetTimes)
+                            return false;
+                        
+                        if (config.ExecutedTimes == 0)
+                            return true;
+                        
+                        var timeSinceLastCountdown = currentTime - config.LastExecutedTime;
+                        return timeSinceLastCountdown >= countdown.Interval;
+                    }
+                    return false;
 
-                case UntilTimeScheduleConfiguration untilTime:
-                    if (currentTime >= untilTime.TargetTime)
-                        return false;
-                    
-                    if (config.ExecutedTimes == 0)
-                        return true;
-                    
-                    var timeSinceLastUntil = currentTime - config.LastExecutedTime;
-                    return timeSinceLastUntil >= untilTime.Interval;
+                case ScheduleType.UntilTime:
+                    if (config is UntilTimeScheduleConfiguration untilTime)
+                    {
+                        if (currentTime >= untilTime.TargetTime)
+                            return false;
+                        
+                        if (config.ExecutedTimes == 0)
+                            return true;
+                        
+                        var timeSinceLastUntil = currentTime - config.LastExecutedTime;
+                        return timeSinceLastUntil >= untilTime.Interval;
+                    }
+                    return false;
 
                 default:
                     return false;

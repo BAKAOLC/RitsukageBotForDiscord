@@ -1,3 +1,4 @@
+using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
@@ -47,10 +48,11 @@ namespace RitsukageBot.Modules.Schedules
 
                 // Build message list for AI
                 var messageList = new List<ChatMessage>();
+                var temperature = 1.0f; // Default temperature
                 
                 // Add role data if specified
                 if (!string.IsNullOrWhiteSpace(_taskData.AiRole) && 
-                    _chatClientProvider.GetRoleData(out var roleData, out var temperature, _taskData.AiRole))
+                    _chatClientProvider.GetRoleData(out var roleData, out temperature, _taskData.AiRole))
                 {
                     messageList.Add(roleData);
                 }
