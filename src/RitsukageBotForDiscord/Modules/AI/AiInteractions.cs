@@ -819,8 +819,6 @@ namespace RitsukageBot.Modules.AI
                 return Task.FromResult(AutocompletionResult.FromSuccess(results.Take(25)));
             }
         }
-
-
     }
 
     /// <summary>
