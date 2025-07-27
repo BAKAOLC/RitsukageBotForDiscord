@@ -8,6 +8,7 @@ using Newtonsoft.Json.Linq;
 using RitsukageBot.Library.Data;
 using RitsukageBot.Library.Utils;
 using RitsukageBot.Services.Providers;
+using RitsukageBot.Services.AI;
 
 namespace RitsukageBot.Modules.AI
 {
@@ -55,6 +56,11 @@ namespace RitsukageBot.Modules.AI
         ///     Google API
         /// </summary>
         public required GoogleSearchProviderService GoogleSearchProviderService { get; set; }
+
+        /// <summary>
+        ///     AI Function Calling Service
+        /// </summary>
+        public required AiFunctionCallingService AiFunctionCallingService { get; set; }
 
         /// <summary>
         ///     Shutdown the chat
@@ -159,30 +165,6 @@ namespace RitsukageBot.Modules.AI
                                   {emotes}
                                   """;
 
-            if (ChatClientProvider.CheckAssistantEnabled("Preprocessing"))
-            {
-                var assistantEmbed = new EmbedBuilder();
-                assistantEmbed.WithDescription("Preparing the chat with the AI... Please wait...");
-                await ModifyOriginalResponseAsync(x =>
-                {
-                    x.Content = null;
-                    x.Embed = assistantEmbed.Build();
-                    x.Components = new ComponentBuilder()
-                        .WithButton("Cancel", $"{CustomId}:cancel_chat", ButtonStyle.Danger).Build();
-                }).ConfigureAwait(false);
-
-                var assistantMessage =
-                    await TryPreprocessingMessage(message, cancellationTokenSource.Token).ConfigureAwait(false);
-
-                if (cancellationTokenSource.IsCancellationRequested) return;
-
-                if (!string.IsNullOrWhiteSpace(assistantMessage))
-                {
-                    Logger.LogInformation("Assistant message: {AssistantMessage}", assistantMessage);
-                    roleData.Text += "\n\n" + ChatClientProvider.FormatAssistantMessage(assistantMessage);
-                }
-            }
-
             if (cancellationTokenSource.IsCancellationRequested) return;
             if (await ChatClientProvider.BuildUserChatMessage(Context.User.Username, Context.User.Id,
                     Context.Interaction.CreatedAt, message).ConfigureAwait(false)
@@ -205,7 +187,9 @@ namespace RitsukageBot.Modules.AI
             messageList.Add(userMessage);
 
             if (cancellationTokenSource.IsCancellationRequested) return;
-            await BeginChatAsync(messageList, role, 3, temperature, cancellationTokenSource.Token)
+            
+            // Use new Function Calling implementation instead of old preprocessing/postprocessing
+            await BeginChatWithFunctionCallingAsync(messageList, role, 3, temperature, cancellationTokenSource.Token)
                 .ConfigureAwait(false);
             lock (LockObject)
             {

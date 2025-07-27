@@ -109,6 +109,7 @@ using var host = Host.CreateDefaultBuilder()
             x.GetRequiredService<InteractionServiceConfig>()));
         services.AddHostedService<DiscordBotService>();
         services.AddSingleton<ChatClientProviderService>();
+        services.AddSingleton<RitsukageBot.Services.AI.AiFunctionCallingService>();
 #if !DEBUG // Auto update service is not needed in debug mode.
         services.AddHostedService<AutoUpdateService>();
 #endif
