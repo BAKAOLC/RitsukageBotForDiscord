@@ -50,8 +50,9 @@ namespace RitsukageBot.Modules.AI
             }).ConfigureAwait(false);
 
             var endpointConfig = ChatClientProvider.GetFirstChatEndpoint();
+            var timeout = ChatClientProvider.GetConfig<long?>("Timeout") ?? 60000;
             var (isSuccess, errorMessage) =
-                await TryGettingResponse(messageList, role, endpointConfig, temperature,
+                await TryGettingResponse(messageList, role, endpointConfig, temperature, timeout,
                         cancellationToken: cancellationToken)
                     .ConfigureAwait(false);
             if (isSuccess) return;
@@ -86,7 +87,7 @@ namespace RitsukageBot.Modules.AI
                             .WithButton("Cancel", $"{CustomId}:cancel_chat", ButtonStyle.Danger).Build();
                     }).ConfigureAwait(false);
                     (isSuccess, errorMessage) =
-                        await TryGettingResponse(messageList, role, endpointConfig,
+                        await TryGettingResponse(messageList, role, endpointConfig, timeout: timeout,
                                 cancellationToken: cancellationToken)
                             .ConfigureAwait(false);
                     if (isSuccess) return;
@@ -113,11 +114,10 @@ namespace RitsukageBot.Modules.AI
         // ReSharper disable once CyclomaticComplexity
         private async Task<(bool, string?)> TryGettingResponse(IList<ChatMessage> messageList, string role,
             ChatClientProviderService.EndpointConfig? endpointConfig = null, float temperature = 1.0f,
-            CancellationToken cancellationToken = default)
+            long timeout = 60000, CancellationToken cancellationToken = default)
         {
             endpointConfig ??= ChatClientProvider.GetChatEndpointRandomly();
             var chatClient = ChatClientProvider.GetChatClient(endpointConfig);
-            var timeout = ChatClientProvider.GetConfig<long?>("Timeout") ?? 60000;
             var sb = new StringBuilder();
             var haveContent = false;
             var checkedEmbed = false;
