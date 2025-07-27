@@ -64,51 +64,15 @@ namespace RitsukageBot.Modules.AI
         private async Task<EmbedBuilder[]> ProgressPostprocessingActions(string json)
         {
             if (string.IsNullOrWhiteSpace(json)) return [];
-            var result = new List<EmbedBuilder>();
-            try
-            {
-                var actionArrayData = JArray.Parse(json);
-                Logger.LogInformation("Postprocessing actions: {ActionArrayData}", actionArrayData);
-                /*
-                foreach (var actionData in actionArrayData)
-                {
-                    if (actionData is not JObject data) continue;
-                    try
-                    {
-                        var actionType = data.Value<string>("action");
-                        if (string.IsNullOrWhiteSpace(actionType))
-                        {
-                            Logger.LogWarning("Unable to parse the JSON: {Json}", data.ToString());
-                            continue;
-                        }
-
-                        switch (actionType)
-                        {
-
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.LogError(ex, "Error while processing the JSON action: {Json}", data.ToString());
-                    }
-                }
-                */
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Error while parsing the JSON header: {JsonHeader}", json);
-                var errorEmbed = new EmbedBuilder();
-                errorEmbed.WithColor(Color.Red);
-                errorEmbed.WithDescription("An error occurred while processing the response");
-                return [errorEmbed];
-            }
-
+            
+            var results = await ProcessUnifiedActions(json, ActionPhase.Postprocessing).ConfigureAwait(false);
+            var embedResults = results.OfType<EmbedBuilder>().Where(e => e != null);
+            
             await ChatClientProvider.RefreshShortMemory(Context.User.Id).ConfigureAwait(false);
-            return [.. result];
+            return [.. embedResults];
         }
 
-        private static class PostprocessingActionParam
-        {
-        }
+        // Note: All postprocessing action methods are now accessible through the ProcessUnifiedActions method
+        // in AiInteractions.UnifiedActions.cs. Any action can now be used in postprocessing phase.
     }
 }
