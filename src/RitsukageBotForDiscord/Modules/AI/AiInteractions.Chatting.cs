@@ -113,10 +113,11 @@ namespace RitsukageBot.Modules.AI
         // ReSharper disable once CyclomaticComplexity
         private async Task<(bool, string?)> TryGettingResponse(IList<ChatMessage> messageList, string role,
             ChatClientProviderService.EndpointConfig? endpointConfig = null, float temperature = 1.0f,
-            long timeout = 60000, CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default)
         {
             endpointConfig ??= ChatClientProvider.GetChatEndpointRandomly();
             var chatClient = ChatClientProvider.GetChatClient(endpointConfig);
+            var timeout = ChatClientProvider.GetConfig<long?>("Timeout") ?? 60000;
             var sb = new StringBuilder();
             var haveContent = false;
             var checkedEmbed = false;
