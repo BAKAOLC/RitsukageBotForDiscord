@@ -421,6 +421,76 @@ namespace RitsukageBot.Modules.AI
                                     result.Add(embed);
                                 break;
                             }
+                            case "query_user_id":
+                            {
+                                var embed = await ProcessingQueryUserId(data).ConfigureAwait(false);
+                                if (embed is not null)
+                                    result.Add(embed);
+                                break;
+                            }
+                            case "get_user_info":
+                            {
+                                var embed = await ProcessingGetUserInfo(data).ConfigureAwait(false);
+                                if (embed is not null)
+                                    result.Add(embed);
+                                break;
+                            }
+                            case "list_channels":
+                            {
+                                var embed = await ProcessingListChannels(data).ConfigureAwait(false);
+                                if (embed is not null)
+                                    result.Add(embed);
+                                break;
+                            }
+                            case "send_dm":
+                            {
+                                var embed = await ProcessingSendDm(data).ConfigureAwait(false);
+                                if (embed is not null)
+                                    result.Add(embed);
+                                break;
+                            }
+                            case "send_channel_message":
+                            {
+                                var embed = await ProcessingSendChannelMessage(data).ConfigureAwait(false);
+                                if (embed is not null)
+                                    result.Add(embed);
+                                break;
+                            }
+                            case "random_users":
+                            {
+                                var embed = await ProcessingRandomUsers(data).ConfigureAwait(false);
+                                if (embed is not null)
+                                    result.Add(embed);
+                                break;
+                            }
+                            case "create_scheduled_task":
+                            {
+                                var embed = await ProcessingCreateScheduledTask(data).ConfigureAwait(false);
+                                if (embed is not null)
+                                    result.Add(embed);
+                                break;
+                            }
+                            case "list_scheduled_tasks":
+                            {
+                                var embed = await ProcessingListScheduledTasks(data).ConfigureAwait(false);
+                                if (embed is not null)
+                                    result.Add(embed);
+                                break;
+                            }
+                            case "delete_scheduled_task":
+                            {
+                                var embed = await ProcessingDeleteScheduledTask(data).ConfigureAwait(false);
+                                if (embed is not null)
+                                    result.Add(embed);
+                                break;
+                            }
+                            case "toggle_scheduled_task":
+                            {
+                                var embed = await ProcessingToggleScheduledTask(data).ConfigureAwait(false);
+                                if (embed is not null)
+                                    result.Add(embed);
+                                break;
+                            }
                         }
                     }
                     catch (Exception ex)
@@ -615,8 +685,684 @@ namespace RitsukageBot.Modules.AI
 
             var embed = new EmbedBuilder();
             embed.WithColor(Color.DarkRed);
-            embed.WithDescription($"Removed self state: \n{sb}");
+        }
+
+        private async Task<EmbedBuilder?> ProcessingQueryUserId(JObject data)
+        {
+            if (data is null) throw new InvalidDataException("Invalid JSON data for query_user_id action");
+            if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
+                throw new InvalidDataException("Invalid JSON data for query_user_id action");
+            var param = paramToken.ToObject<ActionParam.QueryUserIdActionParam>()
+                        ?? throw new InvalidDataException("Invalid JSON data for query_user_id action");
+
+            if (Context.Guild is null)
+            {
+                var errorEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "This action can only be used in a guild context.",
+                    Color = Color.Red,
+                };
+                return errorEmbed;
+            }
+
+            var users = Context.Guild.Users
+                .Where(u => u.Username.Contains(param.Username, StringComparison.OrdinalIgnoreCase) ||
+                           (u.GlobalName?.Contains(param.Username, StringComparison.OrdinalIgnoreCase) ?? false))
+                .Take(10)
+                .ToList();
+
+            if (!users.Any())
+            {
+                var notFoundEmbed = new EmbedBuilder
+                {
+                    Title = "User Search",
+                    Description = $"No users found with username containing: {param.Username}",
+                    Color = Color.Orange,
+                };
+                return notFoundEmbed;
+            }
+
+            var embed = new EmbedBuilder
+            {
+                Title = "User Search Results",
+                Description = $"Found {users.Count} user(s) matching: {param.Username}",
+                Color = Color.Green,
+            };
+
+            foreach (var user in users)
+            {
+                var fieldName = user.GlobalName ?? user.Username;
+                var fieldValue = $"ID: `{user.Id}`\nUsername: {user.Username}\nMention: <@{user.Id}>";
+                embed.AddField(fieldName, fieldValue, true);
+            }
+
+            embed.WithCurrentTimestamp();
             return embed;
+        }
+
+        private async Task<EmbedBuilder?> ProcessingGetUserInfo(JObject data)
+        {
+            if (data is null) throw new InvalidDataException("Invalid JSON data for get_user_info action");
+            if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
+                throw new InvalidDataException("Invalid JSON data for get_user_info action");
+            var param = paramToken.ToObject<ActionParam.GetUserInfoActionParam>()
+                        ?? throw new InvalidDataException("Invalid JSON data for get_user_info action");
+
+            if (Context.Guild is null)
+            {
+                var errorEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "This action can only be used in a guild context.",
+                    Color = Color.Red,
+                };
+                return errorEmbed;
+            }
+
+            if (!ulong.TryParse(param.UserId, out var id))
+            {
+                var errorEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "Invalid user ID format.",
+                    Color = Color.Red,
+                };
+                return errorEmbed;
+            }
+
+            var user = Context.Guild.GetUser(id);
+            if (user is null)
+            {
+                var notFoundEmbed = new EmbedBuilder
+                {
+                    Title = "User Information",
+                    Description = $"User with ID `{id}` not found in this server.",
+                    Color = Color.Orange,
+                };
+                return notFoundEmbed;
+            }
+
+            var embed = new EmbedBuilder
+            {
+                Title = "User Information",
+                Color = Color.Blue,
+            };
+
+            embed.WithThumbnailUrl(user.GetAvatarUrl() ?? user.GetDefaultAvatarUrl());
+            embed.AddField("Display Name", user.DisplayName, true);
+            embed.AddField("Username", user.Username, true);
+            embed.AddField("User ID", user.Id.ToString(), true);
+            embed.AddField("Account Created", $"<t:{user.CreatedAt.ToUnixTimeSeconds()}:F>", true);
+            embed.AddField("Joined Server", user.JoinedAt.HasValue ? $"<t:{user.JoinedAt.Value.ToUnixTimeSeconds()}:F>" : "Unknown", true);
+            embed.AddField("Is Bot", user.IsBot ? "Yes" : "No", true);
+
+            if (user.Roles.Any(r => r.Id != Context.Guild.EveryoneRole.Id))
+            {
+                var roles = string.Join(", ", user.Roles.Where(r => r.Id != Context.Guild.EveryoneRole.Id).Select(r => r.Mention));
+                embed.AddField("Roles", roles.Length > 1024 ? "Too many roles to display" : roles);
+            }
+
+            embed.WithCurrentTimestamp();
+            return embed;
+        }
+
+        private async Task<EmbedBuilder?> ProcessingListChannels(JObject data)
+        {
+            if (Context.Guild is null)
+            {
+                var errorEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "This action can only be used in a guild context.",
+                    Color = Color.Red,
+                };
+                return errorEmbed;
+            }
+
+            var textChannels = Context.Guild.TextChannels
+                .Where(c => Context.Guild.CurrentUser.GetPermissions(c).ViewChannel)
+                .OrderBy(c => c.Position)
+                .ToList();
+
+            var voiceChannels = Context.Guild.VoiceChannels
+                .Where(c => Context.Guild.CurrentUser.GetPermissions(c).ViewChannel)
+                .OrderBy(c => c.Position)
+                .ToList();
+
+            var embed = new EmbedBuilder
+            {
+                Title = "Accessible Channels",
+                Color = Color.Green,
+            };
+
+            if (textChannels.Any())
+            {
+                var textChannelList = string.Join("\n", textChannels.Take(20).Select(c => $"<#{c.Id}> (`{c.Id}`)"));
+                if (textChannels.Count > 20)
+                    textChannelList += $"\n... and {textChannels.Count - 20} more";
+                embed.AddField($"Text Channels ({textChannels.Count})", textChannelList);
+            }
+
+            if (voiceChannels.Any())
+            {
+                var voiceChannelList = string.Join("\n", voiceChannels.Take(20).Select(c => $"{c.Name} (`{c.Id}`)"));
+                if (voiceChannels.Count > 20)
+                    voiceChannelList += $"\n... and {voiceChannels.Count - 20} more";
+                embed.AddField($"Voice Channels ({voiceChannels.Count})", voiceChannelList);
+            }
+
+            embed.WithCurrentTimestamp();
+            return embed;
+        }
+
+        private async Task<EmbedBuilder?> ProcessingSendDm(JObject data)
+        {
+            if (data is null) throw new InvalidDataException("Invalid JSON data for send_dm action");
+            if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
+                throw new InvalidDataException("Invalid JSON data for send_dm action");
+            var param = paramToken.ToObject<ActionParam.SendDmActionParam>()
+                        ?? throw new InvalidDataException("Invalid JSON data for send_dm action");
+
+            // Check if the bot owner is performing this action (security check)
+            if (Context.User.Id != Context.Client.Application.Owner.Id)
+            {
+                var permissionEmbed = new EmbedBuilder
+                {
+                    Title = "Permission Denied",
+                    Description = "Only the bot owner can send direct messages through AI actions.",
+                    Color = Color.Red,
+                };
+                return permissionEmbed;
+            }
+
+            if (!ulong.TryParse(param.UserId, out var id))
+            {
+                var errorEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "Invalid user ID format.",
+                    Color = Color.Red,
+                };
+                return errorEmbed;
+            }
+
+            var user = Context.Client.GetUser(id);
+            if (user is null)
+            {
+                var notFoundEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = $"User with ID `{id}` not found.",
+                    Color = Color.Red,
+                };
+                return notFoundEmbed;
+            }
+
+            try
+            {
+                await user.SendMessageAsync(param.Message).ConfigureAwait(false);
+                var successEmbed = new EmbedBuilder
+                {
+                    Title = "Message Sent",
+                    Description = $"Successfully sent private message to {user.Username} (`{user.Id}`)",
+                    Color = Color.Green,
+                };
+                return successEmbed;
+            }
+            catch (Exception ex)
+            {
+                var errorEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = $"Failed to send message: {ex.Message}",
+                    Color = Color.Red,
+                };
+                return errorEmbed;
+            }
+        }
+
+        private async Task<EmbedBuilder?> ProcessingSendChannelMessage(JObject data)
+        {
+            if (data is null) throw new InvalidDataException("Invalid JSON data for send_channel_message action");
+            if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
+                throw new InvalidDataException("Invalid JSON data for send_channel_message action");
+            var param = paramToken.ToObject<ActionParam.SendChannelMessageActionParam>()
+                        ?? throw new InvalidDataException("Invalid JSON data for send_channel_message action");
+
+            // Check if the user has admin permissions (security check)
+            var isOwner = Context.User.Id == Context.Client.Application.Owner.Id;
+            var hasAdminPermission = Context.User is SocketGuildUser guildUser && 
+                                    guildUser.GuildPermissions.Administrator;
+
+            if (!isOwner && !hasAdminPermission)
+            {
+                var permissionEmbed = new EmbedBuilder
+                {
+                    Title = "Permission Denied",
+                    Description = "Only administrators can send channel messages through AI actions.",
+                    Color = Color.Red,
+                };
+                return permissionEmbed;
+            }
+
+            if (!ulong.TryParse(param.ChannelId, out var id))
+            {
+                var errorEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "Invalid channel ID format.",
+                    Color = Color.Red,
+                };
+                return errorEmbed;
+            }
+
+            var channel = Context.Client.GetChannel(id) as IMessageChannel;
+            if (channel is null)
+            {
+                var notFoundEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = $"Channel with ID `{id}` not found or is not a message channel.",
+                    Color = Color.Red,
+                };
+                return notFoundEmbed;
+            }
+
+            try
+            {
+                await channel.SendMessageAsync(param.Message).ConfigureAwait(false);
+                var successEmbed = new EmbedBuilder
+                {
+                    Title = "Message Sent",
+                    Description = $"Successfully sent message to <#{channel.Id}>",
+                    Color = Color.Green,
+                };
+                return successEmbed;
+            }
+            catch (Exception ex)
+            {
+                var errorEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = $"Failed to send message: {ex.Message}",
+                    Color = Color.Red,
+                };
+                return errorEmbed;
+            }
+        }
+
+        private async Task<EmbedBuilder?> ProcessingRandomUsers(JObject data)
+        {
+            if (data is null) throw new InvalidDataException("Invalid JSON data for random_users action");
+            if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
+                throw new InvalidDataException("Invalid JSON data for random_users action");
+            var param = paramToken.ToObject<ActionParam.RandomUsersActionParam>()
+                        ?? throw new InvalidDataException("Invalid JSON data for random_users action");
+
+            if (Context.Guild is null)
+            {
+                var errorEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "This action can only be used in a guild context.",
+                    Color = Color.Red,
+                };
+                return errorEmbed;
+            }
+
+            var count = Math.Clamp(param.Count, 1, 10);
+            var users = Context.Guild.Users
+                .Where(u => !u.IsBot && u.Status != UserStatus.Offline)
+                .ToList();
+
+            if (!users.Any())
+            {
+                var noUsersEmbed = new EmbedBuilder
+                {
+                    Title = "Random Users",
+                    Description = "No online users found in this server.",
+                    Color = Color.Orange,
+                };
+                return noUsersEmbed;
+            }
+
+            var randomUsers = users.OrderBy(_ => Guid.NewGuid()).Take(count).ToList();
+
+            var embed = new EmbedBuilder
+            {
+                Title = "Random Users",
+                Description = $"Selected {randomUsers.Count} random online user(s):",
+                Color = Color.Blue,
+            };
+
+            foreach (var user in randomUsers)
+            {
+                var fieldName = user.DisplayName;
+                var fieldValue = $"Username: {user.Username}\nID: `{user.Id}`\nStatus: {user.Status}";
+                embed.AddField(fieldName, fieldValue, true);
+            }
+
+            embed.WithCurrentTimestamp();
+            return embed;
+        }
+
+        private async Task<EmbedBuilder?> ProcessingCreateScheduledTask(JObject data)
+        {
+            if (data is null) throw new InvalidDataException("Invalid JSON data for create_scheduled_task action");
+            if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
+                throw new InvalidDataException("Invalid JSON data for create_scheduled_task action");
+            var param = paramToken.ToObject<ActionParam.CreateScheduledTaskActionParam>()
+                        ?? throw new InvalidDataException("Invalid JSON data for create_scheduled_task action");
+
+            if (Context.Guild is null)
+            {
+                var errorEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "This action can only be used in a guild context.",
+                    Color = Color.Red,
+                };
+                return errorEmbed;
+            }
+
+            // Parse schedule time
+            if (!DateTime.TryParseExact(param.ScheduleTime, "yyyy-MM-dd HH:mm", null, System.Globalization.DateTimeStyles.None, out var parsedTime))
+            {
+                var errorEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "Invalid schedule time format. Use: yyyy-MM-dd HH:mm (e.g., 2024-12-25 14:30)",
+                    Color = Color.Red,
+                };
+                return errorEmbed;
+            }
+
+            var scheduleTimeOffset = new DateTimeOffset(parsedTime, TimeZoneInfo.Local.GetUtcOffset(parsedTime));
+
+            // Validate channel ID if provided
+            ulong? channelIdParsed = null;
+            if (!string.IsNullOrWhiteSpace(param.ChannelId))
+            {
+                if (!ulong.TryParse(param.ChannelId, out var cId))
+                {
+                    var errorEmbed = new EmbedBuilder
+                    {
+                        Title = "Error",
+                        Description = "Invalid channel ID format.",
+                        Color = Color.Red,
+                    };
+                    return errorEmbed;
+                }
+                channelIdParsed = cId;
+
+                var channel = Context.Client.GetChannel(cId);
+                if (channel is null)
+                {
+                    var errorEmbed = new EmbedBuilder
+                    {
+                        Title = "Error",
+                        Description = "Channel not found.",
+                        Color = Color.Red,
+                    };
+                    return errorEmbed;
+                }
+            }
+
+            // Validate AI role if provided
+            if (!string.IsNullOrWhiteSpace(param.AiRole) && !ChatClientProvider.GetRoleData(out _, out _, param.AiRole))
+            {
+                var errorEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = $"Invalid AI role: {param.AiRole}",
+                    Color = Color.Red,
+                };
+                return errorEmbed;
+            }
+
+            // Create task
+            var task = new AiScheduledTask
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = param.Name,
+                UserId = Context.User.Id,
+                GuildId = Context.Guild.Id,
+                ChannelId = channelIdParsed,
+                Prompt = param.Prompt,
+                AiRole = param.AiRole,
+                ScheduleType = param.ScheduleType,
+                ScheduleTime = scheduleTimeOffset,
+                IntervalSeconds = param.ScheduleType is "Periodic" or "Countdown" or "UntilTime" ? param.IntervalMinutes * 60L : null,
+                TargetTimes = param.ScheduleType == "Countdown" ? (ulong)param.TargetTimes : null,
+                TargetTime = param.ScheduleType == "UntilTime" ? scheduleTimeOffset.AddMinutes(param.IntervalMinutes * param.TargetTimes) : null,
+                IsEnabled = true,
+                CreatedTime = DateTimeOffset.UtcNow,
+                UpdatedTime = DateTimeOffset.UtcNow
+            };
+
+            await DatabaseProviderService.InsertOrUpdateAsync(task).ConfigureAwait(false);
+
+            var embed = new EmbedBuilder
+            {
+                Title = "AI Scheduled Task Created",
+                Description = $"Task **{param.Name}** has been created successfully.",
+                Color = Color.Green,
+            };
+
+            embed.AddField("Task ID", task.Id, true);
+            embed.AddField("Schedule Type", param.ScheduleType, true);
+            embed.AddField("Schedule Time", $"<t:{scheduleTimeOffset.ToUnixTimeSeconds()}:F>", true);
+            embed.AddField("Output", channelIdParsed.HasValue ? $"<#{channelIdParsed.Value}>" : "Direct Message", true);
+            if (!string.IsNullOrWhiteSpace(param.AiRole))
+                embed.AddField("AI Role", param.AiRole, true);
+
+            embed.WithCurrentTimestamp();
+            return embed;
+        }
+
+        private async Task<EmbedBuilder?> ProcessingListScheduledTasks(JObject data)
+        {
+            if (data is null) throw new InvalidDataException("Invalid JSON data for list_scheduled_tasks action");
+            if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
+                throw new InvalidDataException("Invalid JSON data for list_scheduled_tasks action");
+            var param = paramToken.ToObject<ActionParam.ListScheduledTasksActionParam>()
+                        ?? throw new InvalidDataException("Invalid JSON data for list_scheduled_tasks action");
+
+            if (Context.Guild is null)
+            {
+                var errorEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "This action can only be used in a guild context.",
+                    Color = Color.Red,
+                };
+                return errorEmbed;
+            }
+
+            var query = param.ShowAll && Context.User.Id == Context.Client.Application.Owner.Id
+                ? "SELECT * FROM AiScheduledTask WHERE guild_id = ? ORDER BY created_time DESC"
+                : "SELECT * FROM AiScheduledTask WHERE guild_id = ? AND user_id = ? ORDER BY created_time DESC";
+
+            var parameters = param.ShowAll && Context.User.Id == Context.Client.Application.Owner.Id
+                ? new object[] { Context.Guild.Id }
+                : new object[] { Context.Guild.Id, Context.User.Id };
+
+            var tasks = await DatabaseProviderService.QueryAsync<AiScheduledTask>(query, parameters).ConfigureAwait(false);
+
+            if (!tasks.Any())
+            {
+                var noTasksEmbed = new EmbedBuilder
+                {
+                    Title = "AI Scheduled Tasks",
+                    Description = param.ShowAll ? "No scheduled tasks found in this server." : "You have no scheduled tasks.",
+                    Color = Color.Orange,
+                };
+                return noTasksEmbed;
+            }
+
+            var embed = new EmbedBuilder
+            {
+                Title = "AI Scheduled Tasks",
+                Description = $"Found {tasks.Count} task(s)",
+                Color = Color.Blue,
+            };
+
+            foreach (var task in tasks.Take(10)) // Limit to first 10 tasks
+            {
+                var statusIcon = task.IsFinished ? "✅" : (task.IsEnabled ? "🟢" : "⏸️");
+                var fieldName = $"{statusIcon} {task.Name}";
+                
+                var fieldValue = $"ID: `{task.Id[..8]}...`\n" +
+                                $"Type: {task.ScheduleType}\n" +
+                                $"Schedule: <t:{task.ScheduleTime.ToUnixTimeSeconds()}:R>\n" +
+                                $"Executed: {task.ExecutedTimes} times";
+
+                if (task.LastExecutedTime.HasValue)
+                    fieldValue += $"\nLast: <t:{task.LastExecutedTime.Value.ToUnixTimeSeconds()}:R>";
+
+                if (param.ShowAll)
+                    fieldValue += $"\nCreator: <@{task.UserId}>";
+
+                embed.AddField(fieldName, fieldValue, true);
+            }
+
+            if (tasks.Count > 10)
+                embed.WithFooter($"Showing 10 of {tasks.Count} tasks");
+
+            embed.WithCurrentTimestamp();
+            return embed;
+        }
+
+        private async Task<EmbedBuilder?> ProcessingDeleteScheduledTask(JObject data)
+        {
+            if (data is null) throw new InvalidDataException("Invalid JSON data for delete_scheduled_task action");
+            if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
+                throw new InvalidDataException("Invalid JSON data for delete_scheduled_task action");
+            var param = paramToken.ToObject<ActionParam.DeleteScheduledTaskActionParam>()
+                        ?? throw new InvalidDataException("Invalid JSON data for delete_scheduled_task action");
+
+            if (Context.Guild is null)
+            {
+                var errorEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "This action can only be used in a guild context.",
+                    Color = Color.Red,
+                };
+                return errorEmbed;
+            }
+
+            // Find the task
+            var task = await DatabaseProviderService.GetAsync<AiScheduledTask>(param.TaskId).ConfigureAwait(false);
+            if (task is null)
+            {
+                var notFoundEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "Task not found.",
+                    Color = Color.Red,
+                };
+                return notFoundEmbed;
+            }
+
+            // Check permissions (user can delete own tasks, admins can delete any)
+            var isOwner = Context.User.Id == Context.Client.Application.Owner.Id;
+            var isTaskCreator = task.UserId == Context.User.Id;
+            var hasAdminPermission = Context.User is SocketGuildUser guildUser && 
+                                    guildUser.GuildPermissions.Administrator;
+
+            if (!isOwner && !isTaskCreator && !hasAdminPermission)
+            {
+                var permissionEmbed = new EmbedBuilder
+                {
+                    Title = "Permission Denied",
+                    Description = "You don't have permission to delete this task.",
+                    Color = Color.Red,
+                };
+                return permissionEmbed;
+            }
+
+            // Delete the task
+            await DatabaseProviderService.DeleteAsync<AiScheduledTask>(param.TaskId).ConfigureAwait(false);
+
+            var successEmbed = new EmbedBuilder
+            {
+                Title = "Task Deleted",
+                Description = $"Successfully deleted task **{task.Name}** (`{task.Id[..8]}...`)",
+                Color = Color.Green,
+            };
+
+            successEmbed.WithCurrentTimestamp();
+            return successEmbed;
+        }
+
+        private async Task<EmbedBuilder?> ProcessingToggleScheduledTask(JObject data)
+        {
+            if (data is null) throw new InvalidDataException("Invalid JSON data for toggle_scheduled_task action");
+            if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
+                throw new InvalidDataException("Invalid JSON data for toggle_scheduled_task action");
+            var param = paramToken.ToObject<ActionParam.ToggleScheduledTaskActionParam>()
+                        ?? throw new InvalidDataException("Invalid JSON data for toggle_scheduled_task action");
+
+            if (Context.Guild is null)
+            {
+                var errorEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "This action can only be used in a guild context.",
+                    Color = Color.Red,
+                };
+                return errorEmbed;
+            }
+
+            // Find the task
+            var task = await DatabaseProviderService.GetAsync<AiScheduledTask>(param.TaskId).ConfigureAwait(false);
+            if (task is null)
+            {
+                var notFoundEmbed = new EmbedBuilder
+                {
+                    Title = "Error",
+                    Description = "Task not found.",
+                    Color = Color.Red,
+                };
+                return notFoundEmbed;
+            }
+
+            // Check permissions (same as delete)
+            var isOwner = Context.User.Id == Context.Client.Application.Owner.Id;
+            var isTaskCreator = task.UserId == Context.User.Id;
+            var hasAdminPermission = Context.User is SocketGuildUser guildUser && 
+                                    guildUser.GuildPermissions.Administrator;
+
+            if (!isOwner && !isTaskCreator && !hasAdminPermission)
+            {
+                var permissionEmbed = new EmbedBuilder
+                {
+                    Title = "Permission Denied",
+                    Description = "You don't have permission to modify this task.",
+                    Color = Color.Red,
+                };
+                return permissionEmbed;
+            }
+
+            // Toggle the status
+            task.IsEnabled = !task.IsEnabled;
+            task.UpdatedTime = DateTimeOffset.UtcNow;
+            await DatabaseProviderService.InsertOrUpdateAsync(task).ConfigureAwait(false);
+
+            var statusText = task.IsEnabled ? "enabled" : "disabled";
+            var statusColor = task.IsEnabled ? Color.Green : Color.Orange;
+
+            var successEmbed = new EmbedBuilder
+            {
+                Title = "Task Status Updated",
+                Description = $"Task **{task.Name}** has been {statusText}.",
+                Color = statusColor,
+            };
+
+            successEmbed.WithCurrentTimestamp();
+            return successEmbed;
         }
 
         private static bool CheckUserInputMessage(IList<ChatMessage> messageList)
@@ -651,6 +1397,60 @@ namespace RitsukageBot.Modules.AI
             internal class RemoveMemoryActionParam
             {
                 [JsonProperty("keys")] public string[] Keys { get; set; } = [];
+            }
+
+            internal class QueryUserIdActionParam
+            {
+                [JsonProperty("username")] public string Username { get; set; } = string.Empty;
+            }
+
+            internal class GetUserInfoActionParam
+            {
+                [JsonProperty("userId")] public string UserId { get; set; } = string.Empty;
+            }
+
+            internal class SendDmActionParam
+            {
+                [JsonProperty("userId")] public string UserId { get; set; } = string.Empty;
+                [JsonProperty("message")] public string Message { get; set; } = string.Empty;
+            }
+
+            internal class SendChannelMessageActionParam
+            {
+                [JsonProperty("channelId")] public string ChannelId { get; set; } = string.Empty;
+                [JsonProperty("message")] public string Message { get; set; } = string.Empty;
+            }
+
+            internal class RandomUsersActionParam
+            {
+                [JsonProperty("count")] public int Count { get; set; } = 5;
+            }
+
+            internal class CreateScheduledTaskActionParam
+            {
+                [JsonProperty("name")] public string Name { get; set; } = string.Empty;
+                [JsonProperty("prompt")] public string Prompt { get; set; } = string.Empty;
+                [JsonProperty("scheduleTime")] public string ScheduleTime { get; set; } = string.Empty;
+                [JsonProperty("scheduleType")] public string ScheduleType { get; set; } = "OneTime";
+                [JsonProperty("channelId")] public string? ChannelId { get; set; }
+                [JsonProperty("intervalMinutes")] public int IntervalMinutes { get; set; } = 60;
+                [JsonProperty("targetTimes")] public int TargetTimes { get; set; } = 1;
+                [JsonProperty("aiRole")] public string? AiRole { get; set; }
+            }
+
+            internal class ListScheduledTasksActionParam
+            {
+                [JsonProperty("showAll")] public bool ShowAll { get; set; } = false;
+            }
+
+            internal class DeleteScheduledTaskActionParam
+            {
+                [JsonProperty("taskId")] public string TaskId { get; set; } = string.Empty;
+            }
+
+            internal class ToggleScheduledTaskActionParam
+            {
+                [JsonProperty("taskId")] public string TaskId { get; set; } = string.Empty;
             }
         }
     }
