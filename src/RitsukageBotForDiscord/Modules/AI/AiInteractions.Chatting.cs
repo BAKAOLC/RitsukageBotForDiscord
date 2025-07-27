@@ -50,8 +50,9 @@ namespace RitsukageBot.Modules.AI
             }).ConfigureAwait(false);
 
             var endpointConfig = ChatClientProvider.GetFirstChatEndpoint();
+            var timeout = ChatClientProvider.GetConfig<long?>("Timeout") ?? 60000;
             var (isSuccess, errorMessage) =
-                await TryGettingResponse(messageList, role, endpointConfig, temperature,
+                await TryGettingResponse(messageList, role, endpointConfig, temperature, timeout,
                         cancellationToken: cancellationToken)
                     .ConfigureAwait(false);
             if (isSuccess) return;
@@ -86,7 +87,7 @@ namespace RitsukageBot.Modules.AI
                             .WithButton("Cancel", $"{CustomId}:cancel_chat", ButtonStyle.Danger).Build();
                     }).ConfigureAwait(false);
                     (isSuccess, errorMessage) =
-                        await TryGettingResponse(messageList, role, endpointConfig,
+                        await TryGettingResponse(messageList, role, endpointConfig, timeout: timeout,
                                 cancellationToken: cancellationToken)
                             .ConfigureAwait(false);
                     if (isSuccess) return;
