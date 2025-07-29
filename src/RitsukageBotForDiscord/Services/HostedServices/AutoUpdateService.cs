@@ -80,54 +80,84 @@ namespace RitsukageBot.Services.HostedServices
 
         private async Task CheckUpdateAsync()
         {
-            if (!await CheckLoginAsync().ConfigureAwait(false)) return;
-            var client = gitHubClientProviderService.Client;
-            var runsResponse = await client.Actions.Workflows.Runs.List(RepositoryOwner, RepositoryName, new()
-            {
-                Branch = BranchName,
-                Status = CheckRunStatusFilter.Success,
-            }).ConfigureAwait(false);
-            var latestRun = runsResponse.WorkflowRuns.ToArray().FirstOrDefault();
-            if (latestRun is null) return;
-
-            var jobsResponse = await client.Actions.Workflows.Jobs.List(RepositoryOwner, RepositoryName, latestRun.Id)
-                .ConfigureAwait(false);
-            var targetJob = jobsResponse.Jobs.FirstOrDefault(job => job.Name == TargetJobName);
-            if (targetJob is null) return;
-
-            var artifactsResponse = await client.Actions.Artifacts
-                .ListWorkflowArtifacts(RepositoryOwner, RepositoryName, latestRun.Id).ConfigureAwait(false);
-            var targetArtifact =
-                artifactsResponse.Artifacts.FirstOrDefault(artifact =>
-                    artifact.Name.EndsWith(TargetOsArtifactPlatform));
-            if (targetArtifact is null) return;
-
-            logger.LogDebug(
-                "Latest run: {RunId}, Latest job: {JobId}, Created at: {CreatedAt}, Target artifact: {ArtifactName}",
-                latestRun.Id, targetJob.Id, latestRun.CreatedAt, targetArtifact.Name);
-
-            if (!CheckVersion(targetArtifact.Name))
-            {
-                logger.LogDebug("Not a newer version, skipping");
-                return;
-            }
-
-            logger.LogDebug("Newer version found, downloading...");
-            var artifactStream = await client.Actions.Artifacts
-                .DownloadArtifact(RepositoryOwner, RepositoryName, targetArtifact.Id, "zip").ConfigureAwait(false);
-            if (artifactStream is null)
-            {
-                logger.LogError("Failed to download artifact");
-                return;
-            }
-
             try
             {
-                await UpdateAsync(artifactStream).ConfigureAwait(false);
+                if (!await CheckLoginAsync().ConfigureAwait(false))
+                {
+                    logger.LogDebug("Not logged in to GitHub, skipping update check");
+                    return;
+                }
+
+                var client = gitHubClientProviderService.Client;
+                
+                // Get workflow runs with error handling
+                var runsResponse = await client.Actions.Workflows.Runs.List(RepositoryOwner, RepositoryName, new()
+                {
+                    Branch = BranchName,
+                    Status = CheckRunStatusFilter.Success,
+                }).ConfigureAwait(false);
+                var latestRun = runsResponse.WorkflowRuns.ToArray().FirstOrDefault();
+                if (latestRun is null)
+                {
+                    logger.LogDebug("No successful workflow runs found");
+                    return;
+                }
+
+                // Get workflow jobs with error handling
+                var jobsResponse = await client.Actions.Workflows.Jobs.List(RepositoryOwner, RepositoryName, latestRun.Id)
+                    .ConfigureAwait(false);
+                var targetJob = jobsResponse.Jobs.FirstOrDefault(job => job.Name == TargetJobName);
+                if (targetJob is null)
+                {
+                    logger.LogDebug("Target job '{TargetJobName}' not found", TargetJobName);
+                    return;
+                }
+
+                // Get workflow artifacts with error handling
+                var artifactsResponse = await client.Actions.Artifacts
+                    .ListWorkflowArtifacts(RepositoryOwner, RepositoryName, latestRun.Id).ConfigureAwait(false);
+                var targetArtifact =
+                    artifactsResponse.Artifacts.FirstOrDefault(artifact =>
+                        artifact.Name.EndsWith(TargetOsArtifactPlatform));
+                if (targetArtifact is null)
+                {
+                    logger.LogDebug("Target artifact for platform '{Platform}' not found", TargetOsArtifactPlatform);
+                    return;
+                }
+
+                logger.LogDebug(
+                    "Latest run: {RunId}, Latest job: {JobId}, Created at: {CreatedAt}, Target artifact: {ArtifactName}",
+                    latestRun.Id, targetJob.Id, latestRun.CreatedAt, targetArtifact.Name);
+
+                if (!CheckVersion(targetArtifact.Name))
+                {
+                    logger.LogDebug("Not a newer version, skipping");
+                    return;
+                }
+
+                logger.LogDebug("Newer version found, downloading...");
+                
+                // Download artifact with error handling
+                var artifactStream = await client.Actions.Artifacts
+                    .DownloadArtifact(RepositoryOwner, RepositoryName, targetArtifact.Id, "zip").ConfigureAwait(false);
+                if (artifactStream is null)
+                {
+                    logger.LogError("Failed to download artifact: stream is null");
+                    return;
+                }
+
+                try
+                {
+                    await UpdateAsync(artifactStream).ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to update");
+                }
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Failed to update");
+                logger.LogError(ex, "Failed to check for updates due to GitHub API error");
             }
         }
 
@@ -333,7 +363,7 @@ namespace RitsukageBot.Services.HostedServices
             if (!match.Success) return false;
 
             var artifactVersion = match.Value;
-            const string currentVersion = "1.0.0"; // GitVersionInformation.FullSemVer!;
+            const string currentVersion = GitVersionInformation.FullSemVer!;
 
             return new Version(artifactVersion.Replace('-', '.')) > new Version(currentVersion.Replace('-', '.'));
         }

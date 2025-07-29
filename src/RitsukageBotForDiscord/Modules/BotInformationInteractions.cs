@@ -34,7 +34,7 @@ namespace RitsukageBot.Modules
 
             var embed = new EmbedBuilder();
             embed.WithTitle(FormatName(AssemblyName));
-            embed.AddField("Version", "1.0.0"); // GitVersionInformation.InformationalVersion);
+            embed.AddField("Version", GitVersionInformation.InformationalVersion);
             if (!string.IsNullOrWhiteSpace(AssemblyAuthor))
                 embed.AddField("Author", AssemblyAuthor);
             if (!string.IsNullOrWhiteSpace(AssemblyRepositoryUrl))
