@@ -333,7 +333,7 @@ namespace RitsukageBot.Services.HostedServices
             if (!match.Success) return false;
 
             var artifactVersion = match.Value;
-            const string currentVersion = GitVersionInformation.FullSemVer!;
+            const string currentVersion = "1.0.0"; // GitVersionInformation.FullSemVer!;
 
             return new Version(artifactVersion.Replace('-', '.')) > new Version(currentVersion.Replace('-', '.'));
         }
