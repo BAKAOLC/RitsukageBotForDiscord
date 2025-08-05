@@ -10,7 +10,6 @@ using RitsukageBot.Library.OpenApi;
 using RitsukageBot.Library.Utils;
 using RitsukageBot.Services.Providers;
 using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
-using ChatRole = Microsoft.Extensions.AI.ChatRole;
 
 namespace RitsukageBot.Modules.AI
 {
@@ -29,18 +28,20 @@ namespace RitsukageBot.Modules.AI
                     return string.Empty;
                 }
 
-                var jsonData = new JObject
+                if (await ChatClientProvider.BuildUserChatMessage(Context.User.Username, Context.User.Id,
+                        Context.Interaction.CreatedAt, message).ConfigureAwait(false)
+                    is not { } userMessage)
                 {
-                    ["time"] = Context.Interaction.CreatedAt.ConvertToSettingsOffset().ToDateTimeString(),
-                    ["message"] = message,
-                };
+                    Logger.LogWarning("Unable to build user chat message for preprocessing");
+                    return string.Empty;
+                }
 
                 var messageList = new List<ChatMessage>
                 {
                     prompt,
-                    new(ChatRole.User, jsonData.ToString()),
+                    userMessage,
                 };
-                Logger.LogInformation("Preprocessing message: {Message}", jsonData);
+                Logger.LogInformation("Preprocessing message: {Message}", FormatJson(userMessage.ToString()));
                 var resultCompletion = await chatClient.CompleteAsync(messageList, new()
                     {
                         Temperature = temperature,
