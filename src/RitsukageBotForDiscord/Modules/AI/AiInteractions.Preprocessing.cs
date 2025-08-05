@@ -22,7 +22,8 @@ namespace RitsukageBot.Modules.AI
         {
             try
             {
-                if (!ChatClientProvider.GetAssistant("Preprocessing", out var prompt, out var temperature, out var chatClient))
+                if (!ChatClientProvider.GetAssistant("Preprocessing", out var prompt, out var temperature,
+                        out var chatClient))
                 {
                     Logger.LogWarning("Unable to get the assistant for preprocessing");
                     return string.Empty;
@@ -94,6 +95,9 @@ namespace RitsukageBot.Modules.AI
                             "bilibili_video_info" => await PreprocessingBilibiliVideoInfo(data).ConfigureAwait(false),
                             "bilibili_user_info" => await PreprocessingBilibiliUserInfo(data).ConfigureAwait(false),
                             "bilibili_live_info" => await PreprocessingBilibiliLiveInfo(data).ConfigureAwait(false),
+                            "weather_now" => await PreprocessingQWeatherQueryWeatherNow(data).ConfigureAwait(false),
+                            "weather_forecast" => await PreprocessingQWeatherQueryWeatherForecast(data)
+                                .ConfigureAwait(false),
                             _ => string.Empty,
                         };
 
@@ -117,10 +121,9 @@ namespace RitsukageBot.Modules.AI
             return string.Join("\n\n", result);
         }
 
-        private async Task<string> PreprocessingWebSearch(JObject data)
+        private async Task<string> PreprocessingWebSearch(JObject? data)
         {
-            if (data is null) throw new InvalidDataException("Invalid JSON data for web search action");
-            if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
+            if (data is null || !data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
                 throw new InvalidDataException("Invalid JSON data for web search action");
             var param = paramToken.ToObject<PreprocessingActionParam.WebSearchActionParam>()
                         ?? throw new InvalidDataException("Invalid JSON data for web search action");
@@ -131,10 +134,9 @@ namespace RitsukageBot.Modules.AI
             return $"[Google Search: \"{param.Query}\"]\n{string.Join("\n\n", resultStrings)}";
         }
 
-        private static async Task<string> PreprocessingDateBaseInfo(JObject data)
+        private static async Task<string> PreprocessingDateBaseInfo(JObject? data)
         {
-            if (data is null) throw new InvalidDataException("Invalid JSON data for date base info action");
-            if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
+            if (data is null || !data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
                 throw new InvalidDataException("Invalid JSON data for date base info action");
             var param = paramToken.ToObject<PreprocessingActionParam.DateBaseInfoActionParam>()
                         ?? throw new InvalidDataException("Invalid JSON data for date base info action");
@@ -212,10 +214,9 @@ namespace RitsukageBot.Modules.AI
             return sb.ToString();
         }
 
-        private async Task<string> PreprocessingBilibiliVideoInfo(JObject data)
+        private async Task<string> PreprocessingBilibiliVideoInfo(JObject? data)
         {
-            if (data is null) throw new InvalidDataException("Invalid JSON data for bilibili video info action");
-            if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
+            if (data is null || !data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
                 throw new InvalidDataException("Invalid JSON data for bilibili video info action");
             var param = paramToken.ToObject<PreprocessingActionParam.BilibiliVideoInfoActionParam>()
                         ?? throw new InvalidDataException("Invalid JSON data for bilibili video info action");
@@ -225,10 +226,9 @@ namespace RitsukageBot.Modules.AI
             return $"[Bilibili Video Info: {param.Id}]\n{InformationStringBuilder.BuildVideoInfo(info)}";
         }
 
-        private async Task<string> PreprocessingBilibiliUserInfo(JObject data)
+        private async Task<string> PreprocessingBilibiliUserInfo(JObject? data)
         {
-            if (data is null) throw new InvalidDataException("Invalid JSON data for bilibili user info action");
-            if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
+            if (data is null || !data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
                 throw new InvalidDataException("Invalid JSON data for bilibili user info action");
             var param = paramToken.ToObject<PreprocessingActionParam.BilibiliUserInfoActionParam>()
                         ?? throw new InvalidDataException("Invalid JSON data for bilibili user info action");
@@ -238,10 +238,9 @@ namespace RitsukageBot.Modules.AI
             return $"[Bilibili User Info: {param.Id}]\n{InformationStringBuilder.BuildUserInfo(info)}";
         }
 
-        private async Task<string> PreprocessingBilibiliLiveInfo(JObject data)
+        private async Task<string> PreprocessingBilibiliLiveInfo(JObject? data)
         {
-            if (data is null) throw new InvalidDataException("Invalid JSON data for bilibili live info action");
-            if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
+            if (data is null || !data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
                 throw new InvalidDataException("Invalid JSON data for bilibili live info action");
             var param = paramToken.ToObject<PreprocessingActionParam.BilibiliLiveInfoActionParam>()
                         ?? throw new InvalidDataException("Invalid JSON data for bilibili live info action");
@@ -249,6 +248,68 @@ namespace RitsukageBot.Modules.AI
             var info = await liveService.GetLivePageDetailAsync(new(param.Id.ToString(), null, null))
                 .ConfigureAwait(false);
             return $"[Bilibili Live Info: {param.Id}]\n{InformationStringBuilder.BuildLiveInfo(info)}";
+        }
+
+        private async Task<string> PreprocessingQWeatherQueryWeatherNow(JObject? data)
+        {
+            if (data is null || !data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
+                throw new InvalidDataException("Invalid JSON data for QWeather query weather now action");
+            var param = paramToken.ToObject<PreprocessingActionParam.QWeatherQueryWeatherNowActionParam>()
+                        ?? throw new InvalidDataException("Invalid JSON data for QWeather query weather now action");
+            var location = await QWeatherProviderService.QueryLocation(param.Location);
+            if (location is null)
+                throw new InvalidDataException($"Unable to find location: {param.Location}");
+            var weather = await QWeatherProviderService.QueryWeatherNow(location.Lat, location.Lon);
+            if (weather is null)
+                throw new InvalidDataException($"Unable to find weather for location: {param.Location}");
+            var sb = new StringBuilder();
+            sb.AppendLine($"[QWeather Query Weather Now: {param.Location}]");
+            sb.AppendLine(
+                $"地区：{location.Country} {location.AdministrativeDistrict1} {location.AdministrativeDistrict2} {location.Name}");
+            sb.AppendLine($"观测时间：{weather.ObsTime}");
+            sb.AppendLine($"天气：{weather.Text}");
+            sb.AppendLine($"温度：{weather.Temp}°C");
+            sb.AppendLine($"体感温度：{weather.FeelsLike}°C");
+            sb.AppendLine($"风速：{weather.WindSpeed} km/h");
+            sb.AppendLine($"风向：{weather.WindDir}");
+            sb.AppendLine($"风力等级：{weather.WindScale}");
+            sb.AppendLine($"相对湿度：{weather.Humidity}%");
+            sb.AppendLine($"气压：{weather.Pressure} hPa");
+            sb.AppendLine($"能见度：{weather.Vis} km");
+            return sb.ToString();
+        }
+
+        private async Task<string> PreprocessingQWeatherQueryWeatherForecast(JObject? data)
+        {
+            if (data is null || !data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
+                throw new InvalidDataException("Invalid JSON data for QWeather query weather forecast action");
+            var param = paramToken.ToObject<PreprocessingActionParam.QWeatherQueryWeatherForecastActionParam>()
+                        ?? throw new InvalidDataException(
+                            "Invalid JSON data for QWeather query weather forecast action");
+            var location = await QWeatherProviderService.QueryLocation(param.Location);
+            if (location is null)
+                throw new InvalidDataException($"Unable to find location: {param.Location}");
+            var forecast = await QWeatherProviderService.QueryWeather168Hours(location.Lat, location.Lon);
+            if (forecast is not { Length: > 0 })
+                throw new InvalidDataException($"Unable to find weather forecast for location: {param.Location}");
+            // Filter first 24 hours and every 6 hours after that
+            var first = forecast.FirstOrDefault();
+            if (first is null)
+                throw new InvalidDataException("No weather forecast data found");
+            var firstA24 = first.FxTime.AddHours(24);
+            var list = forecast.Where(hour =>
+                hour.FxTime <= firstA24 || Math.Floor(hour.FxTime.Subtract(firstA24).TotalHours) % 6 == 0).ToArray();
+            var sb = new StringBuilder();
+            sb.AppendLine($"[QWeather Query Weather Forecast 168 Hours: {param.Location}]");
+            sb.AppendLine(
+                $"地区：{location.Country} {location.AdministrativeDistrict1} {location.AdministrativeDistrict2} {location.Name}");
+            sb.AppendLine("未来168小时天气预报：");
+            sb.AppendLine("时间 | 天气 | 温度 | 风速 | 风向 | 风力等级");
+            sb.AppendLine("--- | --- | --- | --- | --- | ---");
+            foreach (var hour in list)
+                sb.AppendLine(
+                    $"{hour.FxTime:yyyy-MM-dd HH:mm} | {hour.Text} | {hour.Temp}°C | {hour.WindSpeed} km/h | {hour.WindDir} | {hour.WindScale}");
+            return sb.ToString();
         }
 
         private static class PreprocessingActionParam
@@ -302,6 +363,16 @@ namespace RitsukageBot.Modules.AI
             internal class BilibiliArticleInfoActionParam
             {
                 [JsonProperty("id")] public int Id { get; set; }
+            }
+
+            internal class QWeatherQueryWeatherNowActionParam
+            {
+                [JsonProperty("location")] public string Location { get; set; } = string.Empty;
+            }
+
+            internal class QWeatherQueryWeatherForecastActionParam
+            {
+                [JsonProperty("location")] public string Location { get; set; } = string.Empty;
             }
         }
     }
