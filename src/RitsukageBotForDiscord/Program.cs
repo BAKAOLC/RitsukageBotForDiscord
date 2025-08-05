@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Net;
+using System.Reflection;
 using System.Text;
 using Discord;
 using Discord.Commands;
@@ -42,7 +43,13 @@ using var host = Host.CreateDefaultBuilder()
         services.AddHostedService<UnhandledExceptionHandlerService>();
         services.AddOptions();
         services.AddHttpClient().ConfigureHttpClientDefaults(x =>
-            x.ConfigureHttpClient(y => y.DefaultRequestHeaders.Add("User-Agent", UserAgent.Default)));
+        {
+            x.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+            {
+                AutomaticDecompression = DecompressionMethods.All,
+            });
+            x.ConfigureHttpClient(y => y.DefaultRequestHeaders.Add("User-Agent", UserAgent.Default));
+        });
         {
             var cachePath = context.Configuration.GetValue<string>("Cache");
             if (!string.IsNullOrWhiteSpace(cachePath))
