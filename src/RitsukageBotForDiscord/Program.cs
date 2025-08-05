@@ -82,6 +82,7 @@ using var host = Host.CreateDefaultBuilder()
         services.AddSingleton<ImageCacheProviderService>();
         services.AddSingleton<BiliKernelProviderService>();
         services.AddSingleton<GoogleSearchProviderService>();
+        services.AddSingleton<QWeatherProviderService>();
         services.AddSingleton<DiscordSocketConfig>(_ => new()
         {
             LogLevel = LogSeverity.Info,

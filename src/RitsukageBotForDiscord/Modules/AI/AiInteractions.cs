@@ -57,6 +57,11 @@ namespace RitsukageBot.Modules.AI
         public required GoogleSearchProviderService GoogleSearchProviderService { get; set; }
 
         /// <summary>
+        ///     QWeather provider service
+        /// </summary>
+        public required QWeatherProviderService QWeatherProviderService { get; set; }
+
+        /// <summary>
         ///     Shutdown the chat
         /// </summary>
         /// <param name="id"></param>
