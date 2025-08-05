@@ -41,8 +41,8 @@ namespace RitsukageBot.Services.Providers
                 return cacheStream.ToArray();
             }, options =>
             {
-                options.FactorySoftTimeout = TimeSpan.FromSeconds(5);
-                options.FactorySoftTimeout = TimeSpan.FromSeconds(20);
+                options.FactorySoftTimeout = TimeSpan.FromSeconds(30);
+                options.FactoryHardTimeout = TimeSpan.FromSeconds(40);
                 options.Duration = cacheTime == TimeSpan.Zero ? TimeSpan.FromDays(1) : cacheTime;
                 options.FailSafeMaxDuration = options.Duration * 3;
             }).ConfigureAwait(false);
