@@ -65,8 +65,8 @@ namespace RitsukageBot.Services.Providers
                 return locationJson;
             }, options =>
             {
-                options.FactorySoftTimeout = TimeSpan.FromSeconds(5);
-                options.FactoryHardTimeout = TimeSpan.FromSeconds(20);
+                options.FactorySoftTimeout = TimeSpan.FromSeconds(30);
+                options.FactoryHardTimeout = TimeSpan.FromSeconds(40);
                 options.Duration = TimeSpan.FromDays(1);
                 options.FailSafeMaxDuration = options.Duration * 3;
             }).ConfigureAwait(false);
@@ -107,8 +107,8 @@ namespace RitsukageBot.Services.Providers
                 return weatherJson;
             }, options =>
             {
-                options.FactorySoftTimeout = TimeSpan.FromSeconds(5);
-                options.FactoryHardTimeout = TimeSpan.FromSeconds(20);
+                options.FactorySoftTimeout = TimeSpan.FromSeconds(30);
+                options.FactoryHardTimeout = TimeSpan.FromSeconds(40);
                 options.Duration = TimeSpan.FromMinutes(30);
                 options.FailSafeMaxDuration = options.Duration * 3;
             }).ConfigureAwait(false);
@@ -150,8 +150,8 @@ namespace RitsukageBot.Services.Providers
                 return weatherJson;
             }, options =>
             {
-                options.FactorySoftTimeout = TimeSpan.FromSeconds(5);
-                options.FactoryHardTimeout = TimeSpan.FromSeconds(20);
+                options.FactorySoftTimeout = TimeSpan.FromSeconds(30);
+                options.FactoryHardTimeout = TimeSpan.FromSeconds(40);
                 options.Duration = TimeSpan.FromHours(1);
                 options.FailSafeMaxDuration = options.Duration * 3;
             }).ConfigureAwait(false);
