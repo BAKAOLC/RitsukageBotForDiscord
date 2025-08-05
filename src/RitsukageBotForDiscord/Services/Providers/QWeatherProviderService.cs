@@ -12,6 +12,7 @@ namespace RitsukageBot.Services.Providers
     /// <param name="logger"></param>
     /// <param name="cacheProvider"></param>
     /// <param name="httpClientFactory"></param>
+    /// <param name="configuration"></param>
     public class QWeatherProviderService(
         ILogger<QWeatherProviderService> logger,
         IFusionCache cacheProvider,
