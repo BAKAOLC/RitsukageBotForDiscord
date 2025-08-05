@@ -265,8 +265,10 @@ namespace RitsukageBot.Modules.AI
                 throw new InvalidDataException($"Unable to find weather for location: {param.Location}");
             var sb = new StringBuilder();
             sb.AppendLine($"[QWeather Query Weather Now: {param.Location}]");
-            sb.AppendLine(
-                $"地区：{location.Country} {location.AdministrativeDistrict1} {location.AdministrativeDistrict2} {location.Name}");
+            sb.AppendLine($"国家：{location.Country}");
+            sb.AppendLine($"一级行政区划：{location.AdministrativeDistrict1}");
+            sb.AppendLine($"上级行政区划：{location.AdministrativeDistrict2}");
+            sb.AppendLine($"名称：{location.Name}");
             sb.AppendLine($"观测时间：{weather.ObsTime}");
             sb.AppendLine($"天气：{weather.Text}");
             sb.AppendLine($"温度：{weather.Temp}°C");
@@ -302,9 +304,10 @@ namespace RitsukageBot.Modules.AI
                 hour.FxTime <= firstA24 || Math.Floor(hour.FxTime.Subtract(firstA24).TotalHours) % 6 == 0).ToArray();
             var sb = new StringBuilder();
             sb.AppendLine($"[QWeather Query Weather Forecast 168 Hours: {param.Location}]");
-            sb.AppendLine(
-                $"地区：{location.Country} {location.AdministrativeDistrict1} {location.AdministrativeDistrict2} {location.Name}");
-            sb.AppendLine("未来168小时天气预报：");
+            sb.AppendLine($"国家：{location.Country}");
+            sb.AppendLine($"一级行政区划：{location.AdministrativeDistrict1}");
+            sb.AppendLine($"上级行政区划：{location.AdministrativeDistrict2}");
+            sb.AppendLine($"名称：{location.Name}");
             sb.AppendLine("时间 | 天气 | 温度 | 风速 | 风向 | 风力等级");
             sb.AppendLine("--- | --- | --- | --- | --- | ---");
             foreach (var hour in list)
