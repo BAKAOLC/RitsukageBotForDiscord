@@ -66,7 +66,7 @@ namespace RitsukageBot.Services.Providers
             }, options =>
             {
                 options.FactorySoftTimeout = TimeSpan.FromSeconds(5);
-                options.FactorySoftTimeout = TimeSpan.FromSeconds(20);
+                options.FactoryHardTimeout = TimeSpan.FromSeconds(20);
                 options.Duration = TimeSpan.FromDays(1);
                 options.FailSafeMaxDuration = options.Duration * 3;
             }).ConfigureAwait(false);
