@@ -133,11 +133,15 @@ namespace RitsukageBot.Modules.AI
             var showPreprocessingAction = ChatClientProvider.GetConfig<bool>("ShowPreprocessingAction");
             if (preprocessingActionData is not null && showPreprocessingAction)
             {
-                var embedBuilder = new EmbedBuilder();
-                embedBuilder.WithDescription(string.Join(Environment.NewLine,
-                    preprocessingActionData.Select(x => x.Action)));
-                embedBuilder.WithColor(Color.DarkPurple);
-                preprocessingEmbed = embedBuilder.Build();
+                var preprocessingActionDataStr = string.Join(Environment.NewLine,
+                    preprocessingActionData.Select(x => x.Action));
+                if (!string.IsNullOrWhiteSpace(preprocessingActionDataStr))
+                {
+                    var embedBuilder = new EmbedBuilder();
+                    embedBuilder.WithDescription(preprocessingActionDataStr);
+                    embedBuilder.WithColor(Color.DarkPurple);
+                    preprocessingEmbed = embedBuilder.Build();
+                }
             }
 
             var generatingEmbed = new EmbedBuilder();
