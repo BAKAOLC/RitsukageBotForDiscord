@@ -164,6 +164,7 @@ namespace RitsukageBot.Modules.AI
                                   {emotes}
                                   """;
 
+            PreprocessingActionData[]? preprocessingActionData = null;
             if (ChatClientProvider.CheckAssistantEnabled("Preprocessing"))
             {
                 var assistantEmbed = new EmbedBuilder();
@@ -176,11 +177,12 @@ namespace RitsukageBot.Modules.AI
                         .WithButton("Cancel", $"{CustomId}:cancel_chat", ButtonStyle.Danger).Build();
                 }).ConfigureAwait(false);
 
-                var assistantMessage =
-                    await TryPreprocessingMessage(message, cancellationTokenSource.Token).ConfigureAwait(false);
+                preprocessingActionData = await TryPreprocessingMessage(message, cancellationTokenSource.Token)
+                    .ConfigureAwait(false);
 
                 if (cancellationTokenSource.IsCancellationRequested) return;
 
+                var assistantMessage = string.Join("\n\n", preprocessingActionData.Select(x => x.Result));
                 if (!string.IsNullOrWhiteSpace(assistantMessage))
                 {
                     Logger.LogInformation("Assistant message: {AssistantMessage}", assistantMessage);
@@ -210,7 +212,8 @@ namespace RitsukageBot.Modules.AI
             messageList.Add(userMessage);
 
             if (cancellationTokenSource.IsCancellationRequested) return;
-            await BeginChatAsync(messageList, role, 3, temperature, cancellationTokenSource.Token)
+            await BeginChatAsync(messageList, role, preprocessingActionData, 3, temperature,
+                    cancellationTokenSource.Token)
                 .ConfigureAwait(false);
             lock (LockObject)
             {

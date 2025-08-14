@@ -15,7 +15,9 @@ namespace RitsukageBot.Modules.AI
     public partial class AiInteractions
     {
         private async Task BeginChatAsync(IList<ChatMessage> messageList, string role,
+            PreprocessingActionData[]? preprocessingActionData = null,
             int retry = 0, float temperature = 1.0f, CancellationToken cancellationToken = default)
+
         {
             if (!CheckUserInputMessage(messageList))
             {
@@ -52,8 +54,8 @@ namespace RitsukageBot.Modules.AI
             var endpointConfig = ChatClientProvider.GetFirstChatEndpoint();
             var timeout = ChatClientProvider.GetConfig<long?>("Timeout") ?? 60000;
             var (isSuccess, errorMessage) =
-                await TryGettingResponse(messageList, role, endpointConfig, temperature, timeout,
-                        cancellationToken: cancellationToken)
+                await TryGettingResponse(messageList, role, preprocessingActionData,
+                        endpointConfig, temperature, timeout, cancellationToken)
                     .ConfigureAwait(false);
             if (isSuccess) return;
             if (cancellationToken.IsCancellationRequested) return;
@@ -87,8 +89,8 @@ namespace RitsukageBot.Modules.AI
                             .WithButton("Cancel", $"{CustomId}:cancel_chat", ButtonStyle.Danger).Build();
                     }).ConfigureAwait(false);
                     (isSuccess, errorMessage) =
-                        await TryGettingResponse(messageList, role, endpointConfig, timeout: timeout,
-                                cancellationToken: cancellationToken)
+                        await TryGettingResponse(messageList, role, preprocessingActionData, endpointConfig,
+                                timeout: timeout, cancellationToken: cancellationToken)
                             .ConfigureAwait(false);
                     if (isSuccess) return;
                     if (cancellationToken.IsCancellationRequested) return;
@@ -113,6 +115,7 @@ namespace RitsukageBot.Modules.AI
 
         // ReSharper disable once CyclomaticComplexity
         private async Task<(bool, string?)> TryGettingResponse(IList<ChatMessage> messageList, string role,
+            PreprocessingActionData[]? preprocessingActionData = null,
             ChatClientProviderService.EndpointConfig? endpointConfig = null, float temperature = 1.0f,
             long timeout = 60000, CancellationToken cancellationToken = default)
         {
@@ -120,13 +123,23 @@ namespace RitsukageBot.Modules.AI
             var chatClient = ChatClientProvider.GetChatClient(endpointConfig);
             var sb = new StringBuilder();
             var haveContent = false;
-            var checkedEmbed = false;
             var isCompleted = false;
             var isUpdated = false;
             var isError = false;
             var isTimeout = false;
             Exception? exception = null;
             var lockObject = new Lock();
+            Embed? preprocessingEmbed = null;
+            var showPreprocessingAction = ChatClientProvider.GetConfig<bool>("ShowPreprocessingAction");
+            if (preprocessingActionData is not null && showPreprocessingAction)
+            {
+                var embedBuilder = new EmbedBuilder();
+                embedBuilder.WithDescription(string.Join(Environment.NewLine,
+                    preprocessingActionData.Select(x => x.Action)));
+                embedBuilder.WithColor(Color.DarkPurple);
+                preprocessingEmbed = embedBuilder.Build();
+            }
+
             var generatingEmbed = new EmbedBuilder();
             generatingEmbed.WithDescription("Generating the response...");
             generatingEmbed.WithColor(Color.Orange);
@@ -226,6 +239,8 @@ namespace RitsukageBot.Modules.AI
                         {
                             x.Content = updateContent;
                             var embeds = new List<Embed>();
+                            if (preprocessingEmbed is not null)
+                                embeds.Add(preprocessingEmbed);
                             if (recordResultEmbed is not null)
                                 embeds.AddRange(recordResultEmbed.Select(embed => embed.Build()));
                             embeds.Add(generatingEmbed.Build());
@@ -247,9 +262,18 @@ namespace RitsukageBot.Modules.AI
                     await ModifyOriginalResponseAsync(x =>
                     {
                         if (resultEmbeds is null || resultEmbeds.Length == 0)
+                        {
                             x.Embed = null;
+                        }
                         else
-                            x.Embeds = resultEmbeds.Select(embed => embed.Build()).ToArray();
+                        {
+                            var embeds = new List<Embed>();
+                            if (preprocessingEmbed is not null)
+                                embeds.Add(preprocessingEmbed);
+                            embeds.AddRange(resultEmbeds.Select(embed => embed.Build()));
+                            x.Embeds = embeds.ToArray();
+                        }
+
                         x.Components = null;
                     }).ConfigureAwait(false);
                 }, CancellationToken.None).ConfigureAwait(false);
@@ -290,12 +314,19 @@ namespace RitsukageBot.Modules.AI
 
             if (string.IsNullOrWhiteSpace(content)) return (true, null);
             var messageContent = $"|| Generated by {endpointConfig.GetName()} with role: {role} ||\n{content}";
-            await ModifyOriginalResponseAsync(x =>
             {
-                x.Content = messageContent;
-                x.Components = null;
-                x.Embeds = resultEmbeds?.Select(embed => embed.Build()).ToArray();
-            }).ConfigureAwait(false);
+                var embeds = new List<Embed>();
+                if (preprocessingEmbed is not null)
+                    embeds.Add(preprocessingEmbed);
+                if (resultEmbeds is { Length: > 0 })
+                    embeds.AddRange(resultEmbeds.Select(embed => embed.Build()));
+                await ModifyOriginalResponseAsync(x =>
+                {
+                    x.Content = messageContent;
+                    x.Components = null;
+                    x.Embeds = embeds.ToArray();
+                }).ConfigureAwait(false);
+            }
 
             var userMessage = messageList.Last(x => x.Role == ChatRole.User).ToString();
             var userMessageData = JObject.Parse(userMessage);
@@ -315,11 +346,13 @@ namespace RitsukageBot.Modules.AI
             {
                 x.Content = messageContent;
                 x.Components = null;
-                var list = new List<Embed>();
+                var embeds = new List<Embed>();
+                if (preprocessingEmbed is not null)
+                    embeds.Add(preprocessingEmbed);
                 if (resultEmbeds is not null)
-                    list.AddRange(resultEmbeds.Select(embed => embed.Build()));
-                list.Add(assistantEmbed.Build());
-                x.Embeds = list.ToArray();
+                    embeds.AddRange(resultEmbeds.Select(embed => embed.Build()));
+                embeds.Add(assistantEmbed.Build());
+                x.Embeds = embeds.ToArray();
             }).ConfigureAwait(false);
             var embedBuilders = await TryPostprocessingMessage(userMessageObject.Message, content,
                 JArray.Parse(jsonHeader ?? "[]"),
@@ -330,12 +363,14 @@ namespace RitsukageBot.Modules.AI
             {
                 x.Content = messageContent;
                 x.Components = null;
-                var list = new List<Embed>();
+                var embeds = new List<Embed>();
+                if (preprocessingEmbed is not null)
+                    embeds.Add(preprocessingEmbed);
                 if (resultEmbeds is not null)
-                    list.AddRange(resultEmbeds.Select(embed => embed.Build()));
-                list.AddRange(embedBuilders.Select(embed => embed.Build()));
-                if (list.Count > 0)
-                    x.Embeds = list.ToArray();
+                    embeds.AddRange(resultEmbeds.Select(embed => embed.Build()));
+                embeds.AddRange(embedBuilders.Select(embed => embed.Build()));
+                if (embeds.Count > 0)
+                    x.Embeds = embeds.ToArray();
                 else
                     x.Embed = null;
             }).ConfigureAwait(false);
