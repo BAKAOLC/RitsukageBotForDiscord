@@ -4,6 +4,8 @@ using Discord.WebSocket;
 using Microsoft.Extensions.Logging;
 using RitsukageBot.Library.Custom.Structs.Times;
 using RitsukageBot.Library.OpenApi;
+using RitsukageBot.Library.OpenApi.Baidu;
+using RitsukageBot.Library.OpenApi.Baidu.Structs;
 using RitsukageBot.Library.Utils;
 
 namespace RitsukageBot.Modules
@@ -117,7 +119,7 @@ namespace RitsukageBot.Modules
             await DeferAsync().ConfigureAwait(false);
 
             var date = DateTimeOffset.Now.ConvertToSettingsOffset();
-            var days = await OpenApi.GetCalendarAsync(date).ConfigureAwait(false);
+            var days = await OpenApi.Instance.GetCalendarAsync(date).ConfigureAwait(false);
             var today = days.FirstOrDefault(x => x.ODate.ConvertToSettingsOffset().Date == date.Date);
             if (today is null)
             {

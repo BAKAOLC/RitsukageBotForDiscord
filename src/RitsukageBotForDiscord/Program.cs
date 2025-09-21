@@ -128,6 +128,8 @@ logger.LogInformation("Assembly User-Agent: {UserAgent}", UserAgent.AssemblyUser
 logger.LogInformation("Network default User-Agent: {UserAgent}", UserAgent.Default);
 
 NetworkUtility.SetHttpClientFactory(host.Services.GetRequiredService<IHttpClientFactory>());
-OpenApi.SetCacheProvider(host.Services.GetRequiredService<IFusionCache>());
+OpenApi.Instance.SetCacheProvider(host.Services.GetRequiredService<IFusionCache>());
+OpenApi.Instance.SetLogger(host.Services.GetRequiredService<ILogger<OpenApi>>());
+
 
 await host.RunAsync(HostCancellationToken.Token).ConfigureAwait(false);

@@ -1,25 +1,30 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using RitsukageBot.Library.OpenApi.Baidu.Structs;
 using RitsukageBot.Library.Utils;
 
-namespace RitsukageBot.Library.OpenApi
+namespace RitsukageBot.Library.OpenApi.Baidu
 {
-    public partial class OpenApi
+    /// <summary>
+    ///     OpenApi.Baidu
+    /// </summary>
+    public static class OpenApiBaidu
     {
         /// <summary>
         ///     Get calendar information from Baidu
         ///     Return the calendar information from the previous month to the next month
         /// </summary>
+        /// <param name="instance"></param>
         /// <param name="date"></param>
         /// <param name="httpClient"></param>
         /// <returns></returns>
-        public static async Task<BaiduCalendarDay[]> GetCalendarAsync(DateTimeOffset date,
+        public static async Task<BaiduCalendarDay[]> GetCalendarAsync(this OpenApi instance, DateTimeOffset date,
             HttpClient? httpClient = null)
         {
             var cacheKey = $"Baidu_Calendar_{date.ToLocalTime():yyyy_MM}";
-            if (_cacheProvider is not null)
+            if (instance.CacheProvider is not null)
             {
-                var recordInfo = await _cacheProvider.GetOrDefaultAsync<string>(cacheKey).ConfigureAwait(false);
+                var recordInfo = await instance.CacheProvider.GetOrDefaultAsync<string>(cacheKey).ConfigureAwait(false);
                 if (recordInfo is not null)
                     return JsonConvert.DeserializeObject<BaiduCalendarDay[]>(recordInfo)!;
             }
@@ -45,8 +50,8 @@ namespace RitsukageBot.Library.OpenApi
             var calendar = almanac.ToObject<BaiduCalendarDay[]>();
             var resultData = calendar is not { Length: > 0 } ? [] : calendar;
 
-            if (_cacheProvider is not null)
-                await _cacheProvider.SetAsync(cacheKey, JsonConvert.SerializeObject(resultData), new()
+            if (instance.CacheProvider is not null)
+                await instance.CacheProvider.SetAsync(cacheKey, JsonConvert.SerializeObject(resultData), new()
                 {
                     Duration = TimeSpan.FromDays(1),
                     FailSafeMaxDuration = TimeSpan.FromDays(3),
