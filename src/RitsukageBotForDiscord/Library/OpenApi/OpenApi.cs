@@ -8,7 +8,7 @@ namespace RitsukageBot.Library.OpenApi
     /// </summary>
     public class OpenApi
     {
-        private static readonly Lazy<OpenApi> OpenApiInstance = new();
+        private static readonly Lazy<OpenApi> OpenApiInstance = new(() => new());
 
         private OpenApi()
         {
