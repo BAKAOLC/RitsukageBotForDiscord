@@ -82,15 +82,16 @@ namespace RitsukageBot.Modules.AI
                 foreach (var actionData in actionArrayData)
                 {
                     if (actionData is not JObject data) continue;
+
+                    var actionType = data.Value<string>("action");
+                    if (string.IsNullOrWhiteSpace(actionType))
+                    {
+                        Logger.LogWarning("Unable to parse the JSON: {Json}", data.ToString());
+                        continue;
+                    }
+
                     try
                     {
-                        var actionType = data.Value<string>("action");
-                        if (string.IsNullOrWhiteSpace(actionType))
-                        {
-                            Logger.LogWarning("Unable to parse the JSON: {Json}", data.ToString());
-                            continue;
-                        }
-
                         var resultData = actionType switch
                         {
                             "web_search" => await PreprocessingWebSearch(data).ConfigureAwait(false),
@@ -104,6 +105,7 @@ namespace RitsukageBot.Modules.AI
                                 .ConfigureAwait(false),
                             "pixiv_user_info" => await PreprocessingPixivQueryUserInfo(data).ConfigureAwait(false),
                             "pixiv_illust_info" => await PreprocessingPixivQueryIllustInfo(data).ConfigureAwait(false),
+                            "explain_image" => await PreprocessingExplainImage(data).ConfigureAwait(false),
                             _ => null,
                         };
 
@@ -113,6 +115,10 @@ namespace RitsukageBot.Modules.AI
                     catch (Exception ex)
                     {
                         Logger.LogError(ex, "Error while processing the JSON action: {Json}", data.ToString());
+                        result.Add(new(actionType, $"""
+                                                    [Failed Action: {actionType}]
+                                                    {ex.Message}
+                                                    """));
                     }
                 }
             }
@@ -407,6 +413,25 @@ namespace RitsukageBot.Modules.AI
             return new($"Get Pixiv Illust Info: {param.Id}", sb.ToString());
         }
 
+        private async Task<PreprocessingActionData> PreprocessingExplainImage(JObject? data)
+        {
+            if (data is null || !data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
+                throw new InvalidDataException("Invalid JSON data for explain image action");
+            var param = paramToken.ToObject<PreprocessingActionParam.ExplainImageActionParam>()
+                        ?? throw new InvalidDataException("Invalid JSON data for explain image action");
+            if (string.IsNullOrWhiteSpace(param.Url))
+                throw new InvalidDataException("Invalid URL for explain image action");
+            var (success, result) = await ChatClientProvider.ExplainImageAsync(param.Url);
+            return !success
+                ? throw new InvalidDataException($"Unable to explain image: {result}")
+                : new($"Explain Image: {param.Url}", $"""
+                                                      [Explain Image: {param.Url}]
+                                                      ```
+                                                      {result}
+                                                      ```
+                                                      """);
+        }
+
         private record PreprocessingActionData(string Action, string Result);
 
         private static class PreprocessingActionParam
@@ -480,6 +505,11 @@ namespace RitsukageBot.Modules.AI
             internal class PixivUserInfoActionParam
             {
                 [JsonProperty("id")] public string Id { get; set; } = string.Empty;
+            }
+
+            internal class ExplainImageActionParam
+            {
+                [JsonProperty("url")] public string Url { get; set; } = string.Empty;
             }
         }
     }
