@@ -130,10 +130,11 @@ namespace RitsukageBot.Library.OpenApi.Pixiv
         }
 
         /// <summary>
+        ///     Returns a proxied Pixiv image URL using the configured proxy template, or the original image URL if no proxy is set.
         /// </summary>
-        /// <param name="instance"></param>
-        /// <param name="imageUrl"></param>
-        /// <returns></returns>
+        /// <param name="instance">OpenApi instance</param>
+        /// <param name="imageUrl">Original Pixiv image URL</param>
+        /// <returns>Proxied image URL or original image URL</returns>
         public static string GetPixivImageProxyUrl(this OpenApi instance, string imageUrl)
         {
             var proxyTemplate = instance.Configuration?.GetValue<string>("OpenApi:PixivImageProxy");
