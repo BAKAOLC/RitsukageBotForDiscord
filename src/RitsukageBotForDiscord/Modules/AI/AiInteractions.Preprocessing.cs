@@ -7,6 +7,9 @@ using Richasy.BiliKernel.Bili.Media;
 using Richasy.BiliKernel.Bili.User;
 using RitsukageBot.Library.Bilibili.Convertors;
 using RitsukageBot.Library.OpenApi;
+using RitsukageBot.Library.OpenApi.Baidu;
+using RitsukageBot.Library.OpenApi.Baidu.Structs;
+using RitsukageBot.Library.OpenApi.Pixiv;
 using RitsukageBot.Library.Utils;
 using RitsukageBot.Services.Providers;
 using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
@@ -99,6 +102,8 @@ namespace RitsukageBot.Modules.AI
                             "weather_now" => await PreprocessingQWeatherQueryWeatherNow(data).ConfigureAwait(false),
                             "weather_forecast" => await PreprocessingQWeatherQueryWeatherForecast(data)
                                 .ConfigureAwait(false),
+                            "pixiv_user_info" => await PreprocessingPixivQueryUserInfo(data).ConfigureAwait(false),
+                            "pixiv_illust_info" => await PreprocessingPixivQueryIllustInfo(data).ConfigureAwait(false),
                             _ => null,
                         };
 
@@ -143,7 +148,7 @@ namespace RitsukageBot.Modules.AI
             var param = paramToken.ToObject<PreprocessingActionParam.DateBaseInfoActionParam>()
                         ?? throw new InvalidDataException("Invalid JSON data for date base info action");
             var time = param.Date.AsSettingsOffset();
-            var days = await OpenApi.GetCalendarAsync(time).ConfigureAwait(false);
+            var days = await OpenApi.Instance.GetCalendarAsync(time).ConfigureAwait(false);
             var today = days.FirstOrDefault(x => x.ODate.ConvertToSettingsOffset() == time);
             var holiday = today?.FestivalInfoList is { Length: > 0 }
                 ? string.Join(", ", today.FestivalInfoList.Select(x => x.Name))
@@ -183,7 +188,7 @@ namespace RitsukageBot.Modules.AI
             var query = from;
             while (query <= end)
             {
-                var dayInfo = await OpenApi.GetCalendarAsync(query).ConfigureAwait(false);
+                var dayInfo = await OpenApi.Instance.GetCalendarAsync(query).ConfigureAwait(false);
                 days.AddRange(dayInfo);
                 query = query.AddMonths(1);
             }
@@ -321,6 +326,67 @@ namespace RitsukageBot.Modules.AI
             return new($"Get Weather Forecast: {param.Location}", sb.ToString());
         }
 
+        private async Task<PreprocessingActionData> PreprocessingPixivQueryUserInfo(JObject? data)
+        {
+            if (data is null || !data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
+                throw new InvalidDataException("Invalid JSON data for Pixiv user info action");
+            var param = paramToken.ToObject<PreprocessingActionParam.PixivUserInfoActionParam>()
+                        ?? throw new InvalidDataException(
+                            "Invalid JSON data for Pixiv user info action");
+            if (string.IsNullOrWhiteSpace(param.Id))
+                throw new InvalidDataException("Invalid ID for Pixiv user info action");
+            var result = await OpenApi.Instance.GetPixivUserAsync(param.Id);
+            if (result is null)
+                throw new InvalidDataException($"Unable to find Pixiv user: {param.Id}");
+            var sb = new StringBuilder();
+            sb.AppendLine($"[Pixiv User Info: {param.Id}]");
+            sb.AppendLine($"用户名：{result.Name}");
+            return new($"Get Pixiv User Info: {param.Id}", sb.ToString());
+        }
+
+        private async Task<PreprocessingActionData> PreprocessingPixivQueryIllustInfo(JObject? data)
+        {
+            if (data is null || !data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
+                throw new InvalidDataException("Invalid JSON data for Pixiv illust info action");
+            var param = paramToken.ToObject<PreprocessingActionParam.PixivIllustInfoActionParam>()
+                        ?? throw new InvalidDataException(
+                            "Invalid JSON data for Pixiv illust info action");
+            if (string.IsNullOrWhiteSpace(param.Id))
+                throw new InvalidDataException("Invalid ID for Pixiv illust info action");
+            var result = await OpenApi.Instance.GetPixivIllustAsync(param.Id);
+            if (result is null)
+                throw new InvalidDataException($"Unable to find Pixiv illust: {param.Id}");
+            var sb = new StringBuilder();
+            sb.AppendLine($"[Pixiv Illust Info: {param.Id}]");
+            sb.AppendLine($"标题：{result.Title}");
+            sb.AppendLine($"作者：{result.UserName}");
+            sb.AppendLine($"描述：{result.IllustComment}");
+            sb.AppendLine($"标签：{string.Join(", ", result.Tags?.Tags?.Select(x => x.Tag) ?? [])}");
+            sb.AppendLine($"创建时间：{result.CreateDate:yyyy-MM-dd HH:mm:ss}");
+            sb.AppendLine($"页数：{result.PageCount}");
+            sb.AppendLine($"浏览数：{result.ViewCount}");
+            sb.AppendLine($"收藏数：{result.BookmarkCount}");
+            sb.AppendLine($"点赞数：{result.LikeCount}");
+            sb.AppendLine($"评论数：{result.CommentCount}");
+
+            var otherArtworks = result.UserIllusts?.Where(x => x.Value != null).Select(x =>
+            {
+                var illust = x.Value!;
+                var stringBuilder = new StringBuilder();
+                stringBuilder.AppendLine($"[{illust.Id}] {illust.Title}");
+                stringBuilder.AppendLine(illust.Description);
+                stringBuilder.AppendLine($"Tags: {string.Join(", ", illust.Tags)}");
+                stringBuilder.AppendLine($"Created At: {illust.CreateDate:yyyy-MM-dd HH:mm:ss}");
+                stringBuilder.AppendLine($"Page Count: {illust.PageCount}");
+                return stringBuilder.ToString();
+            }).ToArray() ?? [];
+            if (otherArtworks.Length == 0) return new($"Get Pixiv Illust Info: {param.Id}", sb.ToString());
+            sb.AppendLine("其他作品：");
+            sb.AppendLine(string.Join("\n", otherArtworks));
+
+            return new($"Get Pixiv Illust Info: {param.Id}", sb.ToString());
+        }
+
         private record PreprocessingActionData(string Action, string Result);
 
         private static class PreprocessingActionParam
@@ -384,6 +450,16 @@ namespace RitsukageBot.Modules.AI
             internal class QWeatherQueryWeatherForecastActionParam
             {
                 [JsonProperty("location")] public string Location { get; set; } = string.Empty;
+            }
+
+            internal class PixivIllustInfoActionParam
+            {
+                [JsonProperty("id")] public string Id { get; set; } = string.Empty;
+            }
+
+            internal class PixivUserInfoActionParam
+            {
+                [JsonProperty("id")] public string Id { get; set; } = string.Empty;
             }
         }
     }

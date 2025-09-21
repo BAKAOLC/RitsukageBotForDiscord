@@ -10,6 +10,8 @@ using Newtonsoft.Json.Linq;
 using RitsukageBot.Library.Data;
 using RitsukageBot.Library.Modules.Schedules;
 using RitsukageBot.Library.OpenApi;
+using RitsukageBot.Library.OpenApi.Baidu;
+using RitsukageBot.Library.OpenApi.Baidu.Structs;
 using RitsukageBot.Library.Utils;
 using RitsukageBot.Services.Providers;
 using ZiggyCreatures.Caching.Fusion;
@@ -227,7 +229,7 @@ namespace RitsukageBot.Modules.Schedules
         private async Task<ChatMessage?> CreateTimeMessageRequireMessage(DateTimeOffset targetTime, string prompt)
         {
             var time = targetTime.ConvertToSettingsOffset();
-            var days = await OpenApi.GetCalendarAsync(time).ConfigureAwait(false);
+            var days = await OpenApi.Instance.GetCalendarAsync(time).ConfigureAwait(false);
             var minDay = time.Date.AddDays(-1);
             var maxDay = time.Date.AddDays(7);
             days = [.. days.Where(x => x.ODate >= minDay && x.ODate <= maxDay)];

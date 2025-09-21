@@ -674,8 +674,7 @@ namespace RitsukageBot.Modules
         [ComponentInteraction($"{ImageInteractions.CustomId}:last_page")]
         public async Task LastPageAsync()
         {
-            var firstComponent = Context.Interaction.Message.Components?.FirstOrDefault()?.Components?.FirstOrDefault();
-            if (firstComponent is not null)
+            if (Context.Interaction.Message.Components?.FirstOrDefault() is ButtonComponent firstComponent)
             {
                 var componentInteraction =
                     ImageInteractions.AllowedInteractions.FirstOrDefault(x => x.Id == firstComponent.CustomId);
@@ -696,8 +695,7 @@ namespace RitsukageBot.Modules
         [ComponentInteraction($"{ImageInteractions.CustomId}:next_page")]
         public async Task NextPageAsync()
         {
-            var firstComponent = Context.Interaction.Message.Components?.FirstOrDefault()?.Components?.FirstOrDefault();
-            if (firstComponent is not null)
+            if (Context.Interaction.Message.Components?.FirstOrDefault() is ButtonComponent firstComponent)
             {
                 var componentInteraction =
                     ImageInteractions.AllowedInteractions.FirstOrDefault(x => x.Id == firstComponent.CustomId);

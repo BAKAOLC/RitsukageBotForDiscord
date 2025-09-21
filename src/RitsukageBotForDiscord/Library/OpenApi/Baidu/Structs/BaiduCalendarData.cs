@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace RitsukageBot.Library.OpenApi
+namespace RitsukageBot.Library.OpenApi.Baidu.Structs
 {
     /// <summary>
     ///     Baidu calendar day
