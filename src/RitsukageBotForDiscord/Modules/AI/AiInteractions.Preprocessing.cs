@@ -384,6 +384,10 @@ namespace RitsukageBot.Modules.AI
                 else
                     sb.AppendLine($"<图像内容解析失败，原因：{explainResult}>");
             }
+            else
+            {
+                sb.AppendLine("<图像内容解析失败，原因：无法获取图像链接>");
+            }
 
             var otherArtworks = result.UserIllusts?.Where(x => x.Value != null).Select(x =>
             {
