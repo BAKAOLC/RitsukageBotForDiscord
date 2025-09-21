@@ -479,10 +479,9 @@ namespace RitsukageBot.Modules.AI
             return [.. result];
         }
 
-        private async Task<EmbedBuilder?> ProcessingModifyGood(JObject data)
+        private async Task<EmbedBuilder?> ProcessingModifyGood(JObject? data)
         {
-            if (data is null) throw new InvalidDataException("Invalid JSON data for good action");
-            if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
+            if (data is null || !data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
                 throw new InvalidDataException("Invalid JSON data for good action");
             var param = paramToken.ToObject<ActionParam.GoodActionParam>()
                         ?? throw new InvalidDataException("Invalid JSON data for good action");
@@ -517,10 +516,9 @@ namespace RitsukageBot.Modules.AI
             return embedBuilder;
         }
 
-        private async Task<EmbedBuilder?> ProcessingAddShortMemory(JObject data)
+        private async Task<EmbedBuilder?> ProcessingAddShortMemory(JObject? data)
         {
-            if (data is null) throw new InvalidDataException("Invalid JSON data for add_short_memory action");
-            if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
+            if (data is null || !data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
                 throw new InvalidDataException("Invalid JSON data for add_short_memory action");
             var param = paramToken.ToObject<ActionParam.MemoryActionParam>()
                         ?? throw new InvalidDataException("Invalid JSON data for add_short_memory action");
@@ -546,10 +544,9 @@ namespace RitsukageBot.Modules.AI
             return embed;
         }
 
-        private async Task<EmbedBuilder?> ProcessingAddLongMemory(JObject data)
+        private async Task<EmbedBuilder?> ProcessingAddLongMemory(JObject? data)
         {
-            if (data is null) throw new InvalidDataException("Invalid JSON data for add_long_memory action");
-            if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
+            if (data is null || !data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
                 throw new InvalidDataException("Invalid JSON data for add_long_memory action");
             var param = paramToken.ToObject<ActionParam.MemoryActionParam>()
                         ?? throw new InvalidDataException("Invalid JSON data for add_long_memory action");
@@ -575,10 +572,9 @@ namespace RitsukageBot.Modules.AI
             return embed;
         }
 
-        private async Task<EmbedBuilder?> ProcessingRemoveLongMemory(JObject data)
+        private async Task<EmbedBuilder?> ProcessingRemoveLongMemory(JObject? data)
         {
-            if (data is null) throw new InvalidDataException("Invalid JSON data for remove_long_memory action");
-            if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
+            if (data is null || !data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
                 throw new InvalidDataException("Invalid JSON data for remove_long_memory action");
             var param = paramToken.ToObject<ActionParam.RemoveMemoryActionParam>()
                         ?? throw new InvalidDataException("Invalid JSON data for remove_long_memory action");
@@ -603,10 +599,9 @@ namespace RitsukageBot.Modules.AI
             return embed;
         }
 
-        private async Task<EmbedBuilder?> ProcessingUpdateSelfState(JObject data)
+        private async Task<EmbedBuilder?> ProcessingUpdateSelfState(JObject? data)
         {
-            if (data is null) throw new InvalidDataException("Invalid JSON data for update_self_state action");
-            if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
+            if (data is null || !data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
                 throw new InvalidDataException("Invalid JSON data for update_self_state action");
             var param = paramToken.ToObject<ActionParam.MemoryActionParam>()
                         ?? throw new InvalidDataException("Invalid JSON data for update_self_state action");
@@ -631,10 +626,9 @@ namespace RitsukageBot.Modules.AI
             return embed;
         }
 
-        private async Task<EmbedBuilder?> ProcessingRemoveSelfState(JObject data)
+        private async Task<EmbedBuilder?> ProcessingRemoveSelfState(JObject? data)
         {
-            if (data is null) throw new InvalidDataException("Invalid JSON data for remove_self_state action");
-            if (!data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
+            if (data is null || !data.TryGetValue("param", out var paramValue) || paramValue is not JObject paramToken)
                 throw new InvalidDataException("Invalid JSON data for remove_self_state action");
             var param = paramToken.ToObject<ActionParam.RemoveMemoryActionParam>()
                         ?? throw new InvalidDataException("Invalid JSON data for remove_self_state action");

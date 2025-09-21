@@ -31,8 +31,6 @@ namespace RitsukageBot.Services.Providers
         private readonly ILogger<ChatClientProviderService> _logger =
             serviceProvider.GetRequiredService<ILogger<ChatClientProviderService>>();
 
-        private readonly IServiceProvider _serviceProvider = serviceProvider;
-
         private IChatClient CreateChatClient(EndpointConfig config)
         {
             if (string.IsNullOrWhiteSpace(config.Endpoint))
@@ -49,7 +47,7 @@ namespace RitsukageBot.Services.Providers
                 }), config.ModelId);
 
             var client = new ChatClientBuilder(innerChatClient)
-                .UseDistributedCache(_serviceProvider.GetRequiredService<IDistributedCache>())
+                .UseDistributedCache(serviceProvider.GetRequiredService<IDistributedCache>())
                 //.UseLogging(_serviceProvider.GetRequiredService<ILoggerFactory>())
                 .Build();
             return client;
@@ -84,9 +82,9 @@ namespace RitsukageBot.Services.Providers
         {
             var random = _configuration.GetValue<bool>("AI:FirstServiceRandom");
             var configs = GetEndpointConfigs();
-            if (configs.Length == 0)
-                throw new InvalidDataException("No endpoint is configured");
-            return configs[random ? Random.Shared.Next(configs.Length) : 0];
+            return configs.Length == 0
+                ? throw new InvalidDataException("No endpoint is configured")
+                : configs[random ? Random.Shared.Next(configs.Length) : 0];
         }
 
         /// <summary>
@@ -97,9 +95,9 @@ namespace RitsukageBot.Services.Providers
         public EndpointConfig GetChatEndpointRandomly()
         {
             var configs = GetEndpointConfigs();
-            if (configs.Length == 0)
-                throw new InvalidDataException("No endpoint is configured");
-            return configs[Random.Shared.Next(configs.Length)];
+            return configs.Length == 0
+                ? throw new InvalidDataException("No endpoint is configured")
+                : configs[Random.Shared.Next(configs.Length)];
         }
 
         internal EndpointConfig[] GetEndpointConfigs()
@@ -260,6 +258,79 @@ namespace RitsukageBot.Services.Providers
         public string[] GetRoles()
         {
             return [.. _configuration.GetSection("AI:RoleData").GetChildren().Select(x => x.Key)];
+        }
+
+        /// <summary>
+        ///     Check if ImageExplainer is enabled
+        /// </summary>
+        /// <returns></returns>
+        public bool IsImageExplainerEnabled()
+        {
+            var config = _configuration.GetSection("AI:Function:ImageExplainer").Get<ImageExplainerConfig>();
+            return config?.Enabled ?? false;
+        }
+
+        /// <summary>
+        ///     Get ImageExplainer configuration
+        /// </summary>
+        /// <returns></returns>
+        public ImageExplainerConfig? GetImageExplainerConfig()
+        {
+            return _configuration.GetSection("AI:Function:ImageExplainer").Get<ImageExplainerConfig>();
+        }
+
+        /// <summary>
+        ///     Explain image content using AI
+        /// </summary>
+        /// <param name="imageUrl">The URL of the image to explain</param>
+        /// <returns>The explanation of the image content</returns>
+        /// <exception cref="InvalidOperationException">Thrown when ImageExplainer is not enabled or configured properly</exception>
+        public async Task<(bool, string)> ExplainImageAsync(string imageUrl)
+        {
+            var config = GetImageExplainerConfig();
+            if (config is null || !config.Enabled)
+                return (false, "ImageExplainer is not enabled or configured");
+
+            if (string.IsNullOrWhiteSpace(imageUrl))
+                return (false, "Image URL cannot be null or empty");
+
+            try
+            {
+                var chatClient = CreateChatClient(config.Service);
+
+                // Get prompt from configuration
+                if (!GetPrompt(config.PromptConfig, out var prompt))
+                {
+                    _logger.LogWarning("ImageExplainer prompt is empty, using default");
+                    prompt =
+                        "Please describe the content of this image in detail, including the main object, scene, color, composition, etc.";
+                }
+
+                var messages = new List<ChatMessage>
+                {
+                    new(ChatRole.System,
+                        "You are a professional image analysis assistant who can describe image content in detail."),
+                    new(ChatRole.User, [
+                        new TextContent(prompt),
+                        new ImageContent(imageUrl),
+                    ]),
+                };
+
+                var chatOptions = new ChatOptions
+                {
+                    Temperature = config.PromptConfig.Temperature,
+                };
+
+                var response = await chatClient.CompleteAsync(messages, chatOptions).ConfigureAwait(false);
+                if (!string.IsNullOrWhiteSpace(response.Message.Text))
+                    return (true, response.Message.Text);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to explain image: {ImageUrl}", imageUrl);
+            }
+
+            return (false, "Failed to explain image");
         }
 
         /// <summary>
@@ -686,6 +757,14 @@ namespace RitsukageBot.Services.Providers
         /// <param name="Service"></param>
         /// <param name="PromptConfig"></param>
         public record AssistantConfig(bool Enabled, EndpointConfig Service, PromptConfig PromptConfig);
+
+        /// <summary>
+        ///     Image explainer configuration
+        /// </summary>
+        /// <param name="Enabled"></param>
+        /// <param name="Service"></param>
+        /// <param name="PromptConfig"></param>
+        public record ImageExplainerConfig(bool Enabled, EndpointConfig Service, PromptConfig PromptConfig);
     }
 
     /// <summary>

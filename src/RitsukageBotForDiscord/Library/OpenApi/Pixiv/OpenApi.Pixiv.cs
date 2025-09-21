@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using RitsukageBot.Library.OpenApi.Pixiv.Structs;
@@ -34,8 +35,11 @@ namespace RitsukageBot.Library.OpenApi.Pixiv
 
             httpClient ??= NetworkUtility.GetHttpClient();
 
-            if (!httpClient.DefaultRequestHeaders.Contains("Referer"))
-                httpClient.DefaultRequestHeaders.Add("Referer", "https://www.pixiv.net/");
+            httpClient.DefaultRequestHeaders.Referrer = new("https://www.pixiv.net/");
+
+            var cookieString = instance.Configuration?.GetValue<string>("OpenApi:PixivCookie");
+            if (!string.IsNullOrWhiteSpace(cookieString))
+                httpClient.DefaultRequestHeaders.Add("Cookie", cookieString);
 
             try
             {
@@ -90,8 +94,11 @@ namespace RitsukageBot.Library.OpenApi.Pixiv
 
             httpClient ??= NetworkUtility.GetHttpClient();
 
-            if (!httpClient.DefaultRequestHeaders.Contains("Referer"))
-                httpClient.DefaultRequestHeaders.Add("Referer", "https://www.pixiv.net/");
+            httpClient.DefaultRequestHeaders.Referrer = new("https://www.pixiv.net/");
+
+            var cookieString = instance.Configuration?.GetValue<string>("OpenApi:PixivCookie");
+            if (!string.IsNullOrWhiteSpace(cookieString))
+                httpClient.DefaultRequestHeaders.Add("Cookie", cookieString);
 
             try
             {
@@ -121,6 +128,17 @@ namespace RitsukageBot.Library.OpenApi.Pixiv
 
             return null;
         }
+
+        /// <summary>
+        ///     Returns a proxied Pixiv image URL using the configured proxy template, or the original image URL if no proxy is set.
+        /// </summary>
+        /// <param name="instance">OpenApi instance</param>
+        /// <param name="imageUrl">Original Pixiv image URL</param>
+        /// <returns>Proxied image URL or original image URL</returns>
+        public static string GetPixivImageProxyUrl(this OpenApi instance, string imageUrl)
+        {
+            var proxyTemplate = instance.Configuration?.GetValue<string>("OpenApi:PixivImageProxy");
+            return string.IsNullOrWhiteSpace(proxyTemplate) ? imageUrl : string.Format(proxyTemplate, imageUrl);
+        }
     }
 }
-
