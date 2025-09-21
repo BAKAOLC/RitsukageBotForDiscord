@@ -19,7 +19,10 @@ namespace RitsukageBot.Library.OpenApi
         /// </summary>
         public IFusionCache? CacheProvider { get; private set; }
 
-        public ILogger<OpenApi> Logger { get; private set; }
+        /// <summary>
+        ///     Logger
+        /// </summary>
+        public ILogger<OpenApi>? Logger { get; private set; }
 
         /// <summary>
         ///     Instance of OpenApi

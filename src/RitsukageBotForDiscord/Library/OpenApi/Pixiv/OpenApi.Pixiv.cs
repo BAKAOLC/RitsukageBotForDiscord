@@ -59,7 +59,7 @@ namespace RitsukageBot.Library.OpenApi.Pixiv
             }
             catch (Exception ex)
             {
-                instance.Logger.LogError(
+                instance.Logger?.LogError(
                     "Failed to get Pixiv user info (ID: {UserId}): {Message}", userId, ex.Message);
             }
 
@@ -115,7 +115,7 @@ namespace RitsukageBot.Library.OpenApi.Pixiv
             }
             catch (Exception ex)
             {
-                instance.Logger.LogError(
+                instance.Logger?.LogError(
                     "Failed to get Pixiv illust info (ID: {IllustId}): {Message}", illustId, ex.Message);
             }
 

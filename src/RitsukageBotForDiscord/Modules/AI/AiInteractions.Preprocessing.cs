@@ -378,7 +378,7 @@ namespace RitsukageBot.Modules.AI
                 stringBuilder.AppendLine($"Tags: {string.Join(", ", illust.Tags)}");
                 stringBuilder.AppendLine($"Created At: {illust.CreateDate:yyyy-MM-dd HH:mm:ss}");
                 stringBuilder.AppendLine($"Page Count: {illust.PageCount}");
-                return sb.ToString();
+                return stringBuilder.ToString();
             }).ToArray() ?? [];
             if (otherArtworks.Length == 0) return new($"Get Pixiv Illust Info: {param.Id}", sb.ToString());
             sb.AppendLine("其他作品：");
