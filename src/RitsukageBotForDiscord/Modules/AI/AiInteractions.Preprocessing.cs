@@ -369,6 +369,22 @@ namespace RitsukageBot.Modules.AI
             sb.AppendLine($"点赞数：{result.LikeCount}");
             sb.AppendLine($"评论数：{result.CommentCount}");
 
+            if (!string.IsNullOrWhiteSpace(result.Urls.Original))
+            {
+                var (success, explainResult) =
+                    await ChatClientProvider.ExplainImageAsync(
+                        OpenApi.Instance.GetPixivImageProxyUrl(result.Urls.Original));
+                if (success && !string.IsNullOrWhiteSpace(explainResult))
+                    sb.AppendLine($"""
+                                   图像内容描述：
+                                   ```
+                                   {explainResult}
+                                   ```
+                                   """);
+                else
+                    sb.AppendLine($"<图像内容解析失败，原因：{explainResult}>");
+            }
+
             var otherArtworks = result.UserIllusts?.Where(x => x.Value != null).Select(x =>
             {
                 var illust = x.Value!;
